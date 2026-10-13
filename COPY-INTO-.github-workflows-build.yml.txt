@@ -1,0 +1,198 @@
+name: Build Shiksha Desk
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      create_signing_key:
+        description: 'ONE TIME ONLY: create the permanent Android signing key'
+        type: boolean
+        default: false
+
+env:
+  APP_ID: in.shikshadesk.app
+  APP_NAME: Shiksha Desk
+
+jobs:
+  signing-key:
+    name: Create permanent signing key
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.create_signing_key }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create the key
+        run: |
+          PASS=$(openssl rand -hex 16)
+          keytool -genkeypair -storetype PKCS12 -keystore shiksha-desk-signing-key.p12 \
+            -alias shikshadesk -keyalg RSA -keysize 4096 -validity 36500 \
+            -storepass "$PASS" -keypass "$PASS" -dname "CN=Shiksha Desk, O=Shiksha Desk, C=IN"
+          mkdir key
+          cp shiksha-desk-signing-key.p12 key/
+          base64 -w 0 shiksha-desk-signing-key.p12 > key/ANDROID_KEYSTORE_BASE64.txt
+          printf '%s' "$PASS" > key/ANDROID_KEYSTORE_PASSWORD.txt
+          {
+            echo "SHIKSHA DESK - PERMANENT ANDROID SIGNING KEY"
+            echo ""
+            echo "Keep all three files in TWO safe places (for example a pen drive and Google Drive)."
+            echo "If this key is lost, installed apps can never be updated again."
+            echo "Never upload these files into the repository."
+            echo ""
+            echo "Add two repository secrets (Settings > Secrets and variables > Actions):"
+            echo "  ANDROID_KEYSTORE_BASE64   = contents of ANDROID_KEYSTORE_BASE64.txt"
+            echo "  ANDROID_KEYSTORE_PASSWORD = contents of ANDROID_KEYSTORE_PASSWORD.txt"
+          } > key/READ-ME-FIRST.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shiksha-desk-signing-key-KEEP-SAFE
+          path: key/
+          retention-days: 1
+
+  test:
+    name: Analyze and test
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.create_signing_key) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Put uploaded files back into their folders
+        shell: bash
+        run: |
+          shopt -s nullglob
+          for f in *__*; do
+            p="${f//__//}"
+            mkdir -p "$(dirname "$p")"
+            mv "$f" "$p"
+          done
+          find lib test -type f | sort
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter --version
+      - run: flutter pub get
+      - name: Generate database code
+        run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter gen-l10n
+      - run: flutter analyze --no-fatal-infos
+      - run: flutter test
+
+  android:
+    name: Android APK
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Put uploaded files back into their folders
+        shell: bash
+        run: |
+          shopt -s nullglob
+          for f in *__*; do
+            p="${f//__//}"
+            mkdir -p "$(dirname "$p")"
+            mv "$f" "$p"
+          done
+      - name: Check the signing key is set up
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$KEYSTORE_PASS" ]; then
+            echo "::error::The permanent signing key is not set up yet. Run this workflow once with 'create the permanent Android signing key' ticked, then add the two secrets."
+            exit 1
+          fi
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate Android platform folder
+        run: |
+          if [ ! -d android ]; then
+            flutter create --platforms=android --org com.shikshadesk --project-name shiksha_desk .
+          fi
+      - name: Set app ID, app name and backup rules
+        run: |
+          for f in android/app/build.gradle.kts android/app/build.gradle; do
+            if [ -f "$f" ]; then
+              sed -E -i "s/(applicationId[ =]+\")[^\"]*\"/\1${APP_ID}\"/" "$f"
+              grep -n "applicationId" "$f"
+            fi
+          done
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i "s/android:label=\"[^\"]*\"/android:label=\"${APP_NAME}\"/" "$M"
+          # The database key lives in the Android Keystore, which is never backed up,
+          # so the encrypted database must not be backed up separately either.
+          sed -i 's/<application/<application android:allowBackup="false" android:fullBackupContent="false"/' "$M"
+          grep -n "android:label\|allowBackup" "$M"
+          # Fingerprint unlock (local_auth) needs a FragmentActivity.
+          for f in $(find android/app/src/main -name 'MainActivity.kt' -o -name 'MainActivity.java'); do
+            sed -i 's/FlutterActivity/FlutterFragmentActivity/g' "$f"
+            cat "$f"
+          done
+      - run: flutter pub get
+      - name: Generate database code
+        run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter build apk --release
+      - name: Sign with the permanent key
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > signing.p12
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/apksigner" sign --ks signing.p12 --ks-pass env:KEYSTORE_PASS --ks-key-alias shikshadesk \
+            --out shiksha-desk.apk build/app/outputs/flutter-apk/app-release.apk
+          rm signing.p12
+          "$BT/apksigner" verify --print-certs shiksha-desk.apk | head -3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shiksha-desk-android
+          path: shiksha-desk.apk
+          # Old builds are deleted after 5 days so GitHub storage never fills up.
+          retention-days: 5
+
+  windows:
+    name: Windows app
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Put uploaded files back into their folders
+        shell: bash
+        run: |
+          shopt -s nullglob
+          for f in *__*; do
+            p="${f//__//}"
+            mkdir -p "$(dirname "$p")"
+            mv "$f" "$p"
+          done
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate Windows platform folder
+        shell: bash
+        run: |
+          if [ ! -d windows ]; then
+            flutter create --platforms=windows --org com.shikshadesk --project-name shiksha_desk .
+          fi
+      - name: Set window title
+        shell: pwsh
+        run: |
+          $f = "windows/runner/main.cpp"
+          (Get-Content $f) -replace 'L"shiksha_desk"', 'L"Shiksha Desk"' | Set-Content $f
+          Select-String -Path $f -Pattern 'Shiksha'
+      - run: flutter pub get
+      - name: Generate database code
+        run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter build windows --release
+      - name: Zip the app
+        shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath shiksha-desk-windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shiksha-desk-windows
+          path: shiksha-desk-windows.zip
+          retention-days: 5
