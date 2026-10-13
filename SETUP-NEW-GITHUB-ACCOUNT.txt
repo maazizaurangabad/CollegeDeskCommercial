@@ -1,0 +1,27 @@
+SHIKSHA DESK - SETTING UP ON A NEW GITHUB ACCOUNT
+=================================================
+
+IMPORTANT: use your EXISTING signing key. Do NOT run "create the permanent
+Android signing key" again. A new key means the app on your phone can never be
+updated again (you would have to uninstall and lose the data on the phone).
+
+1. Create a PRIVATE repository (for example: shiksha-desk).
+
+2. Create the build file first:
+   Add file > Create new file > name it:  .github/workflows/build.yml
+   Paste everything from COPY-INTO-.github-workflows-build.yml.txt and commit.
+   (The first run will fail - that is expected, the app files are not there yet.)
+
+3. Add the two secrets from the signing key files you saved earlier
+   (shiksha-desk-signing-key-KEEP-SAFE, on your pen drive / Google Drive):
+   Settings > Secrets and variables > Actions > New repository secret
+     ANDROID_KEYSTORE_BASE64    = contents of ANDROID_KEYSTORE_BASE64.txt
+     ANDROID_KEYSTORE_PASSWORD  = contents of ANDROID_KEYSTORE_PASSWORD.txt
+
+4. Upload all the other files (everything except the COPY-INTO... and SETUP... files):
+   Add file > Upload files > select all > Commit changes.
+
+5. Open the Actions tab and wait for the green build. Download the APK and
+   install it OVER the existing app (do not uninstall).
+
+Builds are now kept for 5 days only, so storage will not fill up again.

@@ -1,0 +1,686 @@
+{
+  "@@locale": "en",
+  "appTitle": "Shiksha Desk",
+  "demoBanner": "Demo mode: sample data only",
+  "navDashboard": "Dashboard",
+  "navStudents": "Students",
+  "navSettings": "Settings",
+  "navMore": "More",
+  "moreSheetTitle": "More modules",
+  "academicYear": "Academic year {year}",
+  "@academicYear": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "search": "Search",
+  "searchComingSoon": "Global search arrives with Phase 2.",
+  "comingSoon": "Available in a later build.",
+  "dashboardToday": "Today",
+  "statTotalStudents": "Total students",
+  "statPresent": "Present",
+  "statAbsent": "Absent",
+  "statAttendance": "Attendance",
+  "demoFiguresNote": "Sample figures. Live numbers appear once attendance is built.",
+  "quickActions": "Quick actions",
+  "actionMarkAttendance": "Mark attendance",
+  "actionSearchStudent": "Search student",
+  "actionAddStudent": "Add student",
+  "actionImportExcel": "Import from Excel",
+  "attentionRequired": "Needs attention",
+  "attentionNone": "Nothing needs attention right now.",
+  "studentsTitle": "Students",
+  "studentsSearchHint": "Search by name, code or mobile",
+  "studentsEmptyTitle": "No students yet",
+  "studentsEmptyMessage": "Import your Excel sheet from the ⋮ menu, or add students one by one.",
+  "settingsTitle": "Settings",
+  "settingsInstitutionGroup": "Institution",
+  "settingsInstitutionProfile": "Institution profile",
+  "settingsAcademicYears": "Academic years",
+  "settingsClassesDivisions": "Classes and divisions",
+  "settingsAppGroup": "App",
+  "settingsModules": "Modules",
+  "settingsModulesSubtitle": "Choose which modules this institution uses",
+  "settingsAppearance": "Appearance",
+  "settingsBackup": "Backup and restore",
+  "settingsSecurity": "Security and app lock",
+  "settingsAbout": "About Shiksha Desk",
+  "appearanceSystem": "Follow device",
+  "appearanceLight": "Light",
+  "appearanceDark": "Dark",
+  "modulesTitle": "Modules",
+  "modulesAlwaysOn": "Always on",
+  "modulesVersion": "Version {version}",
+  "@modulesVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "back": "Back",
+  "settingsDataStorage": "Data on this device",
+  "dataEncryptionOn": "Encrypted on this device",
+  "dataEncryptionOff": "Not encrypted (test mode)",
+  "dataSchemaVersion": "Database version {version}",
+  "@dataSchemaVersion": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "dataBackupNote": "Your data stays on this device. Backup and restore arrive in build 1f.",
+  "startupErrorTitle": "Shiksha Desk could not open its data",
+  "startupErrorMessage": "Nothing has been changed or deleted.",
+  "saveFailed": "Could not save the change. Please try again.",
+  "switcherTitle": "Institutions on this device",
+  "switcherDemoTag": "Demo",
+  "switcherOpenNow": "Open now",
+  "switcherAdd": "Add institution",
+  "switchFailed": "Could not open that institution. Nothing was changed.",
+  "setupTitle": "Set up an institution",
+  "setupDetailsTitle": "Institution details",
+  "setupBoardTitle": "Board and medium",
+  "setupYearTitle": "First academic year",
+  "setupStructureTitle": "Classes and divisions",
+  "setupBrandingTitle": "Logo and colour",
+  "fieldName": "Full name",
+  "fieldShortName": "Short name",
+  "fieldShortNameHint": "Shown in the top bar, e.g. Greenfield College",
+  "fieldType": "Type of institution",
+  "typeSchool": "School",
+  "typeJuniorCollege": "Junior college",
+  "typeSeniorCollege": "Senior college",
+  "typeCoaching": "Coaching institute",
+  "typeOther": "Other",
+  "fieldAddress": "Address",
+  "fieldCity": "City",
+  "fieldState": "State",
+  "fieldPhone": "Phone",
+  "fieldEmail": "Email",
+  "fieldWebsite": "Website",
+  "fieldUdise": "UDISE code",
+  "fieldBoard": "Board",
+  "fieldBoardHint": "e.g. Maharashtra State Board",
+  "fieldMedium": "Medium of instruction",
+  "fieldMediumHint": "e.g. English, Urdu, Marathi",
+  "fieldYearLabel": "Year name",
+  "fieldYearStart": "Starts on",
+  "fieldYearEnd": "Ends on",
+  "templateJuniorCollege": "Junior college",
+  "templateJuniorCollegeDetail": "11th and 12th in Science, Commerce and Arts, division A",
+  "templateSchool": "School",
+  "templateSchoolDetail": "1st to 10th, division A",
+  "templateCoaching": "Coaching institute",
+  "templateCoachingDetail": "JEE and NEET courses, one batch each",
+  "templateBlank": "Start empty",
+  "templateBlankDetail": "Add classes yourself",
+  "templateEditLater": "You can rename, add or remove classes and divisions later in Settings.",
+  "brandColour": "Brand colour",
+  "logoPick": "Choose logo",
+  "logoRemove": "Remove logo",
+  "logoNone": "No logo: the initials are used.",
+  "previewLabel": "Preview",
+  "next": "Next",
+  "createInstitution": "Create institution",
+  "cancel": "Cancel",
+  "save": "Save",
+  "saved": "Saved",
+  "fieldRequired": "Required",
+  "invalidEmail": "Enter a valid email address",
+  "createFailed": "Could not create the institution. Nothing was saved.",
+  "labelsTitle": "Names used in this institution",
+  "fieldProgramLabel": "What you call a class",
+  "fieldDivisionLabel": "What you call a division",
+  "defaultProgramLabel": "Class",
+  "defaultDivisionLabel": "Division",
+  "yearsAdd": "Add academic year",
+  "yearActive": "Active",
+  "yearInactive": "Not active",
+  "yearClosed": "Closed",
+  "yearSetActive": "Make active",
+  "yearClose": "Close year",
+  "yearCloseConfirmMessage": "A closed year becomes read-only history. It cannot be reopened in this build.",
+  "yearsEmpty": "No academic years yet.",
+  "classesNoYear": "Add an academic year first, then its classes and divisions.",
+  "classesEmpty": "Nothing here yet. Add the first one.",
+  "streamOptional": "Stream (optional)",
+  "moveUp": "Move up",
+  "moveDown": "Move down",
+  "rename": "Rename",
+  "delete": "Delete",
+  "deleteConfirmMessage": "It is removed from lists. Its history is kept.",
+  "issueEmptyName": "Enter a name.",
+  "issueDuplicateYear": "That academic year already exists.",
+  "issueDuplicateName": "That name is already used.",
+  "issueEndBeforeStart": "The end date must be after the start date.",
+  "issueProgramHasDivisions": "Delete its divisions first.",
+  "issueCannotCloseActiveYear": "Make another year active before closing this one.",
+  "issueYearIsClosed": "This year is closed.",
+  "issueNotFound": "That item no longer exists.",
+  "setupStepOf": "Step {current} of {total}",
+  "@setupStepOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "yearCloseConfirmTitle": "Close {year}?",
+  "@yearCloseConfirmTitle": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "yearDates": "{start} to {end}",
+  "@yearDates": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
+  "addThing": "Add {thing}",
+  "@addThing": {
+    "placeholders": {
+      "thing": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteConfirmTitle": "Delete {name}?",
+  "@deleteConfirmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "classesForYear": "{year}: classes and their divisions",
+  "@classesForYear": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "liveFiguresNote": "Figures appear here once students and attendance are added.",
+  "issueDivisionHasStudents": "Students are placed in this division. Move them first.",
+  "notSet": "Not set",
+  "clear": "Clear",
+  "choose": "Choose",
+  "studentsFilterAll": "All",
+  "studentsFilterClass": "Class",
+  "studentsFilterDivision": "Division",
+  "studentsFilterStatus": "Status",
+  "studentsNoMatch": "No students match",
+  "studentsNoMatchHint": "Try fewer words, or clear the filters.",
+  "studentsNotPlaced": "Not placed in a class",
+  "statusActive": "Active",
+  "statusLeft": "Left",
+  "statusAlumni": "Alumni",
+  "statusArchived": "Archived",
+  "enrollActive": "Current",
+  "enrollLeft": "Left",
+  "enrollPromoted": "Promoted",
+  "enrollDetained": "Detained",
+  "enrollGraduated": "Graduated",
+  "enrollTransferred": "Moved",
+  "studentAddTitle": "Add student",
+  "studentEditTitle": "Edit student",
+  "sectionName": "Name",
+  "sectionPersonal": "Personal details",
+  "sectionHealth": "Health",
+  "sectionAdmission": "Admission",
+  "sectionPlacement": "Class and roll",
+  "sectionGuardians": "Parents and guardians",
+  "sectionIdentifiers": "Official numbers",
+  "sectionExtra": "More details",
+  "sectionNotes": "Notes",
+  "sectionHistory": "Class history",
+  "sectionLeaving": "Leaving",
+  "fieldFirstName": "First name",
+  "fieldMiddleName": "Middle name (father's name)",
+  "fieldLastName": "Last name (surname)",
+  "fieldAltName": "Name in another script",
+  "fieldAltNameHint": "e.g. in Urdu or Marathi, for certificates",
+  "fieldGender": "Gender",
+  "fieldDateOfBirth": "Date of birth",
+  "fieldPlaceOfBirth": "Place of birth",
+  "fieldNationality": "Nationality",
+  "fieldMotherTongue": "Mother tongue",
+  "fieldCategory": "Category",
+  "fieldCaste": "Caste",
+  "fieldSubCaste": "Sub-caste",
+  "fieldBloodGroup": "Blood group",
+  "fieldHeight": "Height (cm)",
+  "fieldWeight": "Weight (kg)",
+  "fieldMeasuredOn": "Measured on",
+  "fieldAdmissionDate": "Admission date",
+  "fieldPreviousSchool": "Previous school or college",
+  "fieldNotes": "Notes (staff only)",
+  "fieldRollNumber": "Roll number",
+  "fieldRelation": "Relation",
+  "fieldMobile": "Mobile",
+  "fieldAltMobile": "Alternate mobile",
+  "fieldOccupation": "Occupation",
+  "fieldPrimaryContact": "Primary contact",
+  "fieldLeavingDate": "Date of leaving",
+  "fieldLeavingReason": "Reason for leaving",
+  "guardianAdd": "Add parent or guardian",
+  "guardianRemove": "Remove",
+  "idGr": "GR number",
+  "idPen": "PEN",
+  "idApaar": "APAAR ID",
+  "idSaral": "Saral ID",
+  "idAdmission": "Admission number",
+  "idAadhaar": "Aadhaar",
+  "aadhaarHint": "12 digits",
+  "aadhaarKeep": "Leave empty to keep the saved number",
+  "aadhaarRemove": "Remove Aadhaar",
+  "aadhaarReveal": "Show full number",
+  "aadhaarRevealed": "This view was recorded in the audit log.",
+  "photoPick": "Choose photo",
+  "photoRemove": "Remove photo",
+  "placementNone": "Not placed yet",
+  "placementNeedsYear": "Add an active academic year to place students in a class.",
+  "studentSaved": "Student saved",
+  "studentMarkLeft": "Mark as left",
+  "studentMarkedLeft": "Marked as left",
+  "studentDelete": "Move to recycle bin",
+  "studentDeleted": "Moved to the recycle bin",
+  "studentDeleteMessage": "It can be restored from Settings > Recycle bin for 30 days.",
+  "studentNotFound": "This student no longer exists.",
+  "duplicateTitle": "This may be a student who is already saved",
+  "duplicateSaveAnyway": "Save anyway",
+  "duplicateOpen": "Open",
+  "dupSameNameDob": "Same name and date of birth",
+  "dupSameId": "Same official number",
+  "dupSameMobile": "Same mobile, similar name",
+  "issueNameRequired": "Enter the first name.",
+  "issueInvalidAadhaar": "This Aadhaar number is not valid. Check the digits.",
+  "issueDuplicateIdentifier": "Another student already has this number.",
+  "issueDuplicateRoll": "Another student already has this roll number in that division.",
+  "issueDivisionNotActive": "Choose a division in the active academic year.",
+  "issueRequiredExtra": "Fill in all required fields.",
+  "issueInvalidNumber": "Enter a number.",
+  "settingsStudentFields": "Student fields",
+  "settingsStudentFieldsSubtitle": "Extra fields and category list",
+  "settingsRecycleBin": "Recycle bin",
+  "recycleBinEmpty": "Nothing in the recycle bin.",
+  "recycleRestore": "Restore",
+  "restored": "Restored",
+  "extraFieldsTitle": "Extra fields",
+  "extraFieldsEmpty": "No extra fields yet.",
+  "extraFieldAdd": "Add field",
+  "extraFieldLabel": "Field name",
+  "extraFieldType": "Type",
+  "extraFieldOptions": "Choices (separate with commas)",
+  "extraFieldRequired": "Required",
+  "typeText": "Text",
+  "typeNumber": "Number",
+  "typeDate": "Date",
+  "typeChoice": "Choice",
+  "typeYesNo": "Yes or no",
+  "yes": "Yes",
+  "no": "No",
+  "categoriesTitle": "Category list",
+  "categoriesEdit": "Edit categories",
+  "categoriesHint": "Separate with commas",
+  "fieldExists": "A field with that name already exists.",
+  "sensitiveNote": "Visible only on the profile, not in lists.",
+  "studentsCount": "{count} students",
+  "@studentsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rollShort": "Roll {roll}",
+  "@rollShort": {
+    "placeholders": {
+      "roll": {
+        "type": "int"
+      }
+    }
+  },
+  "placementLabel": "{program} {division}",
+  "@placementLabel": {
+    "placeholders": {
+      "program": {
+        "type": "String"
+      },
+      "division": {
+        "type": "String"
+      }
+    }
+  },
+  "leftOn": "Left on {date}",
+  "@leftOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "measuredOnLabel": "Measured on {date}",
+  "@measuredOnLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "guardianNumber": "Parent or guardian {number}",
+  "@guardianNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "studentCode": "Code",
+  "studentsMore": "More actions",
+  "importStudentsTitle": "Import students from Excel",
+  "importPhotosTitle": "Import photos",
+  "exportExcel": "Export to Excel",
+  "exportCsv": "Export to CSV",
+  "exported": "File saved",
+  "importIntro": "Choose an Excel (.xlsx) or CSV file. Nothing is saved until you have checked every row.",
+  "importChooseFile": "Choose file",
+  "importXlsWarning": "Old .xls files cannot be read. Open the file in Excel and save it as .xlsx.",
+  "importReadFailed": "This file could not be read. Is it an .xlsx or .csv file?",
+  "importSheet": "Sheet",
+  "importHeaderRow": "Row with the column names",
+  "importColumns": "Match the columns",
+  "importColumnsHint": "Each column of your sheet goes into one student field. Columns set to Ignore are not imported.",
+  "importSample": "Example",
+  "importTemplateUse": "Use saved matching",
+  "importTemplateSave": "Save this matching",
+  "importTemplateName": "Name for this matching",
+  "importTemplateSaved": "Matching saved",
+  "importNames": "How names are written",
+  "importNameFirst": "First name, father's name, surname",
+  "importNameSurname": "Surname, first name, father's name",
+  "importPlacement": "Class and division",
+  "importCreateMissing": "Create classes and divisions that do not exist yet",
+  "importAllInto": "Put every student in this division",
+  "importNoPlacement": "Do not place in a class",
+  "importExisting": "Students already saved",
+  "importExistingHint": "Matched by GR number, PEN, APAAR, Saral ID, admission number or Aadhaar.",
+  "importSkipExisting": "Skip them",
+  "importFillExisting": "Fill in only their empty fields",
+  "importCheck": "Check rows",
+  "importChecking": "Checking rows…",
+  "importOk": "Ready",
+  "importWarnings": "With warnings",
+  "importErrors": "Errors (skipped)",
+  "importAlready": "Already saved",
+  "importWillCreate": "These will be created:",
+  "importProblemRows": "Rows that need attention",
+  "importDownloadErrors": "Download error rows",
+  "importNow": "Import",
+  "importImporting": "Importing… please keep the app open.",
+  "importDone": "Import finished",
+  "importOpenStudents": "Open students",
+  "importUndo": "Undo this import",
+  "importUndone": "Import undone",
+  "importNothing": "There are no rows to import.",
+  "importAnother": "Import another file",
+  "fieldIgnore": "Ignore",
+  "fieldSerialNo": "Serial number (Sr. No.)",
+  "fieldFullName": "Full name",
+  "fieldFatherName": "Father's name",
+  "fieldMotherName": "Mother's name",
+  "fieldGuardianName": "Guardian's name",
+  "fieldClass": "Class",
+  "fieldDivision": "Division",
+  "issueMissingName": "No name",
+  "issueBadDate": "Date not understood, left empty",
+  "issueBadNumber": "Number not understood, left empty",
+  "issueBadBloodGroup": "Blood group not understood, left empty",
+  "issueInvalidAadhaarRow": "Aadhaar not valid, imported without it",
+  "issueInvalidMobileRow": "Mobile not valid, left empty",
+  "issueDuplicateInFile": "Same number appears in another row",
+  "issueDuplicateRollRow": "Roll number already used",
+  "issueNotPlaced": "Class not found, not placed",
+  "issueWillCreate": "New class or division",
+  "issueAlreadyExists": "Already saved",
+  "issuePossibleDuplicate": "Possible duplicate (same name and date of birth)",
+  "issueAadhaarTaken": "Aadhaar belongs to another student",
+  "issueRequiredExtraRow": "Required field empty",
+  "issueBadChoice": "Not one of the choices, left empty",
+  "photosIntro": "Choose photos, or one .zip of the photo folder. Each file name is matched to a student, e.g. 4512.jpg to GR number 4512.",
+  "photosChoose": "Choose photos or .zip",
+  "photosMatchBy": "File names are",
+  "photosBestGuess": "Suggested: matches the most files",
+  "photosDivisionForRoll": "Division for roll numbers",
+  "photosImportBatch": "Excel import whose serial numbers to use",
+  "photosMatched": "Matched",
+  "photosUnmatched": "No matching student",
+  "photosAmbiguous": "More than one student fits",
+  "photosHasPhoto": "Already have a photo",
+  "photosReplace": "Replace existing photos",
+  "photosSave": "Save photos",
+  "photosSaving": "Saving photos…",
+  "photosDone": "Photos saved",
+  "photosNotImage": "Not a readable image",
+  "keySerial": "Serial numbers from an Excel import",
+  "keyGr": "GR numbers",
+  "keyAdmission": "Admission numbers",
+  "keyCode": "Student codes (STU-…)",
+  "keyPen": "PEN",
+  "keyApaar": "APAAR IDs",
+  "keySaral": "Saral IDs",
+  "keyRoll": "Roll numbers in one division",
+  "keyName": "Full names",
+  "settingsImports": "Imports",
+  "settingsImportsSubtitle": "Past imports, with undo",
+  "importsEmpty": "No imports yet.",
+  "importKindStudents": "Students",
+  "importKindPhotos": "Photos",
+  "importUndoConfirm": "Students added by this import go to the recycle bin; photos are put back as they were. Changes to students who already existed are kept.",
+  "importFailedRow": "Nothing was saved. Fix this row and try again:",
+  "importRowsFound": "{count} rows found",
+  "@importRowsFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importRowLabel": "Row {row}",
+  "@importRowLabel": {
+    "placeholders": {
+      "row": {
+        "type": "int"
+      }
+    }
+  },
+  "importSummary": "{added} added, {updated} updated, {skipped} skipped",
+  "@importSummary": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "updated": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "importNowCount": "Import {count} students",
+  "@importNowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photosFound": "{count} photos",
+  "@photosFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "photosSummary": "{saved} saved, {skipped} skipped",
+  "@photosSummary": {
+    "placeholders": {
+      "saved": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "photosProgress": "{done} of {total}",
+  "@photosProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "lockTitle": "Enter your PIN",
+  "lockWrongPin": "Wrong PIN. Try again.",
+  "lockForgot": "Forgot PIN?",
+  "lockUseBiometric": "Use fingerprint",
+  "lockBiometricReason": "Unlock Shiksha Desk",
+  "continueLabel": "Continue",
+  "pinChoose": "Choose a PIN",
+  "pinConfirm": "Enter the PIN again",
+  "pinMismatch": "The two PINs did not match. Start again.",
+  "pinChooseHint": "4 to 6 digits.",
+  "pinRequiredExplain": "This app now holds real student data. A 4 to 6 digit PIN keeps it safe if the phone or computer is left open or lost.",
+  "pinChange": "Change PIN",
+  "pinSet": "Set a PIN",
+  "pinRemove": "Remove PIN",
+  "pinRemoveBlocked": "A PIN is required while a real institution is on this device.",
+  "recoveryTitle": "Your recovery code",
+  "recoveryExplain": "If you forget your PIN, this code lets you choose a new one. It is shown only now. Write it down and keep it somewhere safe, away from this device.",
+  "recoveryWritten": "I have written down the recovery code",
+  "recoveryEnter": "Enter the recovery code you wrote down when you set your PIN.",
+  "recoveryCodeLabel": "Recovery code",
+  "recoveryWrong": "That code is not right.",
+  "recoveryLost": "No recovery code? Reinstall the app and restore your latest backup. Without the backup password, the data cannot be recovered.",
+  "securityPin": "App PIN",
+  "securityBiometric": "Unlock with fingerprint or face",
+  "securityBiometricNone": "This device has no fingerprint or face unlock set up.",
+  "securityAutoLock": "Lock after leaving the app for",
+  "securityImmediately": "Immediately",
+  "securityLockNow": "Lock now",
+  "backupTitle": "Backup and restore",
+  "backupPassword": "Backup password",
+  "backupPasswordSet": "Set backup password",
+  "backupPasswordChange": "Change backup password",
+  "backupPasswordMissing": "Not set. Automatic backups are off until you set one.",
+  "backupPasswordIsSet": "Set. Needed to restore any backup.",
+  "backupPasswordExplain": "At least 8 characters. Write it down: without it, backups cannot be restored on a new phone or computer. It cannot be recovered.",
+  "backupPasswordAgain": "Password again",
+  "backupPasswordShort": "Use at least 8 characters.",
+  "backupPasswordMismatch": "The passwords do not match.",
+  "backupPasswordSaved": "Backup password saved",
+  "backupPasswordChangedNote": "Older backups still open with the password they were made with.",
+  "backupNow": "Back up now",
+  "backupNowExplain": "Save the backup to Google Drive, a pen drive or email, away from this device.",
+  "backupNeedsPassword": "Set a backup password first.",
+  "backupMaking": "Making the backup…",
+  "backupSaved": "Backup saved",
+  "backupNever": "Never",
+  "restoreFromFile": "Restore from a backup file",
+  "restoreExplain": "A backup of this institution replaces its data here (a safety copy is kept). A backup of another institution is added alongside.",
+  "restoreEnterPassword": "Backup password",
+  "restoreReading": "Opening the backup…",
+  "restoreWrongPassword": "Wrong password, or the file is damaged.",
+  "restoreNotBackup": "This is not a Shiksha Desk backup file.",
+  "restoreTooNew": "This backup was made by a newer version of Shiksha Desk. Update the app first.",
+  "restoreConfirmTitle": "Restore this backup?",
+  "restoreReplaces": "This replaces the current data of this institution on this device. A safety copy of the current data is kept.",
+  "restoreAdds": "This institution is not on this device yet. It will be added.",
+  "restoreButton": "Restore",
+  "restoreDone": "Backup restored",
+  "restoreFailed": "The backup could not be restored. Nothing was changed.",
+  "autoBackupsTitle": "Automatic backups on this device",
+  "autoBackupsExplain": "Made daily and before imports and restores. They stay on this device, so also save backups elsewhere.",
+  "autoBackupsEmpty": "None yet.",
+  "saveCopy": "Save a copy",
+  "reminderBackup": "No backup saved away from this device in the last 7 days.",
+  "reminderPassword": "Set a backup password to turn on automatic backups.",
+  "settingsDataHealth": "Data health",
+  "settingsDataHealthSubtitle": "Check this institution's data for problems",
+  "healthRun": "Check again",
+  "healthIntegrity": "Database file is undamaged",
+  "healthOrphans": "Class records linked to missing students or divisions",
+  "healthDuplicateRolls": "Roll numbers used twice in a division",
+  "healthMultipleActive": "Students placed in two classes at once",
+  "healthDuplicateIds": "Official numbers shared by two students",
+  "healthUnplaced": "Active students not placed in a class this year",
+  "healthAllGood": "Everything looks right.",
+  "healthOk": "OK",
+  "lockBlocked": "Too many wrong tries. Wait {seconds} seconds.",
+  "@lockBlocked": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "securityMinutes": "{minutes} minutes",
+  "@securityMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupLastSaved": "Last saved away from this device: {date}",
+  "@backupLastSaved": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreSummary": "{name}\nBacked up on {date}\n{students} students",
+  "@restoreSummary": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      },
+      "students": {
+        "type": "int"
+      }
+    }
+  },
+  "healthFound": "{count} found",
+  "@healthFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
+}
