@@ -1,7 +1,7 @@
 # Shiksha Desk
 
 Offline-first education management platform for schools, junior colleges and coaching institutes.
-Built in phases; this is **build 1f (safety)**. Phase 1 is complete.
+Built in phases; this is **build 2a (attendance)**. Phase 1 is complete.
 
 ## What is built so far
 
@@ -57,6 +57,19 @@ Build 1f (safety):
   current data is kept) or adds a new one; backups from newer app versions are refused.
 - Dashboard reminder when no backup was saved off the device in 7 days.
 - Settings > Data health: integrity, broken links, duplicate rolls, duplicate numbers, unplaced students.
+
+Build 2a (daily attendance, database version 6):
+- Attendance tab: choose class and division (remembered) and date; everyone starts present; tap to cycle
+  P / A / L, press and hold to choose; mark all present; counts and Save always visible.
+- Rules in the data layer: no future dates; weekly offs and holidays blocked unless "Mark anyway";
+  edit window (default 7 days) after which sheets are view-only; every change audited.
+- The list follows enrollment dates: students appear only on days they belonged to the division.
+- Monthly register: day-by-day marks, totals and percentage, below 75% highlighted.
+- Student profile: attendance this year, this month, recent absences.
+- Settings > Attendance: own marks (counts as present, absent, half day or not counted), edit window,
+  weekly holiday days, holiday and exam-day calendar.
+- Dashboard: Mark attendance button; today's real present/absent figures.
+- A lecture number is reserved in the data for period-wise attendance later.
 
 The build workflow also switches Android's MainActivity to FlutterFragmentActivity (needed for fingerprint unlock).
 

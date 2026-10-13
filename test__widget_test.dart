@@ -90,4 +90,29 @@ void main() {
     expect(find.text('1 students'), findsOneWidget);
     await _close(tester, startup);
   });
+
+  testWidgets('attendance: everyone starts present, a tap marks absent, save stores it', (tester) async {
+    final startup = await _pumpAt(tester, const Size(1280, 1000));
+    await tester.tap(find.descendant(of: find.byType(NavigationRail), matching: find.text('Attendance')));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose a class and division'), findsOneWidget);
+
+    await tester.tap(find.text('Class').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('11th Science').last);
+    await tester.pumpAndSettle();
+
+    final today = DateTime.now();
+    if (today.weekday != DateTime.sunday) {
+      expect(find.text('P'), findsWidgets);
+      await tester.tap(find.byType(ListTile).first);
+      await tester.pumpAndSettle();
+      expect(find.text('A'), findsWidgets);
+      await tester.tap(find.text('Save attendance'));
+      await tester.pumpAndSettle();
+      final sessions = await tester.runAsync(() => startup.database.select(startup.database.attendanceSessions).get());
+      expect(sessions, hasLength(1));
+    }
+    await _close(tester, startup);
+  });
 }
