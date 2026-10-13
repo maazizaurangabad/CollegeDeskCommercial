@@ -13,6 +13,7 @@ import '../../../platform/demo/demo_data.dart';
 import '../../../platform/organization/organization_providers.dart';
 import '../../attendance/application/attendance_providers.dart';
 import '../../students/application/students_providers.dart';
+import 'dashboard_lists.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -96,6 +97,7 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: SdSpace.xxl),
+        const DashboardTodayLists(),
         SdSection(
           title: l10n.quickActions,
           child: Wrap(
@@ -111,7 +113,7 @@ class DashboardScreen extends ConsumerWidget {
                 label: l10n.actionSearchStudent,
                 icon: Icons.search,
                 variant: SdButtonVariant.secondary,
-                onPressed: () => context.go('/students'),
+                onPressed: () => context.go('/search'),
               ),
               SdButton(
                 label: l10n.actionAddStudent,
@@ -160,6 +162,8 @@ class DashboardScreen extends ConsumerWidget {
             },
           ),
         ),
+        const SizedBox(height: SdSpace.xxl),
+        const DashboardRecentActivity(),
       ],
     );
   }

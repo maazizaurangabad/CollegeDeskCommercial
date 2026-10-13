@@ -33,12 +33,26 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   bool _saving = false;
   bool _overrideHoliday = false;
 
+  String? _appliedQuery;
+
   @override
-  void initState() {
-    super.initState();
-    ref.read(appSettingsRepositoryProvider).getValue(_lastDivisionKey).then((id) {
-      if (id != null && mounted) _open(id, _date);
-    });
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // "/attendance?division=..." (from the dashboard) opens that division for today.
+    final requested = GoRouterState.of(context).uri.queryParameters['division'];
+    if (requested != null && requested != _appliedQuery) {
+      _appliedQuery = requested;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _open(requested, DateTime.now());
+      });
+      return;
+    }
+    if (_appliedQuery == null && _divisionId == null && !_loading) {
+      _appliedQuery = '';
+      ref.read(appSettingsRepositoryProvider).getValue(_lastDivisionKey).then((id) {
+        if (id != null && mounted && _divisionId == null) _open(id, _date);
+      });
+    }
   }
 
   Future<bool> _confirmDiscard() async {

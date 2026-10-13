@@ -1,7 +1,7 @@
 # Shiksha Desk
 
 Offline-first education management platform for schools, junior colleges and coaching institutes.
-Built in phases; this is **build 2a (attendance)**. Phase 1 is complete.
+Built in phases; this is **build 2b (live dashboard and search)**. Phase 1 is complete.
 
 ## What is built so far
 
@@ -70,6 +70,12 @@ Build 2a (daily attendance, database version 6):
   weekly holiday days, holiday and exam-day calendar.
 - Dashboard: Mark attendance button; today's real present/absent figures.
 - A lecture number is reserved in the data for period-wise attendance later.
+
+Build 2b (live dashboard and global search, no database change):
+- Dashboard: today's real figures; divisions not yet marked today (tap to mark); absent today; below 75%
+  this month (at least 5 counted days); birthdays today; recent activity from the audit log.
+- Global search (top bar or Ctrl + K): students by name, code, GR, PEN, APAAR, Saral, admission number or
+  guardian mobile; classes (open attendance); Settings pages; recent searches remembered.
 
 The build workflow also switches Android's MainActivity to FlutterFragmentActivity (needed for fingerprint unlock).
 

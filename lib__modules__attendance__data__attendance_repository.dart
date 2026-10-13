@@ -460,6 +460,75 @@ class AttendanceRepository extends OrgScopedRepository {
     return (marked: records.length, present: present, absent: absent);
   }
 
+  // ============================================================ dashboard
+
+  /// Divisions with students on [date] whose attendance is not saved yet.
+  Future<List<String>> unmarkedDivisions(DateTime date, Iterable<String> divisionIds) async {
+    final d = _day(date);
+    final marked = {
+      for (final s in await (db.select(db.attendanceSessions)
+            ..where((t) => t.organizationId.equals(orgId) & t.date.equals(d) & t.deletedAt.isNull()))
+          .get())
+        s.divisionId,
+    };
+    final out = <String>[];
+    for (final id in divisionIds) {
+      if (marked.contains(id)) continue;
+      if ((await roster(id, d)).isNotEmpty) out.add(id);
+    }
+    return out;
+  }
+
+  /// Students marked with an absent-type mark on [date], with their division.
+  Future<List<({String studentId, String divisionId, String code})>> absentOn(DateTime date) async {
+    final d = _day(date);
+    final codeMap = {for (final c in await codes()) c.code: c};
+    final sessions = await (db.select(db.attendanceSessions)
+          ..where((t) => t.organizationId.equals(orgId) & t.date.equals(d) & t.deletedAt.isNull()))
+        .get();
+    if (sessions.isEmpty) return [];
+    final division = {for (final s in sessions) s.id: s.divisionId};
+    final records = await (db.select(db.attendanceRecords)
+          ..where((t) => t.deletedAt.isNull() & t.sessionId.isIn(sessions.map((s) => s.id))))
+        .get();
+    return [
+      for (final r in records)
+        if (codeMap[r.code]?.countsAs == CountsAs.absent)
+          (studentId: r.studentId, divisionId: division[r.sessionId]!, code: r.code),
+    ];
+  }
+
+  /// Students below [threshold]% between two dates, with at least [minDays] counted days.
+  /// Lowest first.
+  Future<List<({String studentId, AttendanceSummary summary})>> lowAttendance({
+    required DateTime from,
+    required DateTime to,
+    double threshold = 75,
+    int minDays = 5,
+  }) async {
+    final codeMap = {for (final c in await codes()) c.code: c};
+    final sessions = await (db.select(db.attendanceSessions)
+          ..where((t) =>
+              t.organizationId.equals(orgId) & t.deletedAt.isNull() & t.date.isBetweenValues(_day(from), _day(to))))
+        .get();
+    if (sessions.isEmpty) return [];
+    final records = await (db.select(db.attendanceRecords)
+          ..where((t) => t.deletedAt.isNull() & t.sessionId.isIn(sessions.map((s) => s.id))))
+        .get();
+    final byStudent = <String, List<String>>{};
+    for (final r in records) {
+      (byStudent[r.studentId] ??= []).add(r.code);
+    }
+    final out = <({String studentId, AttendanceSummary summary})>[];
+    for (final e in byStudent.entries) {
+      final s = _summarise(e.value, codeMap);
+      final counted = s.present + s.absent;
+      if (counted >= minDays && (s.percent ?? 100) < threshold) out.add((studentId: e.key, summary: s));
+    }
+    out.sort((a, b) => (a.summary.percent ?? 0).compareTo(b.summary.percent ?? 0));
+    return out;
+  }
+
   // ================================================================ helpers
 
   Future<List<(DateTime, String)>> _studentMarks(String studentId, DateTime from, DateTime to) async {

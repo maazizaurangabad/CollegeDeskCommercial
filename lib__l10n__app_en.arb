@@ -775,5 +775,111 @@
       }
     }
   },
-  "attendanceDate": "Date"
+  "attendanceDate": "Date",
+  "dashboardUnmarked": "Not marked yet today ({count})",
+  "@dashboardUnmarked": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboardAbsentToday": "Absent today ({count})",
+  "@dashboardAbsentToday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboardLowAttendance": "Below 75% this month ({count})",
+  "@dashboardLowAttendance": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboardBirthdays": "Birthdays today ({count})",
+  "@dashboardBirthdays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dashboardAndMore": "and {count} more",
+  "@dashboardAndMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "activityStudentAdded": "Student added: {name}",
+  "@activityStudentAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "activityAttendanceSaved": "Attendance saved: {division}, {day}",
+  "@activityAttendanceSaved": {
+    "placeholders": {
+      "division": {
+        "type": "String"
+      },
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "activityAttendanceChanged": "Attendance changed: {division}, {day}",
+  "@activityAttendanceChanged": {
+    "placeholders": {
+      "division": {
+        "type": "String"
+      },
+      "day": {
+        "type": "String"
+      }
+    }
+  },
+  "activityImport": "Excel import: {count} students added",
+  "@activityImport": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "activityYearAdded": "Academic year added: {year}",
+  "@activityYearAdded": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "dashboardRecent": "Recent activity",
+  "activityStudentDeleted": "A student was moved to the recycle bin",
+  "activityStudentRestored": "A student was restored",
+  "activityStudentLeft": "A student was marked as left",
+  "activityImportUndone": "An import was undone",
+  "searchHint": "Search students, numbers, mobiles, classes, settings",
+  "searchRecent": "Recent searches",
+  "searchExplain": "Type a name, student code, GR, PEN, APAAR or Saral number, or a parent's mobile. Classes and Settings pages are found too. On Windows, press Ctrl + K from anywhere.",
+  "searchClasses": "Classes",
+  "searchPages": "Pages",
+  "searchNothing": "Nothing found",
+  "searchNothingHint": "Try fewer letters, or another number.",
+  "searchStudents": "Students ({count})",
+  "@searchStudents": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
