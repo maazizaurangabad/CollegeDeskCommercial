@@ -6,6 +6,7 @@ import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../core/database/app_database.dart';
 import '../../../platform/data/data_providers.dart';
+import '../../../platform/modules/module_providers.dart';
 import '../../../platform/organization/organization_providers.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -45,6 +46,13 @@ class SettingsScreen extends ConsumerWidget {
               subtitle: l10n.settingsStudentFieldsSubtitle,
               onTap: () => context.go('/settings/student-fields'),
             ),
+            if (ref.watch(enabledModulesProvider).contains('attendance'))
+              _Tile(
+                icon: Icons.fact_check_outlined,
+                title: l10n.settingsAttendance,
+                subtitle: l10n.settingsAttendanceSubtitle,
+                onTap: () => context.go('/settings/attendance'),
+              ),
             _Tile(
               icon: Icons.history_outlined,
               title: l10n.settingsImports,
@@ -93,7 +101,7 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => showAboutDialog(
               context: context,
               applicationName: l10n.appTitle,
-              applicationVersion: '0.6.0 (build 1f)',
+              applicationVersion: '0.7.0 (build 2a)',
             ),
           ),
         ]),

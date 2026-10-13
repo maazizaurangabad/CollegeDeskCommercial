@@ -39,6 +39,13 @@ Future<void> applyMigrationStep(AppDatabase db, Migrator m, int fromVersion) asy
       await m.createTable(db.importBatches);
       await m.createTable(db.importRows);
       await _createIndexes(m, _v5Indexes);
+    case 5:
+      // v5 -> v6: daily attendance and the holiday calendar.
+      await m.createTable(db.attendanceCodes);
+      await m.createTable(db.attendanceSessions);
+      await m.createTable(db.attendanceRecords);
+      await m.createTable(db.calendarDays);
+      await _createIndexes(m, _v6Indexes);
     default:
       throw StateError('No migration step from schema version $fromVersion');
   }
@@ -59,6 +66,14 @@ final _v5Indexes = [
   Index('import_rows_by_batch', 'CREATE INDEX IF NOT EXISTS import_rows_by_batch ON import_rows (batch_id)'),
 ];
 
+final _v6Indexes = [
+  Index('sessions_by_division_date',
+      'CREATE INDEX IF NOT EXISTS sessions_by_division_date ON attendance_sessions (division_id, date)'),
+  Index('records_by_session', 'CREATE INDEX IF NOT EXISTS records_by_session ON attendance_records (session_id)'),
+  Index('records_by_student', 'CREATE INDEX IF NOT EXISTS records_by_student ON attendance_records (student_id)'),
+  Index('calendar_by_date', 'CREATE INDEX IF NOT EXISTS calendar_by_date ON calendar_days (organization_id, date)'),
+];
+
 Future<void> _createIndexes(Migrator m, List<Index> indexes) async {
   for (final index in indexes) {
     await m.createIndex(index);
@@ -66,4 +81,4 @@ Future<void> _createIndexes(Migrator m, List<Index> indexes) async {
 }
 
 /// For a brand-new database.
-Future<void> createExtraIndexes(Migrator m) => _createIndexes(m, [..._v4Indexes, ..._v5Indexes]);
+Future<void> createExtraIndexes(Migrator m) => _createIndexes(m, [..._v4Indexes, ..._v5Indexes, ..._v6Indexes]);

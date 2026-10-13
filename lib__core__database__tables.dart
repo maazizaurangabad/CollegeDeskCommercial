@@ -282,6 +282,62 @@ class ImportRows extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Attendance marks an institution uses (P, A, L, M...).
+@DataClassName('AttendanceCodeRow')
+class AttendanceCodes extends Table with StandardColumns {
+  TextColumn get code => text()();
+  TextColumn get label => text()();
+  IntColumn get colorValue => integer()();
+
+  /// present, absent, half (half a day present) or excluded (not counted)
+  TextColumn get countsAs => text()();
+  IntColumn get displayOrder => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// One attendance sheet: a division on a date (and, later, a lecture).
+@DataClassName('AttendanceSessionRow')
+class AttendanceSessions extends Table with StandardColumns {
+  TextColumn get academicYearId => text()();
+  TextColumn get divisionId => text()();
+  DateTimeColumn get date => dateTime()();
+
+  /// Reserved for period-wise attendance; null means the whole day.
+  IntColumn get period => integer().nullable()();
+  TextColumn get takenBy => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// One student's mark in one session.
+@DataClassName('AttendanceRecordRow')
+class AttendanceRecords extends Table with StandardColumns {
+  TextColumn get sessionId => text()();
+  TextColumn get enrollmentId => text()();
+  TextColumn get studentId => text()();
+  TextColumn get code => text()();
+  TextColumn get remark => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Holidays and exam days. Weekly offs (Sunday) come from settings.
+@DataClassName('CalendarDayRow')
+class CalendarDays extends Table with StandardColumns {
+  DateTimeColumn get date => dateTime()();
+
+  /// holiday or exam
+  TextColumn get dayType => text()();
+  TextColumn get note => text().withDefault(const Constant(''))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// Append-only history of changes: who, what, when, old and new values.
 @DataClassName('AuditEntryRow')
 @TableIndex(name: 'audit_by_entity', columns: {#entity, #entityId})

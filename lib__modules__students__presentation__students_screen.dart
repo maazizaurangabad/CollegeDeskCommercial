@@ -197,10 +197,18 @@ class _StudentsScreenState extends ConsumerState<StudentsScreen> {
             }
             _shown = items;
             if (items.isEmpty) {
+              final nothingSaved = _query.isEmpty && _programId == null;
               return SdEmptyState(
                 icon: Icons.person_search_outlined,
-                title: _query.isEmpty && _programId == null ? l10n.studentsEmptyTitle : l10n.studentsNoMatch,
-                message: _query.isEmpty && _programId == null ? l10n.studentsEmptyMessage : l10n.studentsNoMatchHint,
+                title: nothingSaved ? l10n.studentsEmptyTitle : l10n.studentsNoMatch,
+                message: nothingSaved ? l10n.studentsEmptyMessage : l10n.studentsNoMatchHint,
+                action: nothingSaved
+                    ? SdButton(
+                        label: l10n.actionImportExcel,
+                        icon: Icons.upload_file_outlined,
+                        onPressed: () => context.go('/students/import'),
+                      )
+                    : null,
               );
             }
             return Column(

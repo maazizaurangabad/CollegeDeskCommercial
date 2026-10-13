@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../platform/modules/module_descriptor.dart';
 import 'presentation/academic_years_screen.dart';
+import 'presentation/attendance_settings_screen.dart';
 import 'presentation/backup_screen.dart';
 import 'presentation/classes_divisions_screen.dart';
 import 'presentation/data_health_screen.dart';
@@ -43,6 +44,10 @@ final settingsModule = ModuleDescriptor(
     GoRoute(
       path: 'student-fields',
       pageBuilder: (context, state) => const NoTransitionPage(child: StudentFieldsScreen()),
+    ),
+    GoRoute(
+      path: 'attendance',
+      pageBuilder: (context, state) => const NoTransitionPage(child: AttendanceSettingsScreen()),
     ),
     GoRoute(
       path: 'backup',

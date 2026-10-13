@@ -7,7 +7,12 @@ import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
 import '../../../platform/data/data_providers.dart';
+import '../../../platform/modules/module_providers.dart';
 import '../../../platform/organization/organization_providers.dart';
+import '../../attendance/application/attendance_providers.dart';
+import '../../attendance/data/attendance_repository.dart';
+import '../../attendance/domain/attendance_models.dart';
+import '../../attendance/presentation/attendance_labels.dart';
 import '../application/students_providers.dart';
 import '../domain/student_models.dart';
 import 'student_labels.dart';
@@ -235,6 +240,30 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                       : null,
                 ),
             ]),
+            if (ref.watch(enabledModulesProvider).contains('attendance'))
+              FutureBuilder<(AttendanceSummary, AttendanceSummary, List<DateTime>)>(
+                future: _attendance(detail.id, academic.activeYear?.startDate),
+                builder: (context, snap) {
+                  final data = snap.data;
+                  String line(AttendanceSummary s) => s.days == 0
+                      ? l10n.attendanceNone
+                      : l10n.attendancePercentOf(
+                          formatPercent(s.percent),
+                          formatPercent(s.present),
+                          formatPercent(s.present + s.absent),
+                        );
+                  return _Section(title: l10n.attendanceSectionTitle, children: [
+                    InfoRow(label: l10n.attendanceThisYear, value: data == null ? null : line(data.$1)),
+                    InfoRow(label: l10n.attendanceThisMonth, value: data == null ? null : line(data.$2)),
+                    InfoRow(
+                      label: l10n.attendanceRecentAbsences,
+                      value: data == null || data.$3.isEmpty
+                          ? null
+                          : data.$3.map((d) => DateFormat('d MMM').format(d)).join(', '),
+                    ),
+                  ]);
+                },
+              ),
             _Section(title: l10n.sectionAdmission, children: [
               InfoRow(label: l10n.fieldAdmissionDate, value: date(d.admissionDate)),
               InfoRow(label: l10n.fieldPreviousSchool, value: d.previousSchool),
@@ -266,6 +295,32 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
         );
       },
     );
+  }
+
+  Future<(AttendanceSummary, AttendanceSummary, List<DateTime>)>? _attendanceFuture;
+  String? _attendanceKey;
+
+  Future<(AttendanceSummary, AttendanceSummary, List<DateTime>)> _attendance(String studentId, DateTime? yearStart) {
+    final key = '$studentId|$yearStart|${ref.read(attendanceRevisionProvider)}';
+    if (_attendanceFuture == null || key != _attendanceKey) {
+      _attendanceKey = key;
+      final repo = ref.read(attendanceRepositoryProvider);
+      final now = DateTime.now();
+      _attendanceFuture = _loadAttendance(repo, studentId, yearStart ?? DateTime(now.year - 1, now.month), now);
+    }
+    return _attendanceFuture!;
+  }
+
+  static Future<(AttendanceSummary, AttendanceSummary, List<DateTime>)> _loadAttendance(
+    AttendanceRepository repo,
+    String studentId,
+    DateTime yearStart,
+    DateTime now,
+  ) async {
+    final year = await repo.studentSummary(studentId, from: yearStart, to: now);
+    final month = await repo.studentSummary(studentId, from: DateTime(now.year, now.month), to: now);
+    final absences = await repo.recentAbsences(studentId);
+    return (year, month, absences);
   }
 
   static String? _extraDisplay(AppLocalizations l10n, ExtraFieldDefinition f, String? value) {

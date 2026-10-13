@@ -34,7 +34,7 @@
   "studentsTitle": "Students",
   "studentsSearchHint": "Search by name, code or mobile",
   "studentsEmptyTitle": "No students yet",
-  "studentsEmptyMessage": "Import your Excel sheet from the ⋮ menu, or add students one by one.",
+  "studentsEmptyMessage": "Import your Excel sheet, or add students one by one.",
   "settingsTitle": "Settings",
   "settingsInstitutionGroup": "Institution",
   "settingsInstitutionProfile": "Institution profile",
@@ -682,5 +682,98 @@
         "type": "int"
       }
     }
-  }
+  },
+  "navAttendance": "Attendance",
+  "attendanceTitle": "Attendance",
+  "attendanceRegister": "Monthly register",
+  "attendanceChooseDivision": "Choose a class and division",
+  "attendanceNoStudents": "No students are in this division on this date.",
+  "attendanceAllPresent": "Mark all present",
+  "attendanceSave": "Save attendance",
+  "attendanceSaved": "Attendance saved",
+  "attendanceNotMarked": "Not marked yet. Everyone starts as present: tap only the absent students.",
+  "attendanceFuture": "This date is in the future.",
+  "attendanceWeeklyOff": "Weekly holiday.",
+  "attendanceHoliday": "Holiday",
+  "attendanceExamDay": "Exam day",
+  "attendanceMarkAnyway": "Mark anyway",
+  "attendanceLocked": "Older than the edit window. You can view it, not change it.",
+  "attendanceTapHint": "Tap a student to change the mark. Press and hold to choose.",
+  "attendanceUnsaved": "You have unsaved marks",
+  "attendanceDiscard": "Discard",
+  "attendanceChooseMark": "Choose a mark",
+  "attendanceToday": "Today",
+  "attendanceErrFuture": "Attendance cannot be marked for a future date.",
+  "attendanceErrNotWorking": "This day is a holiday or weekly off.",
+  "attendanceErrLocked": "This date is outside the edit window.",
+  "attendanceErrUnknown": "Unknown attendance mark.",
+  "attendanceErrInUse": "This mark is already used on attendance sheets and cannot be deleted.",
+  "attendanceErrDuplicate": "That mark already exists.",
+  "attendanceErrEmpty": "Enter a mark of 1 to 3 letters.",
+  "attendanceSectionTitle": "Attendance",
+  "attendanceThisYear": "This academic year",
+  "attendanceThisMonth": "This month",
+  "attendanceRecentAbsences": "Recent absences",
+  "attendanceNone": "No attendance recorded yet.",
+  "registerTotal": "Total",
+  "registerPercent": "%",
+  "registerLow": "Below 75%",
+  "settingsAttendance": "Attendance",
+  "settingsAttendanceSubtitle": "Marks, edit window, weekly off and holidays",
+  "attendanceCodes": "Attendance marks",
+  "attendanceCodeAdd": "Add mark",
+  "attendanceCodeLetter": "Mark (1 to 3 letters)",
+  "attendanceCodeLabel": "Meaning",
+  "attendanceCountsAs": "Counts as",
+  "countsPresent": "Present",
+  "countsAbsent": "Absent",
+  "countsHalf": "Half day",
+  "countsExcluded": "Not counted",
+  "attendanceEditWindow": "Past attendance can be changed for",
+  "attendanceSameDayOnly": "Same day only",
+  "attendanceWeeklyOffTitle": "Weekly holiday",
+  "attendanceCalendar": "Holidays and exam days",
+  "attendanceCalendarAdd": "Add a day",
+  "attendanceCalendarEmpty": "No holidays added yet.",
+  "attendanceDayType": "Type",
+  "attendanceNote": "Note (e.g. Diwali)",
+  "weekMon": "Mon",
+  "weekTue": "Tue",
+  "weekWed": "Wed",
+  "weekThu": "Thu",
+  "weekFri": "Fri",
+  "weekSat": "Sat",
+  "weekSun": "Sun",
+  "statToday": "Today",
+  "attendanceSavedAt": "Saved at {time}",
+  "@attendanceSavedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "attendanceEditDays": "{days} days",
+  "@attendanceEditDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "attendancePercentOf": "{percent}% ({present} of {total} days)",
+  "@attendancePercentOf": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      },
+      "present": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "attendanceDate": "Date"
 }

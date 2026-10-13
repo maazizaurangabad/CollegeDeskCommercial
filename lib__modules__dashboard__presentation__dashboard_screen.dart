@@ -11,6 +11,7 @@ import '../../../platform/data/data_providers.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/demo/demo_data.dart';
 import '../../../platform/organization/organization_providers.dart';
+import '../../attendance/application/attendance_providers.dart';
 import '../../students/application/students_providers.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -25,7 +26,11 @@ class DashboardScreen extends ConsumerWidget {
     final sd = SdColors.of(context);
     const snap = DemoData.snapshot;
     final studentCount = ref.watch(activeStudentCountProvider).valueOrNull;
-    void later() => SdToast.show(context, l10n.comingSoon);
+    final today = ref.watch(todayAttendanceProvider).valueOrNull;
+    final hasToday = !isDemo && today != null && today.marked > 0;
+    final todayPresent = today?.present ?? 0;
+    final todayAbsent = today?.absent ?? 0;
+    final todayCounted = todayPresent + todayAbsent;
 
     return SdPage(
       children: [
@@ -61,11 +66,21 @@ class DashboardScreen extends ConsumerWidget {
                   String show(String value) => isDemo ? value : '—';
                   final tiles = [
                     SdStatTile(label: l10n.statTotalStudents, value: studentCount == null ? '—' : '$studentCount'),
-                    SdStatTile(label: l10n.statPresent, value: show('${snap.present}'), accent: sd.present),
-                    SdStatTile(label: l10n.statAbsent, value: show('${snap.absent}'), accent: sd.absent),
+                    SdStatTile(
+                      label: l10n.statPresent,
+                      value: hasToday ? '$todayPresent' : show('${snap.present}'),
+                      accent: sd.present,
+                    ),
+                    SdStatTile(
+                      label: l10n.statAbsent,
+                      value: hasToday ? '$todayAbsent' : show('${snap.absent}'),
+                      accent: sd.absent,
+                    ),
                     SdStatTile(
                       label: l10n.statAttendance,
-                      value: show('${snap.attendancePercent.toStringAsFixed(1)}%'),
+                      value: hasToday
+                          ? '${(todayPresent * 100 / (todayCounted == 0 ? 1 : todayCounted)).toStringAsFixed(1)}%'
+                          : show('${snap.attendancePercent.toStringAsFixed(1)}%'),
                     ),
                   ];
                   return Wrap(
@@ -87,7 +102,11 @@ class DashboardScreen extends ConsumerWidget {
             spacing: SdSpace.sm,
             runSpacing: SdSpace.sm,
             children: [
-              SdButton(label: l10n.actionMarkAttendance, icon: Icons.fact_check_outlined, onPressed: later),
+              SdButton(
+                label: l10n.actionMarkAttendance,
+                icon: Icons.fact_check_outlined,
+                onPressed: () => context.go('/attendance'),
+              ),
               SdButton(
                 label: l10n.actionSearchStudent,
                 icon: Icons.search,
@@ -104,7 +123,7 @@ class DashboardScreen extends ConsumerWidget {
                 label: l10n.actionImportExcel,
                 icon: Icons.upload_file_outlined,
                 variant: SdButtonVariant.secondary,
-                onPressed: later,
+                onPressed: () => context.go('/students/import'),
               ),
             ],
           ),
