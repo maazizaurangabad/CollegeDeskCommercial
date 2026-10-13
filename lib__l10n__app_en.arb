@@ -881,5 +881,67 @@
         "type": "int"
       }
     }
+  },
+  "navReports": "Reports",
+  "reportsIntro": "Choose a report, set its options, then save it as PDF, print it, or export it to Excel.",
+  "reportGroupAttendance": "Attendance",
+  "reportGroupStudents": "Students",
+  "reportRegisterTitle": "Monthly attendance register",
+  "reportRegisterDesc": "One division, one month: every day's mark, totals and %",
+  "reportDefaultersName": "Defaulter list",
+  "reportDefaultersDesc": "Students below a chosen attendance %, with parent mobiles",
+  "reportAbsenteesTitle": "Daily absentee list",
+  "reportAbsenteesDesc": "Everyone absent on a date, by class, with parent mobiles",
+  "reportSummaryTitle": "Attendance summary",
+  "reportSummaryDesc": "Each division: days marked, average % and students below 75%",
+  "reportClassListTitle": "Class list",
+  "reportClassListDesc": "One division in roll order, with the columns you choose",
+  "reportMasterTitle": "Student master list",
+  "reportMasterDesc": "All students, or one class or status, with main details",
+  "reportRoll": "Roll",
+  "reportSr": "Sr",
+  "reportPresentShort": "Pres.",
+  "reportDaysShort": "Days",
+  "reportMark": "Mark",
+  "reportStudents": "Students",
+  "reportDaysMarked": "Days marked",
+  "reportAverage": "Average %",
+  "reportBelow75": "Below 75%",
+  "reportClassTeacher": "Class teacher",
+  "reportPrincipal": "Principal",
+  "reportRegisterNote": "Shaded columns are Sundays and holidays. Rows in red are below 75%.",
+  "reportFrom": "From",
+  "reportTo": "To",
+  "reportThreshold": "Attendance below",
+  "reportColumns": "Columns to show",
+  "reportShow": "Show report",
+  "reportSavePdf": "Save PDF",
+  "reportShare": "Share PDF",
+  "reportPrint": "Print",
+  "reportEmpty": "Nothing to show for these options.",
+  "reportPreviewMore": "The preview shows the first 300 rows. The PDF and Excel file have all of them.",
+  "reportDefaultersTitle": "Defaulter list (below {percent}%)",
+  "@reportDefaultersTitle": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "reportBelowPercent": "Below {percent}%",
+  "@reportBelowPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "reportCount": "Total: {count}",
+  "@reportCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

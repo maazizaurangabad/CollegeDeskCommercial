@@ -105,6 +105,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         (l10n.attendanceRegister, '/attendance/register', Icons.calendar_view_month_outlined,
             'register monthly month percentage defaulter below 75'),
       if (attendance) (l10n.attendanceTitle, '/attendance', Icons.fact_check_outlined, 'attendance mark absent present today'),
+      if (ref.read(enabledModulesProvider).contains('reports')) ...[
+        (l10n.reportRegisterTitle, '/reports/register', Icons.picture_as_pdf_outlined, 'report pdf print register monthly'),
+        (l10n.reportDefaultersName, '/reports/defaulters', Icons.trending_down, 'report defaulter defaulters below 75 low pdf'),
+        (l10n.reportAbsenteesTitle, '/reports/absentees', Icons.person_off_outlined, 'report absent absentee today pdf'),
+        (l10n.reportSummaryTitle, '/reports/summary', Icons.insights_outlined, 'report summary average pdf'),
+        (l10n.reportClassListTitle, '/reports/classList', Icons.format_list_numbered, 'report class list roll pdf print'),
+        (l10n.reportMasterTitle, '/reports/master', Icons.groups_outlined, 'report student master list all pdf'),
+      ],
     ];
   }
 

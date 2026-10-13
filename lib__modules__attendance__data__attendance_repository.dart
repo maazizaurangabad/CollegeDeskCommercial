@@ -529,6 +529,48 @@ class AttendanceRepository extends OrgScopedRepository {
     return out;
   }
 
+  /// Per division between two dates: days marked, average attendance %
+  /// and how many students are below [threshold].
+  Future<Map<String, ({int days, double? average, int below, int students})>> divisionSummaries({
+    required DateTime from,
+    required DateTime to,
+    double threshold = 75,
+  }) async {
+    final codeMap = {for (final c in await codes()) c.code: c};
+    final sessions = await (db.select(db.attendanceSessions)
+          ..where((t) =>
+              t.organizationId.equals(orgId) & t.deletedAt.isNull() & t.date.isBetweenValues(_day(from), _day(to))))
+        .get();
+    if (sessions.isEmpty) return {};
+    final divisionOf = {for (final s in sessions) s.id: s.divisionId};
+    final days = <String, int>{};
+    for (final s in sessions) {
+      days[s.divisionId] = (days[s.divisionId] ?? 0) + 1;
+    }
+    final records = await (db.select(db.attendanceRecords)
+          ..where((t) => t.deletedAt.isNull() & t.sessionId.isIn(sessions.map((s) => s.id))))
+        .get();
+    final marks = <String, Map<String, List<String>>>{};
+    for (final r in records) {
+      ((marks[divisionOf[r.sessionId]!] ??= {})[r.studentId] ??= []).add(r.code);
+    }
+    return {
+      for (final e in marks.entries)
+        e.key: () {
+          final percents = [
+            for (final m in e.value.values)
+              if (_summarise(m, codeMap).percent case final p?) p,
+          ];
+          return (
+            days: days[e.key] ?? 0,
+            average: percents.isEmpty ? null : percents.reduce((a, b) => a + b) / percents.length,
+            below: percents.where((p) => p < threshold).length,
+            students: e.value.length,
+          );
+        }(),
+    };
+  }
+
   // ================================================================ helpers
 
   Future<List<(DateTime, String)>> _studentMarks(String studentId, DateTime from, DateTime to) async {
