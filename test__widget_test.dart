@@ -115,4 +115,19 @@ void main() {
     }
     await _close(tester, startup);
   });
+
+  testWidgets('global search finds a student by code and opens the profile', (tester) async {
+    final startup = await _pumpAt(tester, const Size(1280, 1000));
+    await tester.tap(find.byTooltip('Search'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'STU-000005');
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+    expect(find.text('Students (1)'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).first, 'backup');
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+    expect(find.text('Backup and restore'), findsOneWidget);
+    await _close(tester, startup);
+  });
 }

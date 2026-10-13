@@ -101,7 +101,7 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => showAboutDialog(
               context: context,
               applicationName: l10n.appTitle,
-              applicationVersion: '0.7.0 (build 2a)',
+              applicationVersion: '0.8.0 (build 2b)',
             ),
           ),
         ]),

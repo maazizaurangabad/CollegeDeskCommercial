@@ -81,6 +81,47 @@ class StudentRepository extends OrgScopedRepository {
     ];
   }
 
+  /// Active students whose birthday is on [date] (day and month).
+  Future<List<StudentListItem>> birthdaysOn(DateTime date) async {
+    final rows = await (db.select(db.students)
+          ..where((t) =>
+              t.organizationId.equals(orgId) &
+              t.deletedAt.isNull() &
+              t.status.equals(StudentStatus.active.name) &
+              t.dateOfBirth.isNotNull()))
+        .get();
+    return [
+      for (final r in rows)
+        if (r.dateOfBirth!.month == date.month && r.dateOfBirth!.day == date.day)
+          StudentListItem(
+            id: r.id,
+            displayCode: r.displayCode,
+            fullName: _fullName(r),
+            status: _status(r.status),
+            photoFileName: r.photoFileName,
+          ),
+    ];
+  }
+
+  /// Names and codes for a set of students (dashboard lists).
+  Future<Map<String, StudentListItem>> namesFor(Iterable<String> ids) async {
+    final list = ids.toSet();
+    if (list.isEmpty) return {};
+    final rows = await (db.select(db.students)
+          ..where((t) => t.organizationId.equals(orgId) & t.deletedAt.isNull() & t.id.isIn(list)))
+        .get();
+    return {
+      for (final r in rows)
+        r.id: StudentListItem(
+          id: r.id,
+          displayCode: r.displayCode,
+          fullName: _fullName(r),
+          status: _status(r.status),
+          photoFileName: r.photoFileName,
+        ),
+    };
+  }
+
   Future<int> countActive() async {
     final count = db.students.id.count();
     final query = db.selectOnly(db.students)

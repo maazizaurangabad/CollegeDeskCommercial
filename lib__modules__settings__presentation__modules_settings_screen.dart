@@ -14,7 +14,7 @@ class ModulesSettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final registry = ref.watch(moduleRegistryProvider);
+    final installed = ref.watch(moduleRegistryProvider).installed.where((m) => m.showInNavigation).toList();
     final enabled = ref.watch(enabledModulesProvider);
     final theme = Theme.of(context);
 
@@ -36,10 +36,10 @@ class ModulesSettingsScreen extends ConsumerWidget {
           padding: EdgeInsets.zero,
           child: Column(
             children: [
-              for (var i = 0; i < registry.installed.length; i++) ...[
+              for (var i = 0; i < installed.length; i++) ...[
                 if (i > 0) const Divider(indent: SdSpace.lg),
                 Builder(builder: (context) {
-                  final m = registry.installed[i];
+                  final m = installed[i];
                   final on = m.isCore || enabled.contains(m.id);
                   return SwitchListTile(
                     secondary: Icon(m.icon),

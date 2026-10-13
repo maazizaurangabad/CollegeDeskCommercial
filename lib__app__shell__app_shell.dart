@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -25,13 +26,30 @@ class AppShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final modules = ref.watch(visibleModulesProvider);
+    final modules = ref.watch(visibleModulesProvider).where((m) => m.showInNavigation).toList();
     final owner = ref.watch(moduleRegistryProvider).forLocation(location);
     final found = owner == null ? -1 : modules.indexWhere((m) => m.id == owner.id);
     final selected = found < 0 ? 0 : found;
     final width = MediaQuery.sizeOf(context).width;
     final topBar = _TopBar(org: ref.watch(activeOrganizationProvider), isDemo: ref.watch(isDemoModeProvider));
 
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyK, control: true): () => context.go('/search'),
+      },
+      child: Focus(autofocus: true, child: _layout(context, ref, l10n, modules, selected, width, topBar)),
+    );
+  }
+
+  Widget _layout(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+    List<ModuleDescriptor> modules,
+    int selected,
+    double width,
+    PreferredSizeWidget topBar,
+  ) {
     if (width < SdBreakpoints.compact) {
       final overflow = modules.length > _maxBottomItems;
       final primary = overflow ? modules.take(_maxBottomItems - 1).toList() : modules;
@@ -164,7 +182,7 @@ class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
         IconButton(
           tooltip: l10n.search,
           icon: const Icon(Icons.search),
-          onPressed: () => SdToast.show(context, l10n.searchComingSoon),
+          onPressed: () => context.go('/search'),
         ),
         const SizedBox(width: SdSpace.sm),
       ],

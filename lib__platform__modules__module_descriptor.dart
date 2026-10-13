@@ -22,6 +22,7 @@ class ModuleDescriptor {
     this.requiredPermissions = const {},
     this.dependsOn = const [],
     this.subRoutes = const [],
+    this.showInNavigation = true,
   });
 
   /// Stable id, e.g. 'attendance'. Never changes once released.
@@ -58,4 +59,7 @@ class ModuleDescriptor {
 
   /// Nested pages, e.g. '/settings/modules'. Paths are relative.
   final List<RouteBase> subRoutes;
+
+  /// False for pages opened from elsewhere (e.g. global search), not from the menu.
+  final bool showInNavigation;
 }
