@@ -80,23 +80,31 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     context.go(route);
   }
 
-  List<(String, String, IconData)> _settingsPages(AppLocalizations l10n) {
+  /// Pages that search can open: (title, route, icon, extra words people may type).
+  List<(String, String, IconData, String)> _settingsPages(AppLocalizations l10n) {
     final attendance = ref.read(enabledModulesProvider).contains('attendance');
     return [
-      (l10n.settingsInstitutionProfile, '/settings/institution', Icons.apartment_outlined),
-      (l10n.settingsAcademicYears, '/settings/academic-years', Icons.calendar_month_outlined),
-      (l10n.settingsClassesDivisions, '/settings/classes', Icons.account_tree_outlined),
-      (l10n.settingsStudentFields, '/settings/student-fields', Icons.tune_outlined),
-      if (attendance) (l10n.settingsAttendance, '/settings/attendance', Icons.fact_check_outlined),
-      (l10n.settingsImports, '/settings/imports', Icons.history_outlined),
-      (l10n.settingsRecycleBin, '/settings/recycle-bin', Icons.delete_outline),
-      (l10n.settingsModules, '/settings/modules', Icons.extension_outlined),
-      (l10n.settingsBackup, '/settings/backup', Icons.backup_outlined),
-      (l10n.settingsSecurity, '/settings/security', Icons.lock_outline),
-      (l10n.settingsDataHealth, '/settings/data-health', Icons.health_and_safety_outlined),
-      (l10n.importStudentsTitle, '/students/import', Icons.upload_file_outlined),
-      (l10n.importPhotosTitle, '/students/import-photos', Icons.photo_library_outlined),
-      if (attendance) (l10n.attendanceRegister, '/attendance/register', Icons.calendar_view_month_outlined),
+      (l10n.settingsInstitutionProfile, '/settings/institution', Icons.apartment_outlined,
+          'college school name logo colour color address udise board medium'),
+      (l10n.settingsAcademicYears, '/settings/academic-years', Icons.calendar_month_outlined, 'year session active close'),
+      (l10n.settingsClassesDivisions, '/settings/classes', Icons.account_tree_outlined,
+          'class division standard std section batch course'),
+      (l10n.settingsStudentFields, '/settings/student-fields', Icons.tune_outlined, 'extra field category caste custom'),
+      if (attendance)
+        (l10n.settingsAttendance, '/settings/attendance', Icons.fact_check_outlined,
+            'holiday holidays calendar exam day weekly off sunday saturday mark marks code codes leave medical edit window सुट्टी'),
+      (l10n.settingsImports, '/settings/imports', Icons.history_outlined, 'import history undo excel'),
+      (l10n.settingsRecycleBin, '/settings/recycle-bin', Icons.delete_outline, 'deleted restore bin trash'),
+      (l10n.settingsModules, '/settings/modules', Icons.extension_outlined, 'module modules switch on off'),
+      (l10n.settingsBackup, '/settings/backup', Icons.backup_outlined, 'backup restore password drive automatic'),
+      (l10n.settingsSecurity, '/settings/security', Icons.lock_outline, 'pin lock fingerprint face password recovery'),
+      (l10n.settingsDataHealth, '/settings/data-health', Icons.health_and_safety_outlined, 'check problems errors duplicate'),
+      (l10n.importStudentsTitle, '/students/import', Icons.upload_file_outlined, 'excel csv import upload sheet'),
+      (l10n.importPhotosTitle, '/students/import-photos', Icons.photo_library_outlined, 'photo photos picture zip'),
+      if (attendance)
+        (l10n.attendanceRegister, '/attendance/register', Icons.calendar_view_month_outlined,
+            'register monthly month percentage defaulter below 75'),
+      if (attendance) (l10n.attendanceTitle, '/attendance', Icons.fact_check_outlined, 'attendance mark absent present today'),
     ];
   }
 
@@ -115,7 +123,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             for (final d in academic.divisions)
               if ((placementName(academic, d.id) ?? '').toLowerCase().contains(q)) (d.id, placementName(academic, d.id)!),
           ];
-    final pages = q.isEmpty ? const <(String, String, IconData)>[] : _settingsPages(l10n).where((p) => p.$1.toLowerCase().contains(q)).toList();
+    // A page matches its title or any of its extra words, e.g. "holiday" finds Attendance settings.
+    final words = q.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    final pages = q.isEmpty
+        ? const <(String, String, IconData, String)>[]
+        : _settingsPages(l10n).where((p) {
+            final text = '${p.$1} ${p.$4}'.toLowerCase();
+            return words.every(text.contains);
+          }).toList();
 
     return SdPage(
       children: [
@@ -229,7 +244,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               child: SdCard(
                 padding: EdgeInsets.zero,
                 child: Column(children: [
-                  for (final (label, route, icon) in pages)
+                  for (final (label, route, icon, _) in pages)
                     ListTile(leading: Icon(icon), title: Text(label), onTap: () => _go(route)),
                 ]),
               ),

@@ -128,6 +128,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
     expect(find.text('Backup and restore'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).first, 'holiday');
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+    expect(find.text('Attendance'), findsWidgets);
     await _close(tester, startup);
   });
 }
