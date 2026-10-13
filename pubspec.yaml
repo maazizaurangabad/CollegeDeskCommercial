@@ -1,7 +1,7 @@
 name: shiksha_desk
 description: Shiksha Desk - offline-first education management platform.
 publish_to: 'none'
-version: 0.8.0+8
+version: 0.9.0+9
 
 environment:
   sdk: '>=3.8.0 <4.0.0'
@@ -25,6 +25,8 @@ dependencies:
   xml: ^6.5.0
   image: ^4.2.0
   local_auth: ^3.0.1
+  pdf: ^3.11.1
+  printing: ^5.13.4
 
 dev_dependencies:
   flutter_test:
@@ -36,6 +38,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+  assets:
+    # Noto Sans (SIL Open Font License), bundled so PDFs work offline.
+    - assets/fonts/NotoSans-Regular.ttf
+    - assets/fonts/NotoSans-Bold.ttf
 
 # Bundle SQLite3MultipleCiphers (encrypted SQLite) on every platform.
 hooks:

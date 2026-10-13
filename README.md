@@ -1,7 +1,7 @@
 # Shiksha Desk
 
 Offline-first education management platform for schools, junior colleges and coaching institutes.
-Built in phases; this is **build 2b (live dashboard and search)**. Phase 1 is complete.
+Built in phases; this is **build 2c (reports and PDF)**. Phase 1 is complete.
 
 ## What is built so far
 
@@ -76,6 +76,13 @@ Build 2b (live dashboard and global search, no database change):
   this month (at least 5 counted days); birthdays today; recent activity from the audit log.
 - Global search (top bar or Ctrl + K): students by name, code, GR, PEN, APAAR, Saral, admission number or
   guardian mobile; classes (open attendance); Settings pages; recent searches remembered.
+
+Build 2c (reports, no database change):
+- Reports tab: monthly attendance register (A4 landscape), defaulter list (chosen %), daily absentee list,
+  attendance summary per division, class list (choose columns), student master list.
+- One engine for all reports: on-screen preview, Save PDF, Share PDF (Android), Print, Excel, CSV.
+- PDF letterhead from Settings (logo, name, address, phone, UDISE, board); page x of y; signature lines.
+- Noto Sans fonts are bundled (SIL Open Font License) so PDFs work offline.
 
 The build workflow also switches Android's MainActivity to FlutterFragmentActivity (needed for fingerprint unlock).
 

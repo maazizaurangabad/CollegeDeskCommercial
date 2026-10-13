@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../modules/attendance/attendance_module.dart';
 import '../../modules/dashboard/dashboard_module.dart';
+import '../../modules/reports/reports_module.dart';
 import '../../modules/search/search_module.dart';
 import '../../modules/settings/settings_module.dart';
 import '../../modules/students/students_module.dart';
@@ -13,7 +14,7 @@ import 'module_registry.dart';
 
 /// Every module compiled into this build. Add new modules here.
 ModuleRegistry buildModuleRegistry() =>
-    ModuleRegistry([dashboardModule, searchModule, studentsModule, attendanceModule, settingsModule]);
+    ModuleRegistry([dashboardModule, searchModule, studentsModule, attendanceModule, reportsModule, settingsModule]);
 
 final moduleRegistryProvider = Provider<ModuleRegistry>((ref) => buildModuleRegistry());
 
