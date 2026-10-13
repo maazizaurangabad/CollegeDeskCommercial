@@ -38,7 +38,7 @@ class RowIssue {
 }
 
 /// Column mapping: one id per column. Ids are ImportField names
-/// ("firstName") or "extra:<key>" for the institution's own fields.
+/// ("firstName") or `extra:<key>` for the institution's own fields.
 typedef ColumnMapping = List<String>;
 
 String fieldId(ImportField f) => f.name;
