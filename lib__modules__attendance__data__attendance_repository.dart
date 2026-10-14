@@ -498,6 +498,43 @@ class AttendanceRepository extends OrgScopedRepository {
     ];
   }
 
+  /// For each student, how many marked days in a row ending on [date] were
+  /// counted as absent (0 when present on [date]). Days with no mark
+  /// (holidays, weekly offs) do not break a streak.
+  Future<Map<String, int>> absentStreaks(Iterable<String> studentIds, DateTime date, {int lookBackDays = 60}) async {
+    final ids = studentIds.toSet();
+    if (ids.isEmpty) return {};
+    final codeMap = {for (final c in await codes()) c.code: c};
+    final to = _day(date);
+    final from = to.subtract(Duration(days: lookBackDays));
+    final sessions = await (db.select(db.attendanceSessions)
+          ..where((t) => t.organizationId.equals(orgId) & t.deletedAt.isNull() & t.date.isBetweenValues(from, to)))
+        .get();
+    if (sessions.isEmpty) return {for (final id in ids) id: 0};
+    final dates = {for (final s in sessions) s.id: s.date};
+    final records = await (db.select(db.attendanceRecords)
+          ..where((t) => t.deletedAt.isNull() & t.studentId.isIn(ids) & t.sessionId.isIn(dates.keys)))
+        .get();
+    final byStudent = <String, List<(DateTime, String)>>{};
+    for (final r in records) {
+      final d = dates[r.sessionId];
+      if (d != null) (byStudent[r.studentId] ??= []).add((d, r.code));
+    }
+    final out = <String, int>{};
+    for (final id in ids) {
+      final marks = (byStudent[id] ?? [])..sort((a, b) => b.$1.compareTo(a.$1));
+      var streak = 0;
+      for (final m in marks) {
+        final kind = codeMap[m.$2]?.countsAs;
+        if (kind == CountsAs.excluded) continue;
+        if (kind != CountsAs.absent) break;
+        streak++;
+      }
+      out[id] = streak;
+    }
+    return out;
+  }
+
   /// Students below [threshold]% between two dates, with at least [minDays] counted days.
   /// Lowest first.
   Future<List<({String studentId, AttendanceSummary summary})>> lowAttendance({

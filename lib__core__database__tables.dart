@@ -366,6 +366,37 @@ class Certificates extends Table with StandardColumns {
   Set<Column> get primaryKey => {id};
 }
 
+/// One parent message opened for sending (WhatsApp), kept as a record of
+/// who was told what and when. One row per student, so siblings sent in one
+/// message share a [batchId]. The daily summary has no student.
+@DataClassName('MessageLogRow')
+class MessageLogs extends Table with StandardColumns {
+  /// absent, streak (absent several days in a row) or summary
+  TextColumn get kind => text()();
+  TextColumn get batchId => text()();
+  TextColumn get studentId => text().nullable()();
+
+  /// Name and class as they were when sent, so history stays readable.
+  TextColumn get studentName => text().nullable()();
+  TextColumn get classLabel => text().nullable()();
+
+  /// The attendance date the message is about.
+  DateTimeColumn get forDate => dateTime()();
+  DateTimeColumn get sentAt => dateTime()();
+  TextColumn get recipientName => text().nullable()();
+  TextColumn get mobile => text().nullable()();
+  TextColumn get body => text()();
+
+  /// whatsapp or copy (for now)
+  TextColumn get channel => text().withDefault(const Constant('whatsapp'))();
+
+  /// opened: handed to WhatsApp. The app cannot see whether it was delivered.
+  TextColumn get status => text().withDefault(const Constant('opened'))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// Append-only history of changes: who, what, when, old and new values.
 @DataClassName('AuditEntryRow')
 @TableIndex(name: 'audit_by_entity', columns: {#entity, #entityId})

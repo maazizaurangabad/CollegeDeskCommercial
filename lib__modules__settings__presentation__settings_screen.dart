@@ -53,6 +53,13 @@ class SettingsScreen extends ConsumerWidget {
                 subtitle: l10n.settingsAttendanceSubtitle,
                 onTap: () => context.go('/settings/attendance'),
               ),
+            if (ref.watch(enabledModulesProvider).contains('messages'))
+              _Tile(
+                icon: Icons.forum_outlined,
+                title: l10n.settingsMessages,
+                subtitle: l10n.settingsMessagesSubtitle,
+                onTap: () => context.go('/messages/templates'),
+              ),
             _Tile(
               icon: Icons.history_outlined,
               title: l10n.settingsImports,
@@ -101,7 +108,7 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => showAboutDialog(
               context: context,
               applicationName: l10n.appTitle,
-              applicationVersion: '1.0.0 (build 2d)',
+              applicationVersion: '1.0.0 (build 2e)',
             ),
           ),
         ]),

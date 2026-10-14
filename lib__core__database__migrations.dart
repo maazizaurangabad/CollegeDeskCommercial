@@ -50,6 +50,10 @@ Future<void> applyMigrationStep(AppDatabase db, Migrator m, int fromVersion) asy
       // v6 -> v7: certificates and their serial register.
       await m.createTable(db.certificates);
       await _createIndexes(m, _v7Indexes);
+    case 7:
+      // v7 -> v8: messages to parents (history of what was sent).
+      await m.createTable(db.messageLogs);
+      await _createIndexes(m, _v8Indexes);
     default:
       throw StateError('No migration step from schema version $fromVersion');
   }
@@ -83,6 +87,11 @@ final _v7Indexes = [
   Index('certificates_by_kind', 'CREATE INDEX IF NOT EXISTS certificates_by_kind ON certificates (organization_id, kind, issued_on)'),
 ];
 
+final _v8Indexes = [
+  Index('messages_by_date', 'CREATE INDEX IF NOT EXISTS messages_by_date ON message_logs (organization_id, for_date)'),
+  Index('messages_by_student', 'CREATE INDEX IF NOT EXISTS messages_by_student ON message_logs (student_id)'),
+];
+
 Future<void> _createIndexes(Migrator m, List<Index> indexes) async {
   for (final index in indexes) {
     await m.createIndex(index);
@@ -90,4 +99,4 @@ Future<void> _createIndexes(Migrator m, List<Index> indexes) async {
 }
 
 /// For a brand-new database.
-Future<void> createExtraIndexes(Migrator m) => _createIndexes(m, [..._v4Indexes, ..._v5Indexes, ..._v6Indexes, ..._v7Indexes]);
+Future<void> createExtraIndexes(Migrator m) => _createIndexes(m, [..._v4Indexes, ..._v5Indexes, ..._v6Indexes, ..._v7Indexes, ..._v8Indexes]);

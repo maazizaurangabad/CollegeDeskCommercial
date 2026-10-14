@@ -1064,5 +1064,154 @@
   "certPeriodYear": "This academic year",
   "certPeriodAll": "All time",
   "certSearch": "Search by student name, number or GR",
-  "dashboardCertificates": "Certificates this month"
+  "dashboardCertificates": "Certificates this month",
+  "navMessages": "Messages",
+  "settingsMessages": "Message templates",
+  "settingsMessagesSubtitle": "Texts sent to parents, and which marks get a message",
+  "msgTabSend": "Send",
+  "msgTabHistory": "History",
+  "msgTemplatesButton": "Templates",
+  "msgPreviousDay": "Previous day",
+  "msgNextDay": "Next day",
+  "msgOpenMessages": "Message parents",
+  "msgSummaryTitle": "Day summary",
+  "msgSummaryHint": "Class-wise attendance with absent names, ready for the staff or principal's WhatsApp group.",
+  "msgShareWhatsApp": "Share on WhatsApp",
+  "msgCopy": "Copy",
+  "msgCopied": "Copied",
+  "msgSend": "WhatsApp",
+  "msgSendAgain": "Send again",
+  "msgSendAgainTitle": "Send again?",
+  "msgSendAgainBody": "A message about this day was already opened for this parent.",
+  "msgOpenFailed": "Could not open WhatsApp. Check that it is installed, or copy the message instead.",
+  "msgParentsTitle": "Parents to message ({count})",
+  "@msgParentsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "msgProgress": "{sent} of {total} sent",
+  "@msgProgress": {
+    "placeholders": {
+      "sent": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "msgSentAt": "Sent {time}",
+  "@msgSentAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "msgStreakBadge": "{days} days",
+  "@msgStreakBadge": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "msgNoAbsent": "No absent students to message",
+  "msgNoAbsentHint": "Parents to message appear here once attendance for this day is saved with absent students.",
+  "msgNoNumberTitle": "No mobile number ({count})",
+  "@msgNoNumberTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "msgNoNumberHint": "Add a parent's mobile number on the student's record, then come back here.",
+  "msgPreviewTitle": "Message",
+  "msgEditHint": "You can change the text for this parent before sending.",
+  "msgKindAbsent": "Absent today",
+  "msgKindStreak": "Absent days in a row",
+  "msgKindSummary": "Day summary",
+  "msgChannelWhatsApp": "WhatsApp",
+  "msgChannelCopy": "Copied",
+  "msgPeriodToday": "Today",
+  "msgPeriodMonth": "This month",
+  "msgPeriodAll": "All time",
+  "msgHistorySearch": "Search by student, class or mobile",
+  "msgHistoryEmpty": "No messages sent yet",
+  "msgHistoryReport": "Parent message history",
+  "msgHistoryNote": "Messages are opened in WhatsApp from Shiksha Desk; delivery is not confirmed by the app.",
+  "msgColDate": "Date",
+  "msgColSentAt": "Sent at",
+  "msgColKind": "Type",
+  "msgColStudents": "Student(s)",
+  "msgColTo": "To",
+  "msgColVia": "Via",
+  "msgColMessage": "Message",
+  "msgSummaryHeading": "Attendance: {date}",
+  "@msgSummaryHeading": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSummaryClassLine": "{label}: Present {present}, Absent {absent}",
+  "@msgSummaryClassLine": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "present": {
+        "type": "int"
+      },
+      "absent": {
+        "type": "int"
+      }
+    }
+  },
+  "msgSummaryNotMarked": "{label}: not marked yet",
+  "@msgSummaryNotMarked": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSummaryTotal": "Total: Present {present}, Absent {absent} ({percent}%)",
+  "@msgSummaryTotal": {
+    "placeholders": {
+      "present": {
+        "type": "int"
+      },
+      "absent": {
+        "type": "int"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "msgSummaryNone": "No attendance saved for this day yet.",
+  "msgTemplatesHint": "These texts are sent to parents. You can write them in Marathi, Urdu, Hindi or English. Tap a word below a box to insert it; it is replaced with the student's details when sending.",
+  "msgTemplateAbsent": "Absent today",
+  "msgTemplateStreak": "Absent several days in a row",
+  "msgStreakDaysLabel": "Use the \"days in a row\" text from this many school days",
+  "msgPreview": "Example",
+  "msgPhStudent": "Student name",
+  "msgPhClass": "Class",
+  "msgPhRoll": "Roll no.",
+  "msgPhDate": "Date",
+  "msgPhDays": "Days in a row",
+  "msgPhInstitution": "Institution name",
+  "msgPhMark": "Mark (A, L...)",
+  "msgCodesTitle": "Which marks get a parent message",
+  "msgCodesHint": "Leave (L) is off at first, so parents who applied for leave are not messaged. Switch it on if you want.",
+  "msgCodesEmpty": "Choose at least one mark.",
+  "msgResetTemplates": "Use the standard texts",
+  "msgResetBody": "Both texts and the number of days go back to the standard ones. Your choice of marks is kept.",
+  "msgTemplatesSaved": "Templates saved"
 }

@@ -85,6 +85,14 @@ class DashboardTodayLists extends ConsumerWidget {
               more(absent.length),
             ]),
           ),
+          trailing: ref.watch(enabledModulesProvider).contains('messages')
+              ? SdButton(
+                  label: l10n.msgOpenMessages,
+                  icon: Icons.forum_outlined,
+                  variant: SdButtonVariant.text,
+                  onPressed: () => context.go('/messages'),
+                )
+              : null,
         );
       }
 

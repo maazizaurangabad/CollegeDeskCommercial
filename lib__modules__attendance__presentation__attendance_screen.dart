@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/data/data_providers.dart';
+import '../../../platform/modules/module_providers.dart';
 import '../../students/presentation/student_labels.dart';
 import '../application/attendance_providers.dart';
 import '../domain/attendance_models.dart';
@@ -373,6 +374,14 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     } else if (sheet.isSaved) {
       text = l10n.attendanceSavedAt(DateFormat('d MMM, h:mm a').format(sheet.savedAt!.toLocal()));
       color = sd.present;
+      if (ref.watch(enabledModulesProvider).contains('messages')) {
+        action = SdButton(
+          label: l10n.msgOpenMessages,
+          icon: Icons.forum_outlined,
+          variant: SdButtonVariant.text,
+          onPressed: () => context.go('/messages?date=${DateFormat('yyyy-MM-dd').format(_date)}'),
+        );
+      }
     } else {
       text = day.kind == DayKind.exam ? '${l10n.attendanceExamDay}. ${l10n.attendanceNotMarked}' : l10n.attendanceNotMarked;
     }

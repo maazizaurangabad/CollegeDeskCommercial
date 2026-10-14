@@ -105,6 +105,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         (l10n.attendanceRegister, '/attendance/register', Icons.calendar_view_month_outlined,
             'register monthly month percentage defaulter below 75'),
       if (attendance) (l10n.attendanceTitle, '/attendance', Icons.fact_check_outlined, 'attendance mark absent present today'),
+      if (ref.read(enabledModulesProvider).contains('messages')) ...[
+        (l10n.navMessages, '/messages', Icons.forum_outlined,
+            'message messages parent parents whatsapp sms absent absentee summary send notify inform'),
+        (l10n.msgTabHistory, '/messages?tab=history', Icons.history, 'message history sent whatsapp log parent'),
+        (l10n.settingsMessages, '/messages/templates', Icons.edit_note_outlined,
+            'message template templates text wording parent whatsapp leave'),
+      ],
       if (ref.read(enabledModulesProvider).contains('certificates')) ...[
         (l10n.certIssue, '/certificates/new', Icons.workspace_premium_outlined,
             'certificate bonafide lc leaving nirgam utara register extract tc transfer noc no dues character caste verification validation form 15a issue'),
