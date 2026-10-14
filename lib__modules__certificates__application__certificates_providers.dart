@@ -26,9 +26,11 @@ final certificatesRevisionProvider = StateProvider<int>((ref) => 0);
 String certificateTitle(AppLocalizations l10n, CertificateKind k) => switch (k) {
       CertificateKind.bonafide => l10n.certBonafide,
       CertificateKind.leaving => l10n.certLeaving,
+      CertificateKind.nirgam => l10n.certNirgam,
       CertificateKind.noDues => l10n.certNoDues,
       CertificateKind.noc => l10n.certNoc,
       CertificateKind.character => l10n.certCharacter,
+      CertificateKind.casteVerification => l10n.certCasteVerification,
     };
 
 /// "this junior college", "this school"... from the institution type.

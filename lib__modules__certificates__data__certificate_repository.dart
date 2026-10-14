@@ -33,6 +33,8 @@ class CertificateRepository extends OrgScopedRepository {
     final latest = active ?? (detail.enrollments.isEmpty ? null : detail.enrollments.first);
     final first = detail.enrollments.isEmpty ? null : detail.enrollments.last;
     final mother = detail.guardians.where((g) => g.relation == 'Mother').firstOrNull?.name ?? '';
+    final fatherGuardian = detail.guardians.where((g) => g.relation == 'Father').firstOrNull;
+    final father = fatherGuardian?.name ?? [d.middleName, d.lastName].where((s) => s.isNotEmpty).join(' ');
     final year = await _yearLabel(latest?.academicYearId);
     String date(DateTime? x) => x == null ? '' : _dates.format(x);
     final className = divisionLabels[latest?.divisionId] ?? '';
@@ -73,6 +75,24 @@ class CertificateRepository extends OrgScopedRepository {
       CertField.leavingReason: detail.leavingReason ?? '',
       CertField.remarks: '',
       CertField.purpose: '',
+      CertField.examResult: '',
+      CertField.examDetails: '',
+      CertField.promotion: '',
+      // Nirgam Utara rows.
+      CertField.parents: [
+        if (father.isNotEmpty) 'Father: $father',
+        if (mother.isNotEmpty) 'Mother: $mother',
+      ].join('; '),
+      CertField.caste: [d.caste, d.subCaste].where((s) => s.isNotEmpty).join(' - '),
+      CertField.occupation: fatherGuardian?.occupation ?? '',
+      CertField.admissionDate: date(d.admissionDate ?? first?.startDate),
+      CertField.classAtAdmission: first == null ? '' : divisionLabels[first.divisionId] ?? '',
+      CertField.classAtLeaving: className,
+      CertField.identificationMarks: '',
+      CertField.signatory: 'Principal',
+      // Form-15A: "11th Science A" -> standard "11th", faculty "Science".
+      CertField.standard: _standardOf(className),
+      CertField.faculty: _facultyOf(className),
     };
   }
 
@@ -90,7 +110,7 @@ class CertificateRepository extends OrgScopedRepository {
       final ts = now();
       final today = DateTime.utc(_clock().year, _clock().month, _clock().day);
       CertificateRow? original;
-      if (kind == CertificateKind.leaving) {
+      if (kind == CertificateKind.leaving || kind == CertificateKind.nirgam) {
         original = await (db.select(db.certificates)
               ..where((t) =>
                   t.organizationId.equals(orgId) &
@@ -134,7 +154,7 @@ class CertificateRepository extends OrgScopedRepository {
         operation: 'insert',
         after: {'kind': kind.name, 'serial': label, 'student_id': studentId, 'duplicate': original != null},
       );
-      if (markLeft && kind == CertificateKind.leaving && original == null) {
+      if (markLeft && (kind == CertificateKind.leaving || kind == CertificateKind.nirgam) && original == null) {
         final detail = await students.load(studentId);
         if (detail != null && detail.status == StudentStatus.active) {
           final leaving = _parse(fields[CertField.leavingDate]) ?? today;
@@ -232,6 +252,19 @@ class CertificateRepository extends OrgScopedRepository {
     if (academicYearId == null) return '';
     final row = await (db.select(db.academicYears)..where((t) => t.id.equals(academicYearId))).getSingleOrNull();
     return row?.label ?? '';
+  }
+
+  static String _standardOf(String className) {
+    final words = className.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    return words.isEmpty ? '' : words.first;
+  }
+
+  static String _facultyOf(String className) {
+    final words = className.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    if (words.length <= 1) return '';
+    // The last word is the division (A, B...) when it is short.
+    final end = words.length > 2 && words.last.length <= 2 ? words.length - 1 : words.length;
+    return words.sublist(1, end).join(' ');
   }
 
   static DateTime? _parse(String? ddmmyyyy) {

@@ -204,6 +204,11 @@ abstract final class CertificatePdf {
           ('Conduct', f[CertField.conduct] ?? ''),
           ('Date of leaving', f[CertField.leavingDate] ?? ''),
           ('Class in which studying and since when', f[CertField.studyingSince] ?? ''),
+          (
+            'Result of the last examination',
+            [f[CertField.examResult] ?? '', f[CertField.examDetails] ?? ''].where((x) => x.trim().isNotEmpty).join(', '),
+          ),
+          ('Whether qualified for promotion to a higher class', f[CertField.promotion] ?? ''),
           ('Reason for leaving', f[CertField.leavingReason] ?? ''),
           ('Remarks', f[CertField.remarks] ?? ''),
         ];
@@ -218,7 +223,7 @@ abstract final class CertificatePdf {
           build: (context) => fullPage([
             duplicateMark(),
             letterhead(),
-            pw.Center(child: titleBlock('LEAVING CERTIFICATE', sub: '(Nirgam Utara)')),
+            pw.Center(child: titleBlock('LEAVING CERTIFICATE')),
             meta(),
             if (ids.isNotEmpty) ...[
               pw.SizedBox(height: 3),
@@ -227,7 +232,7 @@ abstract final class CertificatePdf {
             pw.SizedBox(height: 10),
             pw.Table(
               border: pw.TableBorder.all(color: PdfColors.grey500, width: 0.5),
-              columnWidths: const {0: pw.FixedColumnWidth(24), 1: pw.FixedColumnWidth(190), 2: pw.FlexColumnWidth()},
+              columnWidths: const {0: pw.FixedColumnWidth(24), 1: pw.FixedColumnWidth(200), 2: pw.FlexColumnWidth()},
               children: [
                 for (var i = 0; i < items.length; i++)
                   pw.TableRow(children: [
@@ -303,6 +308,159 @@ abstract final class CertificatePdf {
             para('This certificate is issued on ${g.his.toLowerCase()} request.'),
             pw.Spacer(),
             signatures(['Clerk', 'Principal']),
+          ]),
+        ));
+      case CertificateKind.nirgam:
+        // "Student Admission - Leaving Record Register (Extract from General Register)",
+        // the institution's own one-page format with 21 rows.
+        final head0 = (f[CertField.signatory] ?? '').trim().isEmpty ? 'Principal' : f[CertField.signatory]!.trim();
+        final rows = <(String, String?)>[
+          ('Admission (General Register) No.', f[CertField.grNumber]),
+          ('Full Name of Student (with Surname)', f[CertField.name]),
+          ('Name of Father, Mother or Guardian', f[CertField.parents]),
+          ('Caste', f[CertField.caste]),
+          ('Occupation of Father / Guardian', f[CertField.occupation]),
+          ('Mother Tongue', f[CertField.motherTongue]),
+          ('Place of Birth', f[CertField.placeOfBirth]),
+          ('Date of Birth (in figures)', f[CertField.dateOfBirth]),
+          ('Date of Birth (in words)', f[CertField.dateOfBirthWords]),
+          ('Date of Admission', f[CertField.admissionDate]),
+          ('Class at the Time of Admission', f[CertField.classAtAdmission]),
+          ('Name of Previous School', f[CertField.previousSchool]),
+          ('Standard / Class', f[CertField.className]),
+          ('Signature of Officer Granting Admission', null),
+          ('Class at the Time of Leaving', f[CertField.classAtLeaving]),
+          ('Date of Leaving', f[CertField.leavingDate]),
+          ('Reason for Leaving School', f[CertField.leavingReason]),
+          ('Identification Marks of Student (any two, in brief)', f[CertField.identificationMarks]),
+          ('Signature of Officer Recording the Leaving', null),
+          ('Signature of $head0', null),
+          ('Remarks', f[CertField.remarks]),
+        ];
+        String blank(String? v, String fill) => (v ?? '').trim().isEmpty ? fill : v!.trim();
+        final school = blank(f[CertField.schoolName], head.name);
+        doc.addPage(pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(28),
+          build: (context) => pw.Container(
+            padding: const pw.EdgeInsets.fromLTRB(18, 16, 18, 16),
+            decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.black, width: 1.6)),
+            child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.stretch, children: [
+              duplicateMark(),
+              pw.Center(child: pw.Text('STUDENT ADMISSION – LEAVING RECORD REGISTER', style: st(size: 15, b: true))),
+              pw.Center(child: pw.Text('(Extract from General Register)', style: st(size: 9.5))),
+              pw.SizedBox(height: 8),
+              pw.Center(
+                child: pw.RichText(text: pw.TextSpan(children: [
+                  pw.TextSpan(text: 'Name of School: ', style: st(size: 11)),
+                  pw.TextSpan(text: school, style: st(size: 11, b: true)),
+                ])),
+              ),
+              pw.SizedBox(height: 4),
+              pw.Center(
+                child: pw.Text(
+                  'Taluka: ${blank(f[CertField.taluka], '________________')}    '
+                  'District: ${blank(f[CertField.district], '________________')}    '
+                  'Page No.: ${blank(f[CertField.pageNo], '________')}',
+                  style: st(size: 10.5),
+                ),
+              ),
+              pw.SizedBox(height: 4),
+              pw.Row(mainAxisAlignment: pw.MainAxisAlignment.end, children: [
+                pw.Text('No.: $serialLabel', style: st(size: 8.5, color: PdfColors.grey700)),
+              ]),
+              pw.SizedBox(height: 4),
+              pw.Table(
+                border: pw.TableBorder.all(color: PdfColors.black, width: 0.8),
+                columnWidths: const {0: pw.FixedColumnWidth(38), 1: pw.FixedColumnWidth(220), 2: pw.FlexColumnWidth()},
+                children: [
+                  pw.TableRow(children: [
+                    pw.Padding(padding: const pw.EdgeInsets.all(5), child: pw.Text('Sr.\nNo.', textAlign: pw.TextAlign.center, style: st(size: 10, b: true))),
+                    pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Center(child: pw.Text('Particulars', style: st(size: 10.5, b: true)))),
+                    pw.Padding(padding: const pw.EdgeInsets.all(8), child: pw.Center(child: pw.Text('Details', style: st(size: 10.5, b: true)))),
+                  ]),
+                  for (var i = 0; i < rows.length; i++)
+                    pw.TableRow(children: [
+                      pw.Container(
+                        height: 25,
+                        alignment: pw.Alignment.center,
+                        child: pw.Text('${i + 1}', style: st(size: 10)),
+                      ),
+                      pw.Container(
+                        alignment: pw.Alignment.centerLeft,
+                        padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        child: pw.Text(rows[i].$1, style: st(size: 10)),
+                      ),
+                      pw.Container(
+                        alignment: pw.Alignment.centerLeft,
+                        padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        child: pw.Text(rows[i].$2 ?? '', maxLines: 2, style: st(size: 10.5, b: true)),
+                      ),
+                    ]),
+                ],
+              ),
+              pw.SizedBox(height: 16),
+              pw.Row(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
+                pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                  pw.Text('Date: ${DateFormat('dd/MM/yyyy').format(issuedOn)}', style: st(size: 11)),
+                  pw.SizedBox(height: 6),
+                  pw.Text('Place: ${blank(f[CertField.place], '________________')}', style: st(size: 11)),
+                ]),
+                pw.Spacer(),
+                pw.Container(
+                  width: 96,
+                  height: 64,
+                  alignment: pw.Alignment.center,
+                  decoration: pw.BoxDecoration(
+                    shape: pw.BoxShape.circle,
+                    border: pw.Border.all(color: PdfColors.grey600, width: 0.8),
+                  ),
+                  child: pw.Text('Seal', style: st(size: 9, color: PdfColors.grey600)),
+                ),
+                pw.Spacer(),
+                pw.Column(children: [
+                  pw.Container(width: 130, height: 0.7, color: PdfColors.black),
+                  pw.SizedBox(height: 3),
+                  pw.Text(head0, style: st(size: 11, b: true)),
+                ]),
+              ]),
+            ]),
+          ),
+        ));
+      case CertificateKind.casteVerification:
+        // Form-15A: given by the Principal for caste validation.
+        final shri = (f[CertField.gender] ?? '') == 'Female' ? 'Kum.' : ((f[CertField.gender] ?? '') == 'Male' ? 'Shri' : 'Shri/Kum.');
+        final he = (f[CertField.gender] ?? '') == 'Female' ? 'she' : ((f[CertField.gender] ?? '') == 'Male' ? 'he' : 'he/she');
+        final word = institutionWord.toLowerCase().contains('college')
+            ? 'College'
+            : institutionWord.split(' ').map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(' ');
+        doc.addPage(pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(40),
+          build: (context) => pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.stretch, children: [
+            duplicateMark(),
+            letterhead(),
+            pw.SizedBox(height: 18),
+            pw.Center(child: pw.Text('Form-15A', style: st(size: 14, b: true))),
+            pw.SizedBox(height: 22),
+            pw.Center(child: pw.Text('Certificate to be given by Principal of the $word.', style: st(size: 14, b: true))),
+            pw.SizedBox(height: 18),
+            meta(gr: false),
+            pw.SizedBox(height: 18),
+            para('This is to certify that $shri ${v(CertField.name)} is a student of this $word in the academic year '
+                '${v(CertField.academicYear)}, and $he is studying in Std ${v(CertField.standard)} under the '
+                '${v(CertField.faculty)} faculty.', size: 12),
+            pw.SizedBox(height: 10),
+            para('${g.his} name and other information are recorded at entry number ${v(CertField.grNumber)} in the '
+                '{{General Register}}.', size: 12),
+            pw.SizedBox(height: 4),
+            para('The caste as recorded in our General Register is ${v(CertField.caste)}.', size: 12),
+            if (remarks.isNotEmpty) ...[pw.SizedBox(height: 4), para(remarks, size: 12)],
+            pw.Spacer(),
+            pw.Row(mainAxisAlignment: pw.MainAxisAlignment.end, children: [
+              pw.Text('Seal and Signature of the Principal', style: st(size: 12)),
+            ]),
+            pw.SizedBox(height: 40),
           ]),
         ));
       case CertificateKind.bonafide:

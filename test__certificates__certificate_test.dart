@@ -124,6 +124,24 @@ void main() {
       expect((await certs.get(dup.id))!.printCount, 2);
     });
 
+    test('Nirgam Utara is its own register extract with its own numbers', () async {
+      final f = await certs.prefill(studentId, divisionLabels: labels);
+      expect(f[CertField.parents], 'Father: Salim Shaikh; Mother: Shabana Shaikh');
+      expect(f[CertField.caste], 'Example - Sub');
+      expect(f[CertField.admissionDate], '15/06/2026');
+      // "12th Commerce A" -> Std "12th", faculty "Commerce".
+      final words = f[CertField.className]!.split(' ');
+      expect(f[CertField.standard], words.first);
+      expect(f[CertField.faculty], words.sublist(1, words.length - 1).join(' '));
+      final nu = await certs.issue(kind: CertificateKind.nirgam, studentId: studentId, fields: f, academicYearLabel: '2026-27');
+      final lc = await certs.issue(kind: CertificateKind.leaving, studentId: studentId, fields: f, academicYearLabel: '2026-27');
+      expect(nu.serialLabel, 'NU/2026-27/0001');
+      expect(lc.serialLabel, 'LC/2026-27/0001');
+      expect(lc.isDuplicate, isFalse);
+      // Issuing a Nirgam Utara without "mark as left" leaves the student active.
+      expect((await students.load(studentId))!.status, StudentStatus.active);
+    });
+
     test('every certificate type renders to a PDF', () async {
       final fonts = ReportFonts(
         ByteData.sublistView(File('assets/fonts/NotoSans-Regular.ttf').readAsBytesSync()),

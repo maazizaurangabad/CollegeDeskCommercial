@@ -6,6 +6,8 @@ import 'package:printing/printing.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
+import '../../../platform/data/data_providers.dart';
+import '../../../platform/organization/organization_providers.dart';
 import '../../students/application/students_providers.dart';
 import '../../students/domain/student_models.dart';
 import '../../students/presentation/student_labels.dart';
@@ -29,8 +31,14 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
   Map<String, String>? _fields;
   final Map<String, TextEditingController> _controllers = {};
   bool _officeCopy = true;
-  bool _markLeft = true;
-  bool _hasLc = false;
+  late bool _markLeft = _kind == CertificateKind.leaving;
+  Set<CertificateKind> _issuedKinds = const {};
+
+  /// Typed once, then remembered for the next Nirgam Utara.
+  static const _remembered = [CertField.taluka, CertField.district, CertField.place];
+
+  bool get _hasLc => _issuedKinds.contains(_kind);
+  bool get _isLeavingKind => _kind == CertificateKind.leaving || _kind == CertificateKind.nirgam;
   bool _busy = false;
   String _query = '';
 
@@ -52,7 +60,12 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
     setState(() => _busy = true);
     final labels = await ref.read(academicRepositoryProvider).divisionLabels();
     final fields = await ref.read(certificateRepositoryProvider).prefill(studentId, divisionLabels: labels);
-    final existing = await ref.read(certificateRepositoryProvider).list(kind: CertificateKind.leaving, studentId: studentId);
+    final settings = ref.read(appSettingsRepositoryProvider);
+    for (final key in _remembered) {
+      fields[key] = await settings.getValue('cert.$key') ?? '';
+    }
+    fields[CertField.schoolName] = ref.read(activeOrganizationProvider).name;
+    final existing = await ref.read(certificateRepositoryProvider).list(studentId: studentId);
     if (!mounted) return;
     for (final c in _controllers.values) {
       c.dispose();
@@ -63,7 +76,10 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
     setState(() {
       _studentId = studentId;
       _fields = fields;
-      _hasLc = existing.any((c) => c.status == CertificateStatus.issued && !c.isDuplicate);
+      _issuedKinds = {
+        for (final c in existing)
+          if (c.status == CertificateStatus.issued && !c.isDuplicate) c.kind,
+      };
       _busy = false;
     });
   }
@@ -106,6 +122,42 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
           (CertField.purpose, l10n.cfPurpose),
           (CertField.remarks, l10n.cfRemarks),
         ],
+      CertificateKind.casteVerification => [
+          (CertField.name, l10n.cfName),
+          (CertField.gender, l10n.cfGender),
+          (CertField.academicYear, l10n.cfYear),
+          (CertField.standard, l10n.cfStandard),
+          (CertField.faculty, l10n.cfFaculty),
+          (CertField.grNumber, l10n.cfEntryNumber),
+          (CertField.caste, l10n.cfCasteRecorded),
+          (CertField.remarks, l10n.cfRemarks),
+        ],
+      CertificateKind.nirgam => [
+          (CertField.schoolName, l10n.cfSchool),
+          (CertField.taluka, l10n.cfTaluka),
+          (CertField.district, l10n.cfDistrict),
+          (CertField.pageNo, l10n.cfPageNo),
+          (CertField.grNumber, '1. ${l10n.nuGr}'),
+          (CertField.name, '2. ${l10n.nuName}'),
+          (CertField.parents, '3. ${l10n.nuParents}'),
+          (CertField.caste, '4. ${l10n.nuCaste}'),
+          (CertField.occupation, '5. ${l10n.nuOccupation}'),
+          (CertField.motherTongue, '6. ${l10n.cfMotherTongue}'),
+          (CertField.placeOfBirth, '7. ${l10n.cfPlaceOfBirth}'),
+          (CertField.dateOfBirth, '8. ${l10n.cfDob}'),
+          (CertField.dateOfBirthWords, '9. ${l10n.cfDobWords}'),
+          (CertField.admissionDate, '10. ${l10n.nuAdmissionDate}'),
+          (CertField.classAtAdmission, '11. ${l10n.nuClassAdmission}'),
+          (CertField.previousSchool, '12. ${l10n.nuPreviousSchool}'),
+          (CertField.className, '13. ${l10n.nuStandard}'),
+          (CertField.classAtLeaving, '15. ${l10n.nuClassLeaving}'),
+          (CertField.leavingDate, '16. ${l10n.cfLeavingDate}'),
+          (CertField.leavingReason, '17. ${l10n.cfReason}'),
+          (CertField.identificationMarks, '18. ${l10n.nuMarks}'),
+          (CertField.remarks, '21. ${l10n.cfRemarks}'),
+          (CertField.place, l10n.cfPlace),
+          (CertField.signatory, l10n.cfSignatory),
+        ],
       CertificateKind.leaving => [
           (CertField.name, l10n.cfName),
           (CertField.grNumber, l10n.cfGr),
@@ -123,11 +175,22 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
           (CertField.conduct, l10n.cfConduct),
           (CertField.leavingDate, l10n.cfLeavingDate),
           (CertField.studyingSince, l10n.cfStudying),
+          (CertField.examResult, l10n.cfExamResult),
+          (CertField.examDetails, l10n.cfExamDetails),
+          (CertField.promotion, l10n.cfPromotion),
           (CertField.leavingReason, l10n.cfReason),
           (CertField.remarks, l10n.cfRemarks),
         ],
     };
   }
+
+  /// Fields chosen from a short list instead of typed.
+  Map<String, List<String>> _choices(AppLocalizations l10n) => {
+        CertField.examResult: [l10n.resultPassed, l10n.resultFailed, l10n.resultAppeared, l10n.resultNotAppeared],
+        CertField.promotion: [l10n.promotionYes, l10n.promotionNo, l10n.promotionNa],
+        CertField.progress: [l10n.gradeExcellent, l10n.gradeVeryGood, l10n.gradeGood, l10n.gradeSatisfactory],
+        CertField.conduct: [l10n.gradeExcellent, l10n.gradeVeryGood, l10n.gradeGood, l10n.gradeSatisfactory],
+      };
 
   Future<void> _preview() async {
     final bytes = await certificatePdf(
@@ -136,7 +199,7 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
       fields: _values,
       serialLabel: '${_kind.prefix}/DRAFT',
       issuedOn: DateTime.now(),
-      duplicate: _kind == CertificateKind.leaving && _hasLc,
+      duplicate: _isLeavingKind && _hasLc,
       officeCopy: _officeCopy,
     );
     if (!mounted) return;
@@ -160,16 +223,20 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
     setState(() => _busy = true);
     try {
       final values = {..._values, 'office_copy': '$_officeCopy'};
+      final settings = ref.read(appSettingsRepositoryProvider);
+      for (final key in _remembered) {
+        if ((values[key] ?? '').isNotEmpty) await settings.setValue('cert.$key', values[key]!);
+      }
       final record = await ref.read(certificateRepositoryProvider).issue(
             kind: _kind,
             studentId: _studentId!,
             fields: values,
             academicYearLabel: ref.read(academicControllerProvider).activeYear?.label ??
                 (values[CertField.academicYear] ?? ''),
-            markLeft: _kind == CertificateKind.leaving && _markLeft,
+            markLeft: _isLeavingKind && _markLeft,
           );
       ref.read(certificatesRevisionProvider.notifier).state++;
-      if (_kind == CertificateKind.leaving && _markLeft) ref.read(studentsRevisionProvider.notifier).state++;
+      if (_isLeavingKind && _markLeft) ref.read(studentsRevisionProvider.notifier).state++;
       if (!mounted) return;
       SdToast.show(context, l10n.certIssued);
       context.go('/certificates/view/${record.id}');
@@ -199,7 +266,11 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
           label: l10n.certChooseType,
           value: _kind,
           options: [for (final k in CertificateKind.values) (k, certificateTitle(l10n, k))],
-          onChanged: (k) => setState(() => _kind = k ?? _kind),
+          onChanged: (k) => setState(() {
+            _kind = k ?? _kind;
+            // An LC usually goes with marking the student as left; a Nirgam Utara extract usually does not.
+            _markLeft = _kind == CertificateKind.leaving;
+          }),
         ),
         if (_studentId == null) ...[
           SdSection(
@@ -254,7 +325,7 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Text(l10n.certDetailsHint, style: theme.textTheme.bodySmall),
               const SizedBox(height: SdSpace.md),
-              if (_kind == CertificateKind.leaving && _hasLc)
+              if (_isLeavingKind && _hasLc)
                 Padding(
                   padding: const EdgeInsets.only(bottom: SdSpace.md),
                   child: Text(l10n.certDuplicateNote, style: theme.textTheme.bodySmall?.copyWith(color: SdColors.of(context).leave)),
@@ -262,6 +333,15 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
               SdCard(
                 child: Column(children: [
                   for (final (key, label) in _fieldsFor(l10n))
+                    if (_choices(l10n)[key] case final options?)
+                      SdSelectField<String>(
+                        label: label,
+                        value: (_controllers[key] ??= TextEditingController()).text.isEmpty ? null : _controllers[key]!.text,
+                        options: [for (final o in {...options, if (_controllers[key]!.text.isNotEmpty) _controllers[key]!.text}) (o, o)],
+                        clearLabel: l10n.notSet,
+                        onChanged: (v) => setState(() => _controllers[key]!.text = v ?? ''),
+                      )
+                    else
                     Padding(
                       padding: const EdgeInsets.only(bottom: SdSpace.md),
                       child: TextField(
@@ -279,7 +359,7 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
                   value: _officeCopy,
                   onChanged: (v) => setState(() => _officeCopy = v),
                 ),
-              if (_kind == CertificateKind.leaving && !_hasLc)
+              if (_isLeavingKind && !_hasLc)
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Text(l10n.certMarkLeft),

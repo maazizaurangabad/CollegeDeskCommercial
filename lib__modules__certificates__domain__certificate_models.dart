@@ -6,9 +6,13 @@ import 'package:flutter/foundation.dart';
 enum CertificateKind {
   bonafide('BON'),
   leaving('LC'),
+  nirgam('NU'),
   noDues('ND'),
   noc('NOC'),
-  character('CHR');
+  character('CHR'),
+
+  /// Form-15A, for caste validation by the authority.
+  casteVerification('CV');
 
   const CertificateKind(this.prefix);
 
@@ -57,6 +61,30 @@ abstract final class CertField {
   static const leavingReason = 'leaving_reason';
   static const remarks = 'remarks';
   static const purpose = 'purpose';
+
+  // Form-15A (caste verification).
+  static const standard = 'standard';
+  static const faculty = 'faculty';
+
+  // Leaving certificate: examination result and promotion.
+  static const examResult = 'exam_result';
+  static const examDetails = 'exam_details';
+  static const promotion = 'promotion';
+
+  // Nirgam Utara (Leaving Record Register extract).
+  static const parents = 'parents';
+  static const occupation = 'occupation';
+  static const admissionDate = 'admission_date';
+  static const classAtAdmission = 'class_at_admission';
+  static const classAtLeaving = 'class_at_leaving';
+  static const identificationMarks = 'identification_marks';
+  static const caste = 'caste';
+  static const schoolName = 'school_name';
+  static const taluka = 'taluka';
+  static const district = 'district';
+  static const pageNo = 'page_no';
+  static const place = 'place';
+  static const signatory = 'signatory';
 }
 
 @immutable

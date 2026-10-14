@@ -107,7 +107,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       if (attendance) (l10n.attendanceTitle, '/attendance', Icons.fact_check_outlined, 'attendance mark absent present today'),
       if (ref.read(enabledModulesProvider).contains('certificates')) ...[
         (l10n.certIssue, '/certificates/new', Icons.workspace_premium_outlined,
-            'certificate bonafide lc leaving nirgam utara tc transfer noc no dues character issue'),
+            'certificate bonafide lc leaving nirgam utara register extract tc transfer noc no dues character caste verification validation form 15a issue'),
         (l10n.certRegister, '/certificates', Icons.list_alt, 'certificate register issued reprint cancel serial'),
       ],
       if (ref.read(enabledModulesProvider).contains('reports')) ...[
