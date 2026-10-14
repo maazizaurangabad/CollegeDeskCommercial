@@ -6,7 +6,7 @@ import 'package:printing/printing.dart';
 
 import '../../core/files/csv.dart';
 import '../../core/files/save_file.dart';
-import '../../core/files/xlsx.dart';
+import '../../core/files/xlsx_styled.dart';
 import 'pdf_report_renderer.dart';
 import 'report_dataset.dart';
 
@@ -41,22 +41,38 @@ abstract final class ReportOutput {
     await Printing.layoutPdf(name: data.fileName, onLayout: (_) async => bytes);
   }
 
-  static Future<bool> saveExcel(ReportDataset data, {required String title}) => saveBytesWithDialog(
-        fileName: '${data.fileName}.xlsx',
-        bytes: XlsxWriter.write(
-          sheetName: data.title,
-          header: [for (final c in data.columns) c.label],
-          rows: [
-            for (final s in data.subtitle) [s],
-            ...data.tableForExport(),
-          ],
-        ),
-        title: title,
-      );
+  /// A formatted Excel file: headings, coloured frozen header with filter
+  /// buttons, sized columns, shading, real numbers and dates, print settings.
+  static List<int> excelBytes(ReportDataset data, ReportLetterhead head) {
+    final table = data.tableForExport();
+    return XlsxStyledWriter.write(
+      sheetName: data.title,
+      headingLines: [head.name, data.title, ...data.subtitle.where((s) => s.trim().isNotEmpty)],
+      header: table.header,
+      rows: table.rows,
+      types: [
+        for (final t in data.exportTypes())
+          switch (t) {
+            ReportColumnType.number => XlsxCellType.number,
+            ReportColumnType.date => XlsxCellType.date,
+            ReportColumnType.text => XlsxCellType.text,
+          },
+      ],
+      notes: data.notes,
+      landscape: data.landscape || table.header.length > 7,
+      brandColor: head.brandColor,
+    );
+  }
 
-  static Future<bool> saveCsv(ReportDataset data, {required String title}) => saveBytesWithDialog(
-        fileName: '${data.fileName}.csv',
-        bytes: CsvReader.write([for (final c in data.columns) c.label], data.tableForExport()),
-        title: title,
-      );
+  static Future<bool> saveExcel(ReportDataset data, ReportLetterhead head, {required String title}) =>
+      saveBytesWithDialog(fileName: '${data.fileName}.xlsx', bytes: excelBytes(data, head), title: title);
+
+  static Future<bool> saveCsv(ReportDataset data, {required String title}) {
+    final table = data.tableForExport();
+    return saveBytesWithDialog(
+      fileName: '${data.fileName}.csv',
+      bytes: CsvReader.write(table.header, table.rows),
+      title: title,
+    );
+  }
 }

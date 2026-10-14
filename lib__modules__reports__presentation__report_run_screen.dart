@@ -42,6 +42,13 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
 
   ReportDataset? _data;
   bool _busy = false;
+  final Map<int, String> _filters = {};
+  int? _sortColumn;
+  bool _ascending = true;
+
+  /// What is shown and exported: the report with on-screen filters and sorting applied.
+  ReportDataset? get _view =>
+      _data?.arranged(filters: _filters, sortColumn: _sortColumn, ascending: _ascending);
 
   bool get _needsDivision => widget.kind == ReportKind.register || widget.kind == ReportKind.classList;
 
@@ -50,6 +57,8 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
     setState(() {
       _busy = true;
       _data = null;
+      _filters.clear();
+      _sortColumn = null;
     });
     try {
       final b = await reportBuilders(ref, l10n);
@@ -59,7 +68,7 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
         ReportKind.absentees => await b.absentees(_date),
         ReportKind.summary => await b.attendanceSummary(from: _from, to: _to),
         ReportKind.classList => await b.classList(_divisionId!, _columns),
-        ReportKind.master => await b.studentMaster(programId: _programId, status: _status),
+        ReportKind.master => await b.studentMaster(programId: _programId, status: _status, show: _columns),
       };
       if (mounted) setState(() => _data = data);
     } catch (_) {
@@ -94,7 +103,7 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
     final theme = Theme.of(context);
     final academic = ref.watch(academicControllerProvider);
     final dates = DateFormat('d MMM y');
-    final data = _data;
+    final data = _view;
     final canRun = !_needsDivision || _divisionId != null;
 
     Widget dateTile(String label, DateTime value, ValueChanged<DateTime> onChanged) => ListTile(
@@ -152,7 +161,7 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
           options: [for (final s in StudentStatus.values) (s, studentStatusLabel(l10n, s))],
           onChanged: (v) => setState(() => _status = v),
         ),
-      if (widget.kind == ReportKind.classList) ...[
+      if (widget.kind == ReportKind.classList || widget.kind == ReportKind.master) ...[
         Text(l10n.reportColumns, style: theme.textTheme.bodySmall),
         const SizedBox(height: SdSpace.sm),
         Wrap(
@@ -227,7 +236,9 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
                 label: l10n.exportExcel,
                 icon: Icons.table_chart_outlined,
                 variant: SdButtonVariant.text,
-                onPressed: _busy ? null : () => _output(() async => ReportOutput.saveExcel(data, title: l10n.exportExcel)),
+                onPressed: _busy
+                    ? null
+                    : () => _output(() async => ReportOutput.saveExcel(data, await reportLetterhead(ref), title: l10n.exportExcel)),
               ),
               SdButton(
                 label: l10n.exportCsv,
@@ -237,6 +248,49 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
             ],
           ),
           const SizedBox(height: SdSpace.lg),
+          if (_data!.filterColumns.isNotEmpty) ...[
+            Wrap(
+              spacing: SdSpace.sm,
+              runSpacing: SdSpace.sm,
+              children: [
+                for (final col in _data!.filterColumns)
+                  if (col < _data!.columns.length)
+                    ActionChip(
+                      avatar: Icon(_filters.containsKey(col) ? Icons.filter_alt : Icons.filter_alt_outlined, size: 18),
+                      label: Text('${_data!.columns[col].label}: ${_filters[col] ?? l10n.studentsFilterAll}'),
+                      onPressed: () async {
+                        final picked = await SdSheet.show<(String?,)>(
+                          context,
+                          title: _data!.columns[col].label,
+                          builder: (sheet) => ListView(shrinkWrap: true, children: [
+                            ListTile(title: Text(l10n.studentsFilterAll), onTap: () => Navigator.of(sheet).pop((null,))),
+                            for (final v in _data!.valuesOf(col))
+                              ListTile(title: Text(v), onTap: () => Navigator.of(sheet).pop((v,))),
+                          ]),
+                        );
+                        if (picked == null) return;
+                        setState(() {
+                          if (picked.$1 == null) {
+                            _filters.remove(col);
+                          } else {
+                            _filters[col] = picked.$1!;
+                          }
+                        });
+                      },
+                    ),
+                if (_filters.isNotEmpty || _sortColumn != null)
+                  SdButton(
+                    label: l10n.reportClearFilters,
+                    variant: SdButtonVariant.text,
+                    onPressed: () => setState(() {
+                      _filters.clear();
+                      _sortColumn = null;
+                    }),
+                  ),
+              ],
+            ),
+            const SizedBox(height: SdSpace.md),
+          ],
           if (data.subtitle.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: SdSpace.sm),
@@ -245,7 +299,21 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
           if (data.dataRowCount == 0)
             SdEmptyState(icon: Icons.inbox_outlined, title: l10n.reportEmpty, message: '')
           else
-            ReportPreview(data: data, moreText: l10n.reportPreviewMore),
+            ReportPreview(
+              data: data,
+              moreText: l10n.reportPreviewMore,
+              sortColumn: _sortColumn,
+              ascending: _ascending,
+              onSort: (i) => setState(() {
+                if (_sortColumn == i) {
+                  _ascending = !_ascending;
+                } else {
+                  _sortColumn = i;
+                  _ascending = true;
+                }
+              }),
+            ),
+          Text(l10n.reportSortHint, style: theme.textTheme.bodySmall),
           const SizedBox(height: SdSpace.xxl),
         ],
       ],

@@ -42,17 +42,13 @@ abstract final class PdfReportRenderer {
     final line = PdfColor.fromInt(0xFFBFC5CC);
     final shade = PdfColor.fromInt(0xFFEEF1F4);
     final warn = PdfColor.fromInt(0xFFFDECEC);
+    final zebra = PdfColor.fromInt(0xFFF5F7FA);
     final format = data.landscape ? PdfPageFormat.a4.landscape : PdfPageFormat.a4;
     final fs = data.fontSize;
     final logo = head.logo == null ? null : pw.MemoryImage(head.logo!);
     final stamp = DateFormat('d MMM y, h:mm a').format(generatedOn ?? DateTime.now());
 
     final doc = pw.Document(title: data.title, author: head.name, creator: generatedBy);
-
-    // Rows per page, estimated from the page height, so each page gets its own header row.
-    final usable = format.height - 36 * 2 - 92 - 30;
-    final rowHeight = fs * 1.9 + 2;
-    final perPage = ((usable / rowHeight).floor() - 1).clamp(8, 200).toInt();
 
     pw.Alignment align(ReportAlign a) => switch (a) {
           ReportAlign.left => pw.Alignment.centerLeft,
@@ -83,25 +79,28 @@ abstract final class PdfReportRenderer {
         );
 
     pw.TableRow headerRow() => pw.TableRow(
+          repeat: true, // drawn again at the top of every page the table runs onto
           decoration: pw.BoxDecoration(color: brand),
           children: [for (var i = 0; i < data.columns.length; i++) cell(data.columns[i].label, i, header: true)],
         );
 
+    var dataIndex = 0;
     pw.TableRow toRow(ReportRow r) {
       if (r.kind == ReportRowKind.group) {
         return pw.TableRow(
           decoration: pw.BoxDecoration(color: shade),
           children: [
             pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 3),
-              child: pw.Text(r.groupTitle ?? '', style: pw.TextStyle(font: bold, fontSize: fs)),
+              padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: pw.Text(r.groupTitle ?? '', style: pw.TextStyle(font: bold, fontSize: fs + 0.5, color: brand)),
             ),
             for (var i = 1; i < data.columns.length; i++) pw.SizedBox(),
           ],
         );
       }
+      final striped = data.zebra && (dataIndex++).isOdd;
       return pw.TableRow(
-        decoration: r.highlight ? pw.BoxDecoration(color: warn) : null,
+        decoration: r.highlight ? pw.BoxDecoration(color: warn) : (striped ? pw.BoxDecoration(color: zebra) : null),
         children: [
           for (var i = 0; i < data.columns.length; i++)
             cell(
@@ -114,11 +113,17 @@ abstract final class PdfReportRenderer {
       );
     }
 
-    final chunks = <List<ReportRow>>[];
-    for (var i = 0; i < data.rows.length; i += perPage) {
-      chunks.add(data.rows.sublist(i, i + perPage > data.rows.length ? data.rows.length : i + perPage));
+    // Groups (e.g. classes) become headings above their own table.
+    final segments = <(String?, List<ReportRow>)>[];
+    for (final r in data.rows) {
+      if (r.kind == ReportRowKind.group) {
+        segments.add((r.groupTitle, []));
+      } else {
+        if (segments.isEmpty) segments.add((null, []));
+        segments.last.$2.add(r);
+      }
     }
-    if (chunks.isEmpty) chunks.add(const []);
+    if (segments.isEmpty) segments.add((null, const []));
 
     pw.Widget header(pw.Context context) => pw.Container(
           margin: const pw.EdgeInsets.only(bottom: 10),
@@ -170,17 +175,25 @@ abstract final class PdfReportRenderer {
         header: header,
         footer: footer,
         build: (context) => [
-          for (var c = 0; c < chunks.length; c++) ...[
+          for (final (title, rows) in segments) ...[
+            if (title != null)
+              pw.Padding(
+                padding: const pw.EdgeInsets.only(top: 8, bottom: 4),
+                child: pw.Text(title, style: pw.TextStyle(font: bold, fontSize: fs + 1.5, color: brand)),
+              ),
             pw.Table(
               border: pw.TableBorder.all(color: line, width: 0.5),
               columnWidths: widths,
-              children: [headerRow(), for (final r in chunks[c]) toRow(r)],
+              children: [headerRow(), for (final r in rows) toRow(r)],
             ),
-            if (c < chunks.length - 1) pw.NewPage(),
           ],
           if (data.notes.isNotEmpty) ...[
             pw.SizedBox(height: 8),
-            for (final n in data.notes) pw.Text(n, style: pw.TextStyle(font: regular, fontSize: 8.5)),
+            for (var i = 0; i < data.notes.length; i++)
+              pw.Text(
+                data.notes[i],
+                style: pw.TextStyle(font: i == 0 && data.countLabels != null ? bold : regular, fontSize: 9),
+              ),
           ],
           if (data.signatures.isNotEmpty) ...[
             pw.SizedBox(height: 40),

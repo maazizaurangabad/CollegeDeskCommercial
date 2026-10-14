@@ -943,5 +943,77 @@
         "type": "int"
       }
     }
+  },
+  "reportTotal": "Total",
+  "reportBoys": "Boys",
+  "reportGirls": "Girls",
+  "reportClearFilters": "Clear filters and sorting",
+  "reportSortHint": "Tap a column heading to sort. Filters and sorting are kept in the PDF and Excel file.",
+  "navCertificates": "Certificates",
+  "certBonafide": "Bonafide certificate",
+  "certLeaving": "Leaving certificate (Nirgam Utara)",
+  "certNoDues": "No dues certificate",
+  "certNoc": "No objection certificate (NOC)",
+  "certCharacter": "Character certificate",
+  "certIssue": "Issue certificate",
+  "certRegister": "Issued certificates",
+  "certRegisterEmpty": "No certificates issued yet.",
+  "certChooseStudent": "Choose the student",
+  "certChooseType": "Certificate",
+  "certSearchStudent": "Search by name, code or GR",
+  "certDetails": "Details printed on the certificate",
+  "certDetailsHint": "Filled in from the student's record. Correct or complete anything before issuing.",
+  "certOfficeCopy": "Also print an office copy on the lower half",
+  "certMarkLeft": "Mark the student as left on the date of leaving",
+  "certPreview": "Preview",
+  "certIssueNow": "Issue and open",
+  "certIssued": "Certificate issued",
+  "certCancel": "Cancel certificate",
+  "certCancelReason": "Reason for cancelling",
+  "certCancelled": "Cancelled",
+  "certDuplicate": "Duplicate",
+  "certReprint": "Print again",
+  "certPrintedTimes": "Printed",
+  "certAllTypes": "All",
+  "certDuplicateNote": "A leaving certificate was already issued to this student. This one will be a DUPLICATE with the same number.",
+  "certStudentSection": "Certificates",
+  "cfName": "Full name",
+  "cfMother": "Mother's name",
+  "cfNationality": "Nationality",
+  "cfMotherTongue": "Mother tongue",
+  "cfReligion": "Religion",
+  "cfCaste": "Caste and sub-caste",
+  "cfPlaceOfBirth": "Place of birth",
+  "cfDob": "Date of birth (dd/mm/yyyy)",
+  "cfDobWords": "Date of birth in words",
+  "cfPrevious": "Last school / college attended",
+  "cfAdmission": "Date of admission and class",
+  "cfProgress": "Progress",
+  "cfConduct": "Conduct",
+  "cfLeavingDate": "Date of leaving (dd/mm/yyyy)",
+  "cfStudying": "Class in which studying and since when",
+  "cfReason": "Reason for leaving",
+  "cfRemarks": "Remarks",
+  "cfPurpose": "Purpose (e.g. scholarship, bank account)",
+  "cfClass": "Class",
+  "cfYear": "Academic year",
+  "cfGr": "GR number",
+  "cfGender": "Gender (for he/she)",
+  "cfNocPurpose": "No objection to (e.g. taking part in the state sports meet)",
+  "certSerial": "No. {serial}",
+  "@certSerial": {
+    "placeholders": {
+      "serial": {
+        "type": "String"
+      }
+    }
+  },
+  "certPrintCount": "Printed {count} times",
+  "@certPrintCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

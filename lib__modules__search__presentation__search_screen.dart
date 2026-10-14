@@ -105,6 +105,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         (l10n.attendanceRegister, '/attendance/register', Icons.calendar_view_month_outlined,
             'register monthly month percentage defaulter below 75'),
       if (attendance) (l10n.attendanceTitle, '/attendance', Icons.fact_check_outlined, 'attendance mark absent present today'),
+      if (ref.read(enabledModulesProvider).contains('certificates')) ...[
+        (l10n.certIssue, '/certificates/new', Icons.workspace_premium_outlined,
+            'certificate bonafide lc leaving nirgam utara tc transfer noc no dues character issue'),
+        (l10n.certRegister, '/certificates', Icons.list_alt, 'certificate register issued reprint cancel serial'),
+      ],
       if (ref.read(enabledModulesProvider).contains('reports')) ...[
         (l10n.reportRegisterTitle, '/reports/register', Icons.picture_as_pdf_outlined, 'report pdf print register monthly'),
         (l10n.reportDefaultersName, '/reports/defaulters', Icons.trending_down, 'report defaulter defaulters below 75 low pdf'),

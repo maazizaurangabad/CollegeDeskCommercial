@@ -122,6 +122,12 @@ class DashboardScreen extends ConsumerWidget {
                 onPressed: () => context.go('/students/new'),
               ),
               SdButton(
+                label: l10n.certIssue,
+                icon: Icons.workspace_premium_outlined,
+                variant: SdButtonVariant.secondary,
+                onPressed: () => context.go('/certificates/new'),
+              ),
+              SdButton(
                 label: l10n.actionImportExcel,
                 icon: Icons.upload_file_outlined,
                 variant: SdButtonVariant.secondary,

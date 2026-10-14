@@ -74,12 +74,12 @@ class ReportBuilders {
       landscape: true,
       fontSize: 7,
       columns: [
-        ReportColumn(l10n.reportRoll, width: 22, align: ReportAlign.center),
+        ReportColumn(l10n.reportRoll, width: 22, align: ReportAlign.center, type: ReportColumnType.number),
         ReportColumn(l10n.fieldName, flex: 1),
         for (var d = 1; d <= days; d++) ReportColumn('$d', width: 14.5, align: ReportAlign.center),
         ReportColumn(l10n.reportPresentShort, width: 24, align: ReportAlign.center),
         ReportColumn(l10n.reportDaysShort, width: 24, align: ReportAlign.center),
-        ReportColumn('%', width: 26, align: ReportAlign.center),
+        ReportColumn('%', width: 26, align: ReportAlign.center, type: ReportColumnType.number),
       ],
       shadedColumns: {for (final d in grid.dayKinds.keys) d + 1},
       rows: rows,
@@ -143,19 +143,20 @@ class ReportBuilders {
       ],
       fileName: 'defaulters-${DateFormat('yyyy-MM-dd').format(to)}',
       columns: [
-        ReportColumn(l10n.reportSr, width: 24, align: ReportAlign.center),
-        ReportColumn(l10n.reportRoll, width: 30, align: ReportAlign.center),
+        ReportColumn(l10n.reportSr, width: 24, align: ReportAlign.center, type: ReportColumnType.number),
+        ReportColumn(l10n.reportRoll, width: 30, align: ReportAlign.center, type: ReportColumnType.number),
         ReportColumn(l10n.fieldName, flex: 3),
         ReportColumn(l10n.studentCode, width: 62),
         ReportColumn(l10n.reportPresentShort, width: 40, align: ReportAlign.center),
         ReportColumn(l10n.reportDaysShort, width: 40, align: ReportAlign.center),
-        ReportColumn('%', width: 44, align: ReportAlign.center),
+        ReportColumn('%', width: 44, align: ReportAlign.center, type: ReportColumnType.number),
         ReportColumn(l10n.fieldMobile, width: 74),
       ],
       rows: rows,
-      notes: [l10n.reportCount(n)],
+      groupLabel: l10n.fieldClass,
+      countLabels: ReportCountLabels(total: l10n.reportTotal, byValue: const {}),
       signatures: [l10n.reportClassTeacher, l10n.reportPrincipal],
-    );
+    ).withCounts();
   }
 
   // ------------------------------------------------------------ absentees
@@ -188,114 +189,150 @@ class ReportBuilders {
       subtitle: [DateFormat('EEEE, d MMMM y').format(date)],
       fileName: 'absentees-${DateFormat('yyyy-MM-dd').format(date)}',
       columns: [
-        ReportColumn(l10n.reportRoll, width: 34, align: ReportAlign.center),
+        ReportColumn(l10n.reportRoll, width: 34, align: ReportAlign.center, type: ReportColumnType.number),
         ReportColumn(l10n.fieldName, flex: 3),
         ReportColumn(l10n.studentCode, width: 66),
         ReportColumn(l10n.reportMark, width: 80),
         ReportColumn(l10n.fieldMobile, width: 80),
       ],
       rows: rows,
-      notes: [l10n.reportCount(items.length)],
-    );
+      groupLabel: l10n.fieldClass,
+      countLabels: ReportCountLabels(total: l10n.reportTotal, byValue: const {}),
+    ).withCounts();
   }
 
-  // ------------------------------------------------------------ class list
+  // ------------------------------------------------------------ name lists
 
+  ReportCountLabels get _genderCounts => ReportCountLabels(
+        total: l10n.reportTotal,
+        byValue: {'Male': l10n.reportBoys, 'Female': l10n.reportGirls},
+      );
+
+  /// Optional columns: label, index in exportRows, width, Excel type.
+  Map<ClassListColumn, (String, int, double, ReportColumnType)> get _optional => {
+        ClassListColumn.gender: (l10n.fieldGender, 6, 46, ReportColumnType.text),
+        ClassListColumn.dateOfBirth: (l10n.fieldDateOfBirth, 7, 64, ReportColumnType.date),
+        ClassListColumn.gr: (l10n.idGr, 8, 52, ReportColumnType.text),
+        ClassListColumn.pen: (l10n.idPen, 9, 76, ReportColumnType.text),
+        ClassListColumn.apaar: (l10n.idApaar, 10, 76, ReportColumnType.text),
+        ClassListColumn.mobile: (l10n.fieldMobile, 12, 72, ReportColumnType.text),
+        ClassListColumn.category: (l10n.fieldCategory, 13, 54, ReportColumnType.text),
+        ClassListColumn.bloodGroup: (l10n.fieldBloodGroup, 14, 40, ReportColumnType.text),
+      };
+
+  /// Gender is always kept (it is needed for the Boys / Girls counts);
+  /// it is just not shown as a column unless chosen.
   Future<ReportDataset> classList(String divisionId, Set<ClassListColumn> show) async {
     final items = (await students.list(academicYearId: academic.activeYear?.id, status: StudentStatus.active))
         .where((s) => s.divisionId == divisionId)
         .toList()
       ..sort((a, b) => (a.rollNumber ?? 9999).compareTo(b.rollNumber ?? 9999));
     final export = await students.exportRows(items, divisionLabels);
-    // exportRows columns: code, first, middle, last, class, roll, gender, dob, gr, pen, apaar, saral, mobile, category, blood, status
-    final optional = <ClassListColumn, (String, int, double)>{
-      ClassListColumn.gender: (l10n.fieldGender, 6, 44),
-      ClassListColumn.dateOfBirth: (l10n.fieldDateOfBirth, 7, 60),
-      ClassListColumn.gr: (l10n.idGr, 8, 50),
-      ClassListColumn.pen: (l10n.idPen, 9, 70),
-      ClassListColumn.apaar: (l10n.idApaar, 10, 70),
-      ClassListColumn.mobile: (l10n.fieldMobile, 12, 70),
-      ClassListColumn.category: (l10n.fieldCategory, 13, 50),
-      ClassListColumn.bloodGroup: (l10n.fieldBloodGroup, 14, 36),
-    };
-    final chosen = [for (final c in ClassListColumn.values) if (show.contains(c)) optional[c]!];
+    final chosen = [
+      for (final c in ClassListColumn.values)
+        if (show.contains(c)) (c, _optional[c]!),
+    ];
+    final genderAt = chosen.indexWhere((c) => c.$1 == ClassListColumn.gender);
     return ReportDataset(
       title: l10n.reportClassListTitle,
       subtitle: ['${_label(divisionId)} · ${academic.activeYear?.label ?? ''}'],
       fileName: 'class-list-${_slug(_label(divisionId))}',
       landscape: chosen.length > 5,
+      fontSize: 10,
+      zebra: true,
       columns: [
-        ReportColumn(l10n.reportRoll, width: 30, align: ReportAlign.center),
+        ReportColumn(l10n.reportRoll, width: 34, align: ReportAlign.center, type: ReportColumnType.number),
         ReportColumn(l10n.fieldName, flex: 3),
-        for (final c in chosen) ReportColumn(c.$1, width: c.$3),
+        for (final c in chosen) ReportColumn(c.$2.$1, width: c.$2.$3, type: c.$2.$4),
       ],
       rows: [
         for (var i = 0; i < items.length; i++)
           ReportRow([
             items[i].rollNumber?.toString() ?? '',
             items[i].fullName,
-            for (final c in chosen) export[i][c.$2],
+            for (final c in chosen) export[i][c.$2.$2],
           ]),
       ],
-      notes: [l10n.reportCount(items.length)],
+      filterColumns: {
+        for (var i = 0; i < chosen.length; i++)
+          if (const {ClassListColumn.gender, ClassListColumn.category, ClassListColumn.bloodGroup}.contains(chosen[i].$1)) i + 2,
+      },
+      countColumn: genderAt < 0 ? null : genderAt + 2,
+      countLabels: _genderCounts,
       signatures: [l10n.reportClassTeacher],
-    );
+    ).withCounts();
   }
 
-  // ------------------------------------------------------------ master list
-
-  Future<ReportDataset> studentMaster({String? programId, StudentStatus? status}) async {
+  /// All students (or one class / status), grouped by class in roll order.
+  Future<ReportDataset> studentMaster({String? programId, StudentStatus? status, Set<ClassListColumn>? show}) async {
     var items = await students.list(academicYearId: academic.activeYear?.id, status: status);
     if (programId != null) {
       final allowed = academic.divisionsOf(programId).map((d) => d.id).toSet();
       items = items.where((s) => allowed.contains(s.divisionId)).toList();
     }
+    final order = {
+      for (final (i, p) in academic.programs.indexed)
+        for (final (j, d) in academic.divisionsOf(p.id).indexed) d.id: i * 100 + j,
+    };
     items.sort((a, b) {
-      final byClass = _label(a.divisionId).compareTo(_label(b.divisionId));
+      final byClass = (order[a.divisionId] ?? 99999).compareTo(order[b.divisionId] ?? 99999);
       return byClass != 0 ? byClass : (a.rollNumber ?? 9999).compareTo(b.rollNumber ?? 9999);
     });
     final export = await students.exportRows(items, divisionLabels);
+    final columnsShown = show ?? {ClassListColumn.gender, ClassListColumn.dateOfBirth, ClassListColumn.gr, ClassListColumn.mobile};
+    final chosen = [
+      for (final c in ClassListColumn.values)
+        if (columnsShown.contains(c)) (c, _optional[c]!),
+    ];
+    final genderAt = chosen.indexWhere((c) => c.$1 == ClassListColumn.gender);
+    final statusAt = 3 + chosen.length;
+    final rows = <ReportRow>[];
+    String? group;
+    for (var i = 0; i < items.length; i++) {
+      final cls = _label(items[i].divisionId);
+      final heading = cls.isEmpty ? l10n.studentsNotPlaced : cls;
+      if (heading != group) {
+        group = heading;
+        rows.add(ReportRow.group(heading));
+      }
+      rows.add(ReportRow([
+        items[i].rollNumber?.toString() ?? '',
+        items[i].fullName,
+        export[i][0],
+        for (final c in chosen) export[i][c.$2.$2],
+        studentStatusLabel(l10n, items[i].status),
+      ]));
+    }
     return ReportDataset(
       title: l10n.reportMasterTitle,
       subtitle: [
         [
+          academic.activeYear?.label ?? '',
           if (programId != null) academic.programs.where((p) => p.id == programId).firstOrNull?.name ?? '',
           status == null ? l10n.studentsFilterAll : studentStatusLabel(l10n, status),
         ].where((s) => s.isNotEmpty).join(' · '),
       ],
-      fileName: 'student-list',
-      landscape: true,
+      fileName: 'student-master-list',
+      landscape: chosen.length > 4,
+      fontSize: 9.5,
+      zebra: true,
+      groupLabel: l10n.fieldClass,
       columns: [
-        ReportColumn(l10n.reportSr, width: 24, align: ReportAlign.center),
-        ReportColumn(l10n.studentCode, width: 60),
+        ReportColumn(l10n.reportRoll, width: 32, align: ReportAlign.center, type: ReportColumnType.number),
         ReportColumn(l10n.fieldName, flex: 3),
-        ReportColumn(l10n.fieldClass, width: 90),
-        ReportColumn(l10n.reportRoll, width: 28, align: ReportAlign.center),
-        ReportColumn(l10n.fieldGender, width: 42),
-        ReportColumn(l10n.fieldDateOfBirth, width: 58),
-        ReportColumn(l10n.idGr, width: 48),
-        ReportColumn(l10n.idPen, width: 66),
-        ReportColumn(l10n.fieldMobile, width: 66),
-        ReportColumn(l10n.studentsFilterStatus, width: 44),
+        ReportColumn(l10n.studentCode, width: 64),
+        for (final c in chosen) ReportColumn(c.$2.$1, width: c.$2.$3, type: c.$2.$4),
+        ReportColumn(l10n.studentsFilterStatus, width: 46),
       ],
-      rows: [
-        for (var i = 0; i < items.length; i++)
-          ReportRow([
-            '${i + 1}',
-            export[i][0],
-            items[i].fullName,
-            export[i][4],
-            export[i][5],
-            export[i][6],
-            export[i][7],
-            export[i][8],
-            export[i][9],
-            export[i][12],
-            studentStatusLabel(l10n, items[i].status),
-          ]),
-      ],
-      notes: [l10n.reportCount(items.length)],
-    );
+      rows: rows,
+      filterColumns: {
+        for (var i = 0; i < chosen.length; i++)
+          if (const {ClassListColumn.gender, ClassListColumn.category, ClassListColumn.bloodGroup}.contains(chosen[i].$1)) i + 3,
+        statusAt,
+      },
+      countColumn: genderAt < 0 ? null : genderAt + 3,
+      countLabels: _genderCounts,
+    ).withCounts();
   }
 
   // ------------------------------------------------------------ summary

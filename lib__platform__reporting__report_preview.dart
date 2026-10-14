@@ -5,11 +5,24 @@ import 'report_dataset.dart';
 
 /// The report as an on-screen table, scrolling sideways when wide.
 class ReportPreview extends StatelessWidget {
-  const ReportPreview({super.key, required this.data, this.maxRows = 300, this.moreText});
+  const ReportPreview({
+    super.key,
+    required this.data,
+    this.maxRows = 300,
+    this.moreText,
+    this.onSort,
+    this.sortColumn,
+    this.ascending = true,
+  });
 
   final ReportDataset data;
   final int maxRows;
   final String? moreText;
+
+  /// Tapping a heading sorts by that column (tap again to reverse).
+  final ValueChanged<int>? onSort;
+  final int? sortColumn;
+  final bool ascending;
 
   @override
   Widget build(BuildContext context) {
@@ -45,11 +58,18 @@ class ReportPreview extends StatelessWidget {
                 Container(
                   color: theme.colorScheme.primary,
                   child: Row(children: [
-                    for (final c in data.columns)
-                      cell(c.label, c, style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onPrimary)),
+                    for (var i = 0; i < data.columns.length; i++)
+                      InkWell(
+                        onTap: onSort == null ? null : () => onSort!(i),
+                        child: cell(
+                          sortColumn == i ? '${data.columns[i].label} ${ascending ? '▲' : '▼'}' : data.columns[i].label,
+                          data.columns[i],
+                          style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onPrimary),
+                        ),
+                      ),
                   ]),
                 ),
-                for (final r in rows)
+                for (final (index, r) in rows.indexed)
                   if (r.kind == ReportRowKind.group)
                     Container(
                       color: sd.subtleFill,
@@ -59,7 +79,9 @@ class ReportPreview extends StatelessWidget {
                   else
                     Container(
                       decoration: BoxDecoration(
-                        color: r.highlight ? sd.absent.withValues(alpha: 0.06) : null,
+                        color: r.highlight
+                            ? sd.absent.withValues(alpha: 0.06)
+                            : (data.zebra && index.isOdd ? sd.subtleFill.withValues(alpha: 0.6) : null),
                         border: Border(bottom: BorderSide(color: sd.border, width: 0.5)),
                       ),
                       child: Row(children: [

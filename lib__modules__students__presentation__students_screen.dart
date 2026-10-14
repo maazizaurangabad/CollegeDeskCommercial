@@ -7,7 +7,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/files/csv.dart';
 import '../../../core/files/save_file.dart';
-import '../../../core/files/xlsx.dart';
+import '../../../core/files/xlsx_styled.dart';
+import '../../../platform/organization/organization_providers.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
@@ -56,8 +57,20 @@ class _StudentsScreenState extends ConsumerState<StudentsScreen> {
       l10n.fieldBloodGroup,
       l10n.studentsFilterStatus,
     ];
+    final org = ref.read(activeOrganizationProvider);
     final bytes = excel
-        ? XlsxWriter.write(sheetName: l10n.studentsTitle, header: header, rows: rows)
+        ? XlsxStyledWriter.write(
+            sheetName: l10n.studentsTitle,
+            headingLines: [org.name, l10n.studentsTitle, l10n.studentsCount(rows.length)],
+            header: header,
+            rows: rows,
+            types: [
+              for (var i = 0; i < header.length; i++)
+                i == 5 ? XlsxCellType.number : (i == 7 ? XlsxCellType.date : XlsxCellType.text),
+            ],
+            landscape: true,
+            brandColor: org.brandColor.toARGB32(),
+          )
         : CsvReader.write(header, rows);
     final stamp = DateTime.now().toIso8601String().substring(0, 10);
     final saved = await saveBytesWithDialog(

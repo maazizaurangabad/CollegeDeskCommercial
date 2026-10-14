@@ -10,6 +10,8 @@ import '../../../platform/data/data_providers.dart';
 import '../../../platform/modules/module_providers.dart';
 import '../../../platform/organization/organization_providers.dart';
 import '../../attendance/application/attendance_providers.dart';
+import '../../certificates/application/certificates_providers.dart';
+import '../../certificates/domain/certificate_models.dart';
 import '../../attendance/data/attendance_repository.dart';
 import '../../attendance/domain/attendance_models.dart';
 import '../../attendance/presentation/attendance_labels.dart';
@@ -139,8 +141,11 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                   onSelected: (v) {
                     if (v == 'left') _markLeft(detail);
                     if (v == 'delete') _delete(detail);
+                    if (v == 'certificate') context.go('/certificates/new?student=${detail.id}');
                   },
                   itemBuilder: (_) => [
+                    if (ref.read(enabledModulesProvider).contains('certificates'))
+                      PopupMenuItem(value: 'certificate', child: Text(l10n.certIssue)),
                     if (detail.status == StudentStatus.active)
                       PopupMenuItem(value: 'left', child: Text(l10n.studentMarkLeft)),
                     PopupMenuItem(value: 'delete', child: Text(l10n.studentDelete)),
@@ -261,6 +266,26 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                           ? null
                           : data.$3.map((d) => DateFormat('d MMM').format(d)).join(', '),
                     ),
+                  ]);
+                },
+              ),
+            if (ref.watch(enabledModulesProvider).contains('certificates'))
+              FutureBuilder<List<CertificateRecord>>(
+                future: ref.read(certificateRepositoryProvider).list(studentId: detail.id),
+                builder: (context, snap) {
+                  final certs = snap.data ?? const <CertificateRecord>[];
+                  if (certs.isEmpty) return const SizedBox.shrink();
+                  return _Section(title: l10n.certStudentSection, children: [
+                    for (final c in certs)
+                      InkWell(
+                        onTap: () => context.go('/certificates/view/${c.id}'),
+                        child: InfoRow(
+                          label: DateFormat('d MMM y').format(c.issuedOn),
+                          value: '${certificateTitle(l10n, c.kind).split(' (').first} · ${c.serialLabel}'
+                              '${c.status == CertificateStatus.cancelled ? ' · ${l10n.certCancelled}' : ''}'
+                              '${c.isDuplicate ? ' · ${l10n.certDuplicate}' : ''}',
+                        ),
+                      ),
                   ]);
                 },
               ),
