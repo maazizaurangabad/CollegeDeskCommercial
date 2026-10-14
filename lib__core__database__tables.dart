@@ -338,6 +338,34 @@ class CalendarDays extends Table with StandardColumns {
   Set<Column> get primaryKey => {id};
 }
 
+/// Every certificate issued, with the exact details printed on it, so it
+/// can be reprinted identically and the serial register is never broken.
+@DataClassName('CertificateRow')
+class Certificates extends Table with StandardColumns {
+  /// bonafide, leaving, noDues, noc, character
+  TextColumn get kind => text()();
+  IntColumn get serialNo => integer()();
+
+  /// e.g. BON/2026-27/0001
+  TextColumn get serialLabel => text()();
+  TextColumn get academicYearLabel => text()();
+  TextColumn get studentId => text()();
+  DateTimeColumn get issuedOn => dateTime()();
+
+  /// The fields as printed (name, class, purpose...), as JSON.
+  TextColumn get dataJson => text()();
+
+  /// issued or cancelled
+  TextColumn get status => text().withDefault(const Constant('issued'))();
+  TextColumn get cancelReason => text().nullable()();
+  BoolColumn get isDuplicate => boolean().withDefault(const Constant(false))();
+  IntColumn get printCount => integer().withDefault(const Constant(0))();
+  DateTimeColumn get lastPrintedAt => dateTime().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// Append-only history of changes: who, what, when, old and new values.
 @DataClassName('AuditEntryRow')
 @TableIndex(name: 'audit_by_entity', columns: {#entity, #entityId})

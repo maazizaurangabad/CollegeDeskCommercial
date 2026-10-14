@@ -1,7 +1,7 @@
 # Shiksha Desk
 
 Offline-first education management platform for schools, junior colleges and coaching institutes.
-Built in phases; this is **build 2c (reports and PDF)**. Phase 1 is complete.
+Built in phases; this is **build 2d (certificates and polished lists)**. Phase 1 is complete.
 
 ## What is built so far
 
@@ -83,6 +83,17 @@ Build 2c (reports, no database change):
 - One engine for all reports: on-screen preview, Save PDF, Share PDF (Android), Print, Excel, CSV.
 - PDF letterhead from Settings (logo, name, address, phone, UDISE, board); page x of y; signature lines.
 - Noto Sans fonts are bundled (SIL Open Font License) so PDFs work offline.
+
+Build 2d (database version 7):
+- Certificates tab: Bonafide and Character (half A4, optional office copy), Leaving certificate / Nirgam Utara,
+  NOC and No Dues (full A4). Filled in from the student record (date of birth in words included) and editable
+  before issuing. Serial numbers per type and academic year (BON/2026-27/0001), never reused; cancelled ones stay
+  in the register with the reason; a second LC is a DUPLICATE with the same number; prints and reprints counted.
+  Issuing an LC can mark the student as left.
+- Lists: class list and student master list grouped by class with Total / Boys / Girls counts, row shading,
+  larger font, column choice; on-screen filter chips and tap-to-sort that carry into PDF and Excel.
+- Excel exports are formatted: heading lines, coloured frozen header with filter buttons, sized columns,
+  alternate shading, real numbers and dates, landscape fit-to-width with the header repeated when printed.
 
 The build workflow also switches Android's MainActivity to FlutterFragmentActivity (needed for fingerprint unlock).
 
