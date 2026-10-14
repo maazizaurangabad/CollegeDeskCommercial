@@ -7,6 +7,7 @@ import '../../../platform/organization/institution_seal.dart';
 import '../../../platform/organization/organization_providers.dart';
 import '../../../platform/reporting/pdf_report_renderer.dart';
 import '../../attendance/application/attendance_providers.dart';
+import '../../certificates/application/certificates_providers.dart';
 import '../../students/application/students_providers.dart';
 import 'report_builders.dart';
 
@@ -18,6 +19,8 @@ Future<ReportBuilders> reportBuilders(WidgetRef ref, AppLocalizations l10n) asyn
     attendance: ref.read(attendanceRepositoryProvider),
     students: ref.read(studentRepositoryProvider),
     divisionLabels: await ref.read(academicRepositoryProvider).divisionLabels(),
+    certificates: ref.read(certificateRepositoryProvider),
+    certificateTitle: (k) => certificateTitle(l10n, k),
   );
 }
 

@@ -10,6 +10,7 @@ import '../../../platform/data/activity_repository.dart';
 import '../../../platform/data/data_providers.dart';
 import '../../../platform/modules/module_providers.dart';
 import '../../attendance/presentation/attendance_labels.dart';
+import '../../certificates/application/certificates_providers.dart';
 import '../../students/presentation/student_labels.dart';
 import '../application/dashboard_providers.dart';
 
@@ -113,6 +114,27 @@ class DashboardTodayLists extends ConsumerWidget {
             label: l10n.attendanceRegister,
             variant: SdButtonVariant.text,
             onPressed: () => context.go('/attendance/register'),
+          ),
+        );
+      }
+    }
+
+    if (ref.watch(enabledModulesProvider).contains('certificates')) {
+      final certs = ref.watch(certificatesThisMonthProvider).valueOrNull ?? const {};
+      if (certs.isNotEmpty) {
+        add(
+          l10n.dashboardCertificates,
+          Wrap(
+            spacing: SdSpace.sm,
+            runSpacing: SdSpace.sm,
+            children: [
+              for (final e in certs.entries)
+                ActionChip(
+                  avatar: const Icon(Icons.workspace_premium_outlined, size: 18),
+                  label: Text('${certificateTitle(l10n, e.key).split(' (').first}: ${e.value}'),
+                  onPressed: () => context.go('/certificates'),
+                ),
+            ],
           ),
         );
       }

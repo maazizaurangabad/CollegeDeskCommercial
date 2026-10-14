@@ -108,7 +108,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       if (ref.read(enabledModulesProvider).contains('certificates')) ...[
         (l10n.certIssue, '/certificates/new', Icons.workspace_premium_outlined,
             'certificate bonafide lc leaving nirgam utara register extract tc transfer noc no dues character caste verification validation form 15a issue'),
-        (l10n.certRegister, '/certificates', Icons.list_alt, 'certificate register issued reprint cancel serial'),
+        (l10n.certRegister, '/certificates', Icons.list_alt, 'certificate register issued reprint cancel serial outward count'),
+        (l10n.certRegisterReport, '/reports/certificates', Icons.table_chart_outlined, 'certificate register report excel outward inward export'),
       ],
       if (ref.read(enabledModulesProvider).contains('reports')) ...[
         (l10n.reportRegisterTitle, '/reports/register', Icons.picture_as_pdf_outlined, 'report pdf print register monthly'),

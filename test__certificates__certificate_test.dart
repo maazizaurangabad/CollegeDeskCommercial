@@ -7,6 +7,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shiksha_desk/core/database/app_database.dart';
 import 'package:shiksha_desk/core/files/xlsx_styled.dart';
 import 'package:shiksha_desk/core/validation/date_words.dart';
+import 'package:shiksha_desk/l10n/gen/app_localizations_en.dart';
+import 'package:shiksha_desk/modules/attendance/data/attendance_repository.dart';
+import 'package:shiksha_desk/modules/reports/application/report_builders.dart';
+import 'package:shiksha_desk/platform/data/app_settings_repository.dart';
 import 'package:shiksha_desk/modules/certificates/application/certificate_pdf.dart';
 import 'package:shiksha_desk/modules/certificates/data/certificate_repository.dart';
 import 'package:shiksha_desk/modules/certificates/domain/certificate_models.dart';
@@ -140,6 +144,35 @@ void main() {
       expect(lc.isDuplicate, isFalse);
       // Issuing a Nirgam Utara without "mark as left" leaves the student active.
       expect((await students.load(studentId))!.status, StudentStatus.active);
+    });
+
+    test('the certificate register lists every certificate with counts, and can be filtered', () async {
+      final f = await certs.prefill(studentId, divisionLabels: labels);
+      f[CertField.purpose] = 'Scholarship';
+      await certs.issue(kind: CertificateKind.bonafide, studentId: studentId, fields: f, academicYearLabel: '2026-27');
+      await certs.issue(kind: CertificateKind.bonafide, studentId: studentId, fields: f, academicYearLabel: '2026-27');
+      final lc = await certs.issue(kind: CertificateKind.leaving, studentId: studentId, fields: f, academicYearLabel: '2026-27');
+      await certs.cancel(lc.id, 'Typing mistake');
+      final builders = ReportBuilders(
+        l10n: AppLocalizationsEn(),
+        academic: await AcademicRepository(db, testSession).loadSnapshot(),
+        attendance: AttendanceRepository(db, testSession, AppSettingsRepository(db, testSession)),
+        students: students,
+        divisionLabels: labels,
+        certificates: certs,
+        certificateTitle: (k) => k.name,
+      );
+      final all = await builders.certificateRegister();
+      expect(all.rows, hasLength(3));
+      expect(all.rows.first.cells[1], 'BON/2026-27/0001');
+      expect(all.rows.first.cells[7], 'Scholarship');
+      expect(all.rows.last.highlight, isTrue);
+      expect(all.notes.first, startsWith('Total 2'));
+
+      final onlyBonafide = await builders.certificateRegister(kind: CertificateKind.bonafide);
+      expect(onlyBonafide.rows, hasLength(2));
+      final none = await builders.certificateRegister(from: DateTime(2030), to: DateTime(2030, 12, 31));
+      expect(none.rows, isEmpty);
     });
 
     test('every certificate type renders to a PDF', () async {

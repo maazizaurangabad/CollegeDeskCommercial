@@ -6,6 +6,8 @@ import '../../../platform/reporting/report_dataset.dart';
 import '../../attendance/data/attendance_repository.dart';
 import '../../attendance/domain/attendance_models.dart';
 import '../../attendance/presentation/attendance_labels.dart';
+import '../../certificates/data/certificate_repository.dart';
+import '../../certificates/domain/certificate_models.dart';
 import '../../students/data/student_repository.dart';
 import '../../students/domain/student_models.dart';
 import '../../students/presentation/student_labels.dart';
@@ -22,7 +24,14 @@ class ReportBuilders {
     required this.attendance,
     required this.students,
     required this.divisionLabels,
+    this.certificates,
+    this.certificateTitle,
   });
+
+  final CertificateRepository? certificates;
+
+  /// Display name of each certificate type.
+  final String Function(CertificateKind kind)? certificateTitle;
 
   final AppLocalizations l10n;
   final AcademicSnapshot academic;
@@ -333,6 +342,100 @@ class ReportBuilders {
       countColumn: genderAt < 0 ? null : genderAt + 3,
       countLabels: _genderCounts,
     ).withCounts();
+  }
+
+  // ------------------------------------------------------------ certificates
+
+  /// The outward register of certificates: number, date, type, student,
+  /// class, GR, purpose or reason, prints and status.
+  Future<ReportDataset> certificateRegister({DateTime? from, DateTime? to, CertificateKind? kind, String query = ''}) async {
+    final all = await certificates!.list(kind: kind, limit: 100000);
+    return certificateRegisterOf(all, from: from, to: to, query: query, kind: kind);
+  }
+
+  ReportDataset certificateRegisterOf(
+    List<CertificateRecord> all, {
+    DateTime? from,
+    DateTime? to,
+    CertificateKind? kind,
+    String query = '',
+  }) {
+    final q = query.trim().toLowerCase();
+    final items = all.where((c) {
+      final d = DateTime(c.issuedOn.year, c.issuedOn.month, c.issuedOn.day);
+      if (from != null && d.isBefore(DateTime(from.year, from.month, from.day))) return false;
+      if (to != null && d.isAfter(DateTime(to.year, to.month, to.day))) return false;
+      if (kind != null && c.kind != kind) return false;
+      if (q.isNotEmpty && !'${c.studentName} ${c.serialLabel} ${c.fields[CertField.grNumber] ?? ''}'.toLowerCase().contains(q)) {
+        return false;
+      }
+      return true;
+    }).toList()
+      ..sort((a, b) {
+        final byDate = a.issuedOn.compareTo(b.issuedOn);
+        return byDate != 0 ? byDate : a.serialLabel.compareTo(b.serialLabel);
+      });
+    String title(CertificateKind k) => (certificateTitle?.call(k) ?? k.name).split(' (').first;
+    String status(CertificateRecord c) => c.status == CertificateStatus.cancelled
+        ? '${l10n.certCancelled}: ${c.cancelReason ?? ''}'
+        : (c.isDuplicate ? l10n.certDuplicate : l10n.certIssuedStatus);
+    final counts = <CertificateKind, int>{};
+    for (final c in items.where((c) => c.status == CertificateStatus.issued)) {
+      counts[c.kind] = (counts[c.kind] ?? 0) + 1;
+    }
+    return ReportDataset(
+      title: l10n.certRegisterReport,
+      subtitle: [
+        [
+          if (from != null || to != null) '${from == null ? '…' : _date(from)} – ${to == null ? '…' : _date(to)}',
+          if (kind != null) title(kind),
+        ].join(' · '),
+      ],
+      fileName: 'certificate-register',
+      landscape: true,
+      fontSize: 9,
+      zebra: true,
+      columns: [
+        ReportColumn(l10n.reportSr, width: 26, align: ReportAlign.center, type: ReportColumnType.number),
+        ReportColumn(l10n.certOutwardNo, width: 92),
+        ReportColumn(l10n.certIssueDate, width: 60, type: ReportColumnType.date),
+        ReportColumn(l10n.certChooseType, width: 92),
+        ReportColumn(l10n.fieldName, flex: 3),
+        ReportColumn(l10n.fieldClass, width: 82),
+        ReportColumn(l10n.idGr, width: 46),
+        ReportColumn(l10n.certPurposeReason, flex: 2),
+        ReportColumn(l10n.certPrintedColumn, width: 38, align: ReportAlign.center, type: ReportColumnType.number),
+        ReportColumn(l10n.studentsFilterStatus, width: 70),
+      ],
+      rows: [
+        for (var i = 0; i < items.length; i++)
+          ReportRow(
+            [
+              '${i + 1}',
+              items[i].serialLabel,
+              DateFormat('dd/MM/yyyy').format(items[i].issuedOn),
+              title(items[i].kind),
+              items[i].studentName,
+              items[i].fields[CertField.className] ?? '',
+              items[i].fields[CertField.grNumber] ?? '',
+              [
+                items[i].fields[CertField.purpose] ?? '',
+                if (items[i].kind == CertificateKind.leaving || items[i].kind == CertificateKind.nirgam)
+                  items[i].fields[CertField.leavingReason] ?? '',
+              ].where((x) => x.trim().isNotEmpty).join(' · '),
+              '${items[i].printCount}',
+              status(items[i]),
+            ],
+            highlight: items[i].status == CertificateStatus.cancelled,
+          ),
+      ],
+      filterColumns: const {3, 9},
+      notes: [
+        '${l10n.reportTotal} ${items.where((c) => c.status == CertificateStatus.issued).length}'
+            '${counts.isEmpty ? '' : ' · ${counts.entries.map((e) => '${title(e.key)} ${e.value}').join(' · ')}'}',
+      ],
+      signatures: [l10n.reportPrincipal],
+    );
   }
 
   // ------------------------------------------------------------ summary

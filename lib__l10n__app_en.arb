@@ -1052,5 +1052,17 @@
   "cfStandard": "Std (e.g. 11th, 12th)",
   "cfFaculty": "Faculty (e.g. Science)",
   "cfEntryNumber": "Entry number in the General Register",
-  "cfCasteRecorded": "Caste as recorded in the General Register"
+  "cfCasteRecorded": "Caste as recorded in the General Register",
+  "certRegisterReport": "Certificate register",
+  "certRegisterReportDesc": "Every certificate issued in a period: number, date, type, student, purpose, status",
+  "certOutwardNo": "Outward no.",
+  "certIssueDate": "Date",
+  "certPurposeReason": "Purpose / reason",
+  "certPrintedColumn": "Prints",
+  "certIssuedStatus": "Issued",
+  "certPeriodMonth": "This month",
+  "certPeriodYear": "This academic year",
+  "certPeriodAll": "All time",
+  "certSearch": "Search by student name, number or GR",
+  "dashboardCertificates": "Certificates this month"
 }

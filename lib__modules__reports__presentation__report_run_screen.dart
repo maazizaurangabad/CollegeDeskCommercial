@@ -12,6 +12,8 @@ import '../../../platform/reporting/report_dataset.dart';
 import '../../../platform/reporting/report_output.dart';
 import '../../../platform/reporting/report_preview.dart';
 import '../../attendance/presentation/division_picker.dart';
+import '../../certificates/application/certificates_providers.dart';
+import '../../certificates/domain/certificate_models.dart';
 import '../../students/domain/student_models.dart';
 import '../../students/presentation/student_labels.dart';
 import '../application/report_builders.dart';
@@ -38,6 +40,7 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
   double _threshold = 75;
   String? _programId;
   StudentStatus? _status = StudentStatus.active;
+  CertificateKind? _certKind;
   final Set<ClassListColumn> _columns = {ClassListColumn.gender, ClassListColumn.dateOfBirth, ClassListColumn.gr, ClassListColumn.mobile};
 
   ReportDataset? _data;
@@ -69,6 +72,7 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
         ReportKind.summary => await b.attendanceSummary(from: _from, to: _to),
         ReportKind.classList => await b.classList(_divisionId!, _columns),
         ReportKind.master => await b.studentMaster(programId: _programId, status: _status, show: _columns),
+        ReportKind.certificates => await b.certificateRegister(from: _from, to: _to, kind: _certKind),
       };
       if (mounted) setState(() => _data = data);
     } catch (_) {
@@ -132,7 +136,16 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
           ),
         ]),
       if (widget.kind == ReportKind.absentees) dateTile(l10n.attendanceDate, _date, (d) => _date = d),
-      if (widget.kind == ReportKind.defaulters || widget.kind == ReportKind.summary) ...[
+      if (widget.kind == ReportKind.certificates)
+        SdSelectField<CertificateKind>(
+          label: l10n.certChooseType,
+          value: _certKind,
+          clearLabel: l10n.certAllTypes,
+          emptyText: l10n.certAllTypes,
+          options: [for (final k in CertificateKind.values) (k, certificateTitle(l10n, k))],
+          onChanged: (v) => setState(() => _certKind = v),
+        ),
+      if (widget.kind == ReportKind.defaulters || widget.kind == ReportKind.summary || widget.kind == ReportKind.certificates) ...[
         dateTile(l10n.reportFrom, _from, (d) => _from = d),
         dateTile(l10n.reportTo, _to, (d) => _to = d),
       ],

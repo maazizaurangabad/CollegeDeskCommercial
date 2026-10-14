@@ -5,6 +5,8 @@ import '../../../platform/data/activity_repository.dart';
 import '../../../platform/data/data_providers.dart';
 import '../../attendance/application/attendance_providers.dart';
 import '../../attendance/domain/attendance_models.dart';
+import '../../certificates/application/certificates_providers.dart';
+import '../../certificates/domain/certificate_models.dart';
 import '../../students/application/students_providers.dart';
 import '../../students/domain/student_models.dart';
 
@@ -65,4 +67,18 @@ final recentActivityProvider = FutureProvider<List<ActivityItem>>((ref) {
   ref.watch(studentsRevisionProvider);
   ref.watch(attendanceRevisionProvider);
   return ActivityRepository(ref.watch(appDatabaseProvider), ref.watch(sessionProvider)).recent();
+});
+
+/// Certificates issued this month, per type (cancelled ones not counted).
+final certificatesThisMonthProvider = FutureProvider<Map<CertificateKind, int>>((ref) async {
+  ref.watch(certificatesRevisionProvider);
+  final now = DateTime.now();
+  final all = await ref.watch(certificateRepositoryProvider).list(limit: 100000);
+  final counts = <CertificateKind, int>{};
+  for (final c in all) {
+    if (c.status != CertificateStatus.issued) continue;
+    if (c.issuedOn.year != now.year || c.issuedOn.month != now.month) continue;
+    counts[c.kind] = (counts[c.kind] ?? 0) + 1;
+  }
+  return counts;
 });

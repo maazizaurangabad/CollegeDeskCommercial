@@ -15,6 +15,7 @@ class ReportsScreen extends StatelessWidget {
     final groups = <String, List<ReportKind>>{
       l10n.reportGroupAttendance: [ReportKind.register, ReportKind.defaulters, ReportKind.absentees, ReportKind.summary],
       l10n.reportGroupStudents: [ReportKind.classList, ReportKind.master],
+      l10n.navCertificates: [ReportKind.certificates],
     };
     return SdPage(
       children: [
