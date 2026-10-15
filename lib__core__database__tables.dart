@@ -507,6 +507,65 @@ class FeeReceiptLines extends Table with StandardColumns {
   Set<Column> get primaryKey => {id};
 }
 
+/// A subject taught in a class (program). Subjects with the same
+/// [columnName] are alternatives sharing one result-sheet column (each
+/// student takes one, e.g. Urdu / Arabic / Hindi).
+@DataClassName('SubjectRow')
+class Subjects extends Table with StandardColumns {
+  TextColumn get programId => text()();
+  TextColumn get name => text()();
+  TextColumn get columnName => text()();
+  IntColumn get displayOrder => integer().withDefault(const Constant(0))();
+
+  /// marks or grade (grade subjects are not added to the total)
+  TextColumn get kind => text().withDefault(const Constant('marks'))();
+  IntColumn get maxMarks => integer().withDefault(const Constant(100))();
+  IntColumn get passMarks => integer().withDefault(const Constant(35))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// An examination of an academic year (1st Term, 2nd Term...).
+@DataClassName('ExamRow')
+class Exams extends Table with StandardColumns {
+  TextColumn get academicYearId => text()();
+  TextColumn get name => text()();
+  IntColumn get displayOrder => integer().withDefault(const Constant(0))();
+
+  /// Counted in the final (yearly) result.
+  BoolColumn get countsInFinal => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Which subject of a choice column a student takes in a year.
+@DataClassName('SubjectChoiceRow')
+class SubjectChoices extends Table with StandardColumns {
+  TextColumn get studentId => text()();
+  TextColumn get academicYearId => text()();
+  TextColumn get columnName => text()();
+  TextColumn get subjectId => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// A student's marks (or grade) in one subject of one exam.
+@DataClassName('MarkRow')
+class Marks extends Table with StandardColumns {
+  TextColumn get examId => text()();
+  TextColumn get studentId => text()();
+  TextColumn get subjectId => text()();
+  IntColumn get marks => integer().nullable()();
+  TextColumn get grade => text().nullable()();
+  BoolColumn get absent => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// Append-only history of changes: who, what, when, old and new values.
 @DataClassName('AuditEntryRow')
 @TableIndex(name: 'audit_by_entity', columns: {#entity, #entityId})

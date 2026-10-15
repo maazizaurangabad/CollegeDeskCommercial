@@ -105,6 +105,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         (l10n.attendanceRegister, '/attendance/register', Icons.calendar_view_month_outlined,
             'register monthly month percentage defaulter below 75'),
       if (attendance) (l10n.attendanceTitle, '/attendance', Icons.fact_check_outlined, 'attendance mark absent present today'),
+      if (ref.read(enabledModulesProvider).contains('results')) ...[
+        (l10n.navResults, '/results', Icons.emoji_events_outlined, 'result results marks exam term sheet pass fail percentage rank'),
+        (l10n.resSetup, '/results/setup', Icons.tune_outlined, 'subject subjects exam exams term atkt distinction grade passing marks'),
+      ],
       if (ref.read(enabledModulesProvider).contains('fees')) ...[
         (l10n.feeTakePayment, '/fees/pay', Icons.currency_rupee, 'fee fees pay payment collect receipt cash upi cheque'),
         (l10n.navFees, '/fees', Icons.receipt_long_outlined, 'fee fees receipt register collection today'),

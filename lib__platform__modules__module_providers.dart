@@ -5,6 +5,7 @@ import '../../modules/certificates/certificates_module.dart';
 import '../../modules/dashboard/dashboard_module.dart';
 import '../../modules/fees/fees_module.dart';
 import '../../modules/messages/messages_module.dart';
+import '../../modules/results/results_module.dart';
 import '../../modules/reports/reports_module.dart';
 import '../../modules/search/search_module.dart';
 import '../../modules/settings/settings_module.dart';
@@ -25,6 +26,7 @@ ModuleRegistry buildModuleRegistry() =>
       messagesModule,
       feesModule,
       certificatesModule,
+      resultsModule,
       reportsModule,
       settingsModule,
     ]);

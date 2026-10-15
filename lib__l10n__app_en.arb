@@ -1447,5 +1447,163 @@
   "msgKindFee": "Fee reminder",
   "msgPhBalance": "Balance",
   "msgPhOverdue": "Overdue",
-  "msgTemplateFee": "Fee reminder"
+  "msgTemplateFee": "Fee reminder",
+  "navResults": "Results",
+  "resSetup": "Results setup",
+  "resFinalResult": "Final result",
+  "resEnterMarks": "Enter marks",
+  "resPrint": "Print",
+  "resNoStudents": "No students in this class",
+  "resNoSubjects": "No subjects set for this class",
+  "resNoSubjectsHint": "Add the class's subjects in Results setup first.",
+  "resPassed": "Passed",
+  "resFailed": "Failed",
+  "resAtkt": "ATKT",
+  "resIncomplete": "Incomplete",
+  "resDistinction": "Distinction",
+  "resFirstClass": "First class",
+  "resSecondClass": "Second class",
+  "resPassClass": "Pass class",
+  "resColGr": "G.R. No",
+  "resColName": "Name of student",
+  "resColTotal": "Total ({max})",
+  "@resColTotal": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "resColPercent": "% age",
+  "resColGrade": "{subject} (Grade)",
+  "@resColGrade": {
+    "placeholders": {
+      "subject": {
+        "type": "String"
+      }
+    }
+  },
+  "resColClass": "Class",
+  "resColRank": "Rank",
+  "resColResult": "Result",
+  "resPrincipal": "Principal",
+  "resSummaryLine": "Students: {total} · Passed: {passed} · Failed: {failed} · ATKT: {atkt}",
+  "@resSummaryLine": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "passed": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      },
+      "atkt": {
+        "type": "int"
+      }
+    }
+  },
+  "resErrDuplicate": "This name is already used.",
+  "resErrInUse": "Marks are already entered for this, so it cannot be deleted.",
+  "resErrOverMax": "{value} is more than the maximum marks.",
+  "@resErrOverMax": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "resErrBadValue": "\"{value}\" is not valid. Type marks, AB for absent, or a grade letter.",
+  "@resErrBadValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "resChooseColumn": "Subject",
+  "resGrade": "Grade",
+  "resEntryHintMarks": "Type marks out of {max}. Type AB for absent. Leave empty if not yet known.",
+  "@resEntryHintMarks": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "resEntryHintGrade": "Type the grade (A, B, C, D). Type AB for absent.",
+  "resSetUnchosen": "Students without a choice take:",
+  "resChangeSubject": "Change subject",
+  "resChooseSubject": "Choose subject",
+  "resMarksSaved": "{count} marks saved",
+  "@resMarksSaved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resUnsavedTitle": "Marks not saved",
+  "resUnsavedBody": "Some marks you typed are not saved yet.",
+  "resLeaveWithoutSaving": "Leave without saving",
+  "resExamsTitle": "Examinations ({year})",
+  "@resExamsTitle": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "resAddExam": "Add exam",
+  "resExamName": "Name of the exam",
+  "resCountsInFinal": "Counted in the final result",
+  "resNotInFinal": "Not counted in the final result",
+  "resFinalHint": "The final result (for promotion and the Leaving Certificate) adds up the exams switched on. Usually only the 2nd Term.",
+  "resRulesTitle": "Result rules",
+  "resWholePercent": "Percentage as a whole number",
+  "resWholePercentHint": "52 instead of 52.00",
+  "resAtktOff": "Off: failing in any subject means Failed",
+  "resAtktOn": "Failed in up to {count} subjects: ATKT (promoted)",
+  "@resAtktOn": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resPercentLabel": "Percentage (0 to 100)",
+  "resSubjectsTitle": "Subjects of each class",
+  "resSubjectsHint": "Subjects with the same column name are a choice: each student takes one of them, and they share one column on the result sheet (e.g. Urdu/Arabic/Hindi). Grade subjects are not added to the total.",
+  "resGradeOnly": "Grade only",
+  "resMaxPass": "Out of {max}, passing {pass}",
+  "@resMaxPass": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      },
+      "pass": {
+        "type": "int"
+      }
+    }
+  },
+  "resAddSubject": "Add subject",
+  "resEditSubject": "Edit subject",
+  "resScienceTemplate": "Add Science subjects",
+  "resCopySubjects": "Copy from another class",
+  "resSubjectsAdded": "{count} subjects added",
+  "@resSubjectsAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resSubjectName": "Subject name",
+  "resColumnName": "Column (for a choice of subjects)",
+  "resColumnHint": "Leave empty for its own column. For a choice, give the same column name to each subject, e.g. Urdu/Arabic/Hindi.",
+  "resKindMarks": "Marks",
+  "resKindGrade": "Grade only",
+  "resMaxMarks": "Maximum marks",
+  "resPassMarks": "Passing marks"
 }
