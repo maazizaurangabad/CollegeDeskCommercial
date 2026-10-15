@@ -11,6 +11,7 @@ import '../../../platform/data/data_providers.dart';
 import '../../../platform/modules/module_providers.dart';
 import '../../attendance/presentation/attendance_labels.dart';
 import '../../certificates/application/certificates_providers.dart';
+import '../../fees/application/fees_providers.dart';
 import '../../students/presentation/student_labels.dart';
 import '../application/dashboard_providers.dart';
 
@@ -146,6 +147,33 @@ class DashboardTodayLists extends ConsumerWidget {
           ),
         );
       }
+    }
+
+    if (ref.watch(enabledModulesProvider).contains('fees')) {
+      final fees = ref.watch(feesTodayProvider).valueOrNull;
+      add(
+        l10n.feeDashboardTitle,
+        Wrap(
+          spacing: SdSpace.sm,
+          runSpacing: SdSpace.sm,
+          children: [
+            ActionChip(
+              avatar: const Icon(Icons.currency_rupee, size: 18),
+              label: Text(l10n.feeDashboardToday(rupees(fees?.total ?? 0), fees?.count ?? 0)),
+              onPressed: () => context.go('/fees'),
+            ),
+            if (fees != null)
+              for (final e in fees.byMode.entries)
+                Chip(label: Text('${paymentModeLabel(l10n, e.key)}: ${rupees(e.value)}')),
+          ],
+        ),
+        trailing: SdButton(
+          label: l10n.feeTakePayment,
+          icon: Icons.add,
+          variant: SdButtonVariant.text,
+          onPressed: () => context.go('/fees/pay'),
+        ),
+      );
     }
 
     final birthdays = ref.watch(birthdaysTodayProvider).valueOrNull ?? const [];

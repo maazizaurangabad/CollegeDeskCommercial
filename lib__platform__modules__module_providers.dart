@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../modules/attendance/attendance_module.dart';
 import '../../modules/certificates/certificates_module.dart';
 import '../../modules/dashboard/dashboard_module.dart';
+import '../../modules/fees/fees_module.dart';
 import '../../modules/messages/messages_module.dart';
 import '../../modules/reports/reports_module.dart';
 import '../../modules/search/search_module.dart';
@@ -22,6 +23,7 @@ ModuleRegistry buildModuleRegistry() =>
       studentsModule,
       attendanceModule,
       messagesModule,
+      feesModule,
       certificatesModule,
       reportsModule,
       settingsModule,

@@ -14,6 +14,7 @@ import '../../../platform/reporting/report_preview.dart';
 import '../../attendance/presentation/division_picker.dart';
 import '../../certificates/application/certificates_providers.dart';
 import '../../certificates/domain/certificate_models.dart';
+import '../../fees/application/fees_providers.dart';
 import '../../students/domain/student_models.dart';
 import '../../students/presentation/student_labels.dart';
 import '../application/report_builders.dart';
@@ -41,6 +42,7 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
   String? _programId;
   StudentStatus? _status = StudentStatus.active;
   CertificateKind? _certKind;
+  bool _overdueOnly = false;
   final Set<ClassListColumn> _columns = {ClassListColumn.gender, ClassListColumn.dateOfBirth, ClassListColumn.gr, ClassListColumn.mobile};
 
   ReportDataset? _data;
@@ -64,6 +66,13 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
       _sortColumn = null;
     });
     try {
+      final year = ref.read(academicControllerProvider).activeYear;
+      if (widget.kind.isFee && year == null && widget.kind != ReportKind.feeDayBook && widget.kind != ReportKind.feeHeads) {
+        if (mounted) SdToast.show(context, l10n.feeErrNoYear);
+        return;
+      }
+      final yearId = year?.id ?? '';
+      final yearLabel = year?.label ?? '';
       final b = await reportBuilders(ref, l10n);
       final data = switch (widget.kind) {
         ReportKind.register => await b.monthlyRegister(_divisionId!, _month.year, _month.month),
@@ -73,6 +82,11 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
         ReportKind.classList => await b.classList(_divisionId!, _columns),
         ReportKind.master => await b.studentMaster(programId: _programId, status: _status, show: _columns),
         ReportKind.certificates => await b.certificateRegister(from: _from, to: _to, kind: _certKind),
+        ReportKind.feeDayBook => await feeReports(ref, l10n).dayBook(from: _from, to: _to),
+        ReportKind.feeHeads => await feeReports(ref, l10n).headWise(from: _from, to: _to),
+        ReportKind.feeClassSummary => await feeReports(ref, l10n).classSummary(yearId, yearLabel),
+        ReportKind.feeDefaulters => await feeReports(ref, l10n)
+            .defaulters(yearId, yearLabel, programId: _programId, overdueOnly: _overdueOnly),
       };
       if (mounted) setState(() => _data = data);
     } catch (_) {
@@ -145,7 +159,11 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
           options: [for (final k in CertificateKind.values) (k, certificateTitle(l10n, k))],
           onChanged: (v) => setState(() => _certKind = v),
         ),
-      if (widget.kind == ReportKind.defaulters || widget.kind == ReportKind.summary || widget.kind == ReportKind.certificates) ...[
+      if (widget.kind == ReportKind.defaulters ||
+          widget.kind == ReportKind.summary ||
+          widget.kind == ReportKind.certificates ||
+          widget.kind == ReportKind.feeDayBook ||
+          widget.kind == ReportKind.feeHeads) ...[
         dateTile(l10n.reportFrom, _from, (d) => _from = d),
         dateTile(l10n.reportTo, _to, (d) => _to = d),
       ],
@@ -156,7 +174,15 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
           options: [for (final t in const [50.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0]) (t, l10n.reportBelowPercent(t.toStringAsFixed(0)))],
           onChanged: (v) => setState(() => _threshold = v ?? 75),
         ),
-      if (widget.kind == ReportKind.defaulters || widget.kind == ReportKind.master)
+      if (widget.kind == ReportKind.feeDefaulters)
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.feeOverdueOnly),
+          subtitle: Text(l10n.feeOverdueOnlyHint),
+          value: _overdueOnly,
+          onChanged: (v) => setState(() => _overdueOnly = v),
+        ),
+      if (widget.kind == ReportKind.defaulters || widget.kind == ReportKind.master || widget.kind == ReportKind.feeDefaulters)
         SdSelectField<String>(
           label: l10n.fieldClass,
           value: _programId,

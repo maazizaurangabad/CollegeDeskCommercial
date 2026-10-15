@@ -36,12 +36,19 @@ part 'app_database.g.dart';
   CalendarDays,
   Certificates,
   MessageLogs,
+  FeeHeads,
+  FeeStructures,
+  FeeStructureItems,
+  FeeDueDates,
+  StudentFeeAdjustments,
+  FeeReceipts,
+  FeeReceiptLines,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   /// Bump this and add a step in migrations.dart for every schema change.
-  static const int currentSchemaVersion = 8;
+  static const int currentSchemaVersion = 9;
 
   @override
   int get schemaVersion => currentSchemaVersion;

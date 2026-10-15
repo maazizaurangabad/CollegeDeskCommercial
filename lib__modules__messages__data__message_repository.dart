@@ -59,6 +59,7 @@ class MessageRepository extends OrgScopedRepository {
   static const streakTemplateKey = 'messages.template.streak';
   static const streakDaysKey = 'messages.streak_days';
   static const codesKey = 'messages.codes';
+  static const feeTemplateKey = 'messages.template.fee';
 
   static final _dateWords = DateFormat('d MMM y');
 
@@ -68,6 +69,7 @@ class MessageRepository extends OrgScopedRepository {
     final absent = await settings.getValue(absentTemplateKey);
     final streak = await settings.getValue(streakTemplateKey);
     final days = int.tryParse(await settings.getValue(streakDaysKey) ?? '');
+    final fee = await settings.getValue(feeTemplateKey);
     final rawCodes = await settings.getValue(codesKey);
     final Set<String> codes;
     if (rawCodes == null) {
@@ -84,6 +86,7 @@ class MessageRepository extends OrgScopedRepository {
       streakTemplate: (streak == null || streak.trim().isEmpty) ? MessageSettings.defaultStreakTemplate : streak,
       streakDays: (days == null || days < 2) ? MessageSettings.defaultStreakDays : days,
       codes: codes,
+      feeTemplate: (fee == null || fee.trim().isEmpty) ? MessageSettings.defaultFeeTemplate : fee,
     );
   }
 
@@ -92,6 +95,7 @@ class MessageRepository extends OrgScopedRepository {
     await settings.setValue(streakTemplateKey, value.streakTemplate.trim());
     await settings.setValue(streakDaysKey, '${value.streakDays < 2 ? 2 : value.streakDays}');
     await settings.setValue(codesKey, jsonEncode(value.codes.toList()..sort()));
+    await settings.setValue(feeTemplateKey, value.feeTemplate.trim());
   }
 
   /// Puts the standard texts back (the mark choice is kept).
@@ -99,6 +103,7 @@ class MessageRepository extends OrgScopedRepository {
     await settings.setValue(absentTemplateKey, MessageSettings.defaultAbsentTemplate);
     await settings.setValue(streakTemplateKey, MessageSettings.defaultStreakTemplate);
     await settings.setValue(streakDaysKey, '${MessageSettings.defaultStreakDays}');
+    await settings.setValue(feeTemplateKey, MessageSettings.defaultFeeTemplate);
   }
 
   // ================================================================ families
@@ -191,6 +196,30 @@ class MessageRepository extends OrgScopedRepository {
     });
   }
 
+  /// The fee reminder for one family. Amounts are written like ₹12,500.
+  static String fillFeeBody(
+    String template, {
+    required List<String> names,
+    required List<String> classes,
+    required String balance,
+    required String overdue,
+    required DateTime date,
+    required String institution,
+  }) {
+    final distinct = <String>[];
+    for (final c in classes) {
+      if (c.isNotEmpty && !distinct.contains(c)) distinct.add(c);
+    }
+    return MessagePlaceholders.fill(template, {
+      MessagePlaceholders.student: _joinNames(names),
+      MessagePlaceholders.className: distinct.join(' / '),
+      MessagePlaceholders.balance: balance,
+      MessagePlaceholders.overdue: overdue,
+      MessagePlaceholders.date: _dateWords.format(date),
+      MessagePlaceholders.institution: institution,
+    });
+  }
+
   static String _joinNames(List<String> names) {
     if (names.length <= 1) return names.join();
     return '${names.sublist(0, names.length - 1).join(', ')} and ${names.last}';
@@ -246,24 +275,8 @@ class MessageRepository extends OrgScopedRepository {
     return {for (final r in rows) (r.studentId, r.divisionId): r.rollNumber};
   }
 
-  /// studentId -> when a parent message about [date] was last opened.
-  Future<Map<String, DateTime>> _sentOn(DateTime date) async {
-    final rows = await (db.select(db.messageLogs)
-          ..where((t) =>
-              t.organizationId.equals(orgId) &
-              t.deletedAt.isNull() &
-              t.forDate.equals(_day(date)) &
-              t.kind.isIn([MessageKind.absent.name, MessageKind.streak.name])))
-        .get();
-    final out = <String, DateTime>{};
-    for (final r in rows) {
-      final id = r.studentId;
-      if (id == null) continue;
-      final previous = out[id];
-      if (previous == null || r.sentAt.isAfter(previous)) out[id] = r.sentAt;
-    }
-    return out;
-  }
+  /// studentId -> when an absence message about [date] was last opened.
+  Future<Map<String, DateTime>> _sentOn(DateTime date) => sentOn(date, {MessageKind.absent, MessageKind.streak});
 
   // ================================================================= record
 
@@ -289,6 +302,56 @@ class MessageRepository extends OrgScopedRepository {
         );
       }
     });
+  }
+
+  /// Records a fee reminder to one family (siblings share one message).
+  /// [students] are (studentId, name, class).
+  Future<void> recordFeeReminder({
+    required List<(String, String, String)> students,
+    required String mobile,
+    required String body,
+    required DateTime date,
+    String? recipient,
+    String channel = 'whatsapp',
+  }) {
+    return db.transaction(() async {
+      final ts = now();
+      final batch = Uuid7.generate(ts);
+      for (final (id, name, classLabel) in students) {
+        await _insert(
+          batch: batch,
+          ts: ts,
+          kind: MessageKind.feeDue,
+          date: date,
+          studentId: id,
+          studentName: name,
+          classLabel: classLabel,
+          recipient: recipient,
+          mobile: mobile,
+          body: body,
+          channel: channel,
+        );
+      }
+    });
+  }
+
+  /// studentId -> when a message of [kinds] about [date] was last opened.
+  Future<Map<String, DateTime>> sentOn(DateTime date, Set<MessageKind> kinds) async {
+    final rows = await (db.select(db.messageLogs)
+          ..where((t) =>
+              t.organizationId.equals(orgId) &
+              t.deletedAt.isNull() &
+              t.forDate.equals(_day(date)) &
+              t.kind.isIn(kinds.map((k) => k.name))))
+        .get();
+    final out = <String, DateTime>{};
+    for (final r in rows) {
+      final id = r.studentId;
+      if (id == null) continue;
+      final previous = out[id];
+      if (previous == null || r.sentAt.isAfter(previous)) out[id] = r.sentAt;
+    }
+    return out;
   }
 
   /// Records that the day summary was shared or copied.

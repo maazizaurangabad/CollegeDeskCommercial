@@ -487,6 +487,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
                             MessageKind.summary => Icons.summarize_outlined,
                             MessageKind.streak => Icons.warning_amber_outlined,
                             MessageKind.absent => Icons.chat_outlined,
+                            MessageKind.feeDue => Icons.currency_rupee,
                           },
                           color: items[i].kind == MessageKind.streak ? sd.absent : null,
                         ),

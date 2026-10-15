@@ -11,7 +11,10 @@ enum MessageKind {
   streak,
 
   /// The day's summary for staff (no single student).
-  summary;
+  summary,
+
+  /// Fees pending.
+  feeDue;
 
   static MessageKind byName(String name) => values.firstWhere((k) => k.name == name, orElse: () => absent);
 }
@@ -25,8 +28,10 @@ abstract final class MessagePlaceholders {
   static const days = '{days}';
   static const institution = '{institution}';
   static const mark = '{mark}';
+  static const balance = '{balance}';
+  static const overdue = '{overdue}';
 
-  static const all = [student, className, roll, date, days, institution, mark];
+  static const all = [student, className, roll, date, days, institution, mark, balance, overdue];
 
   /// Replaces every known placeholder; unknown words in braces are left as typed.
   static String fill(String template, Map<String, String> values) {
@@ -46,7 +51,16 @@ class MessageSettings {
     required this.streakTemplate,
     required this.streakDays,
     required this.codes,
+    this.feeTemplate = defaultFeeTemplate,
   });
+
+  static const defaultFeeTemplate = 'Dear Parent,\n'
+      'Fees of {student} ({class}) are pending: {balance}.\n'
+      'Please pay at the office at the earliest. Kindly ignore if already paid.\n'
+      '- {institution}';
+
+  /// The fee reminder text.
+  final String feeTemplate;
 
   static const defaultAbsentTemplate = 'Dear Parent,\n'
       'This is to inform you that {student} ({class}) did not attend today, {date}.\n'

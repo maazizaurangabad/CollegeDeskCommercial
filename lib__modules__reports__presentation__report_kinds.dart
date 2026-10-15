@@ -2,7 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
 
-enum ReportKind { register, defaulters, absentees, summary, classList, master, certificates }
+enum ReportKind {
+  register,
+  defaulters,
+  absentees,
+  summary,
+  classList,
+  master,
+  certificates,
+  feeDayBook,
+  feeHeads,
+  feeClassSummary,
+  feeDefaulters;
+
+  bool get isFee => name.startsWith('fee');
+}
 
 extension ReportKindText on ReportKind {
   String title(AppLocalizations l10n) => switch (this) {
@@ -13,6 +27,10 @@ extension ReportKindText on ReportKind {
         ReportKind.classList => l10n.reportClassListTitle,
         ReportKind.master => l10n.reportMasterTitle,
         ReportKind.certificates => l10n.certRegisterReport,
+        ReportKind.feeDayBook => l10n.feeReportDayBook,
+        ReportKind.feeHeads => l10n.feeReportHeads,
+        ReportKind.feeClassSummary => l10n.feeReportClassSummary,
+        ReportKind.feeDefaulters => l10n.feeReportDefaulters,
       };
 
   String description(AppLocalizations l10n) => switch (this) {
@@ -23,6 +41,10 @@ extension ReportKindText on ReportKind {
         ReportKind.classList => l10n.reportClassListDesc,
         ReportKind.master => l10n.reportMasterDesc,
         ReportKind.certificates => l10n.certRegisterReportDesc,
+        ReportKind.feeDayBook => l10n.feeReportDayBookDesc,
+        ReportKind.feeHeads => l10n.feeReportHeadsDesc,
+        ReportKind.feeClassSummary => l10n.feeReportClassSummaryDesc,
+        ReportKind.feeDefaulters => l10n.feeReportDefaultersDesc,
       };
 
   IconData get icon => switch (this) {
@@ -33,5 +55,9 @@ extension ReportKindText on ReportKind {
         ReportKind.classList => Icons.format_list_numbered,
         ReportKind.master => Icons.groups_outlined,
         ReportKind.certificates => Icons.workspace_premium_outlined,
+        ReportKind.feeDayBook => Icons.menu_book_outlined,
+        ReportKind.feeHeads => Icons.pie_chart_outline,
+        ReportKind.feeClassSummary => Icons.account_balance_wallet_outlined,
+        ReportKind.feeDefaulters => Icons.money_off_outlined,
       };
 }

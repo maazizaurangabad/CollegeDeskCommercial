@@ -54,6 +54,16 @@ Future<void> applyMigrationStep(AppDatabase db, Migrator m, int fromVersion) asy
       // v7 -> v8: messages to parents (history of what was sent).
       await m.createTable(db.messageLogs);
       await _createIndexes(m, _v8Indexes);
+    case 8:
+      // v8 -> v9: fees (heads, class structures, concessions, receipts).
+      await m.createTable(db.feeHeads);
+      await m.createTable(db.feeStructures);
+      await m.createTable(db.feeStructureItems);
+      await m.createTable(db.feeDueDates);
+      await m.createTable(db.studentFeeAdjustments);
+      await m.createTable(db.feeReceipts);
+      await m.createTable(db.feeReceiptLines);
+      await _createIndexes(m, _v9Indexes);
     default:
       throw StateError('No migration step from schema version $fromVersion');
   }
@@ -92,6 +102,17 @@ final _v8Indexes = [
   Index('messages_by_student', 'CREATE INDEX IF NOT EXISTS messages_by_student ON message_logs (student_id)'),
 ];
 
+final _v9Indexes = [
+  Index('fee_structures_by_year',
+      'CREATE INDEX IF NOT EXISTS fee_structures_by_year ON fee_structures (organization_id, academic_year_id, program_id)'),
+  Index('fee_items_by_structure', 'CREATE INDEX IF NOT EXISTS fee_items_by_structure ON fee_structure_items (structure_id)'),
+  Index('fee_adjustments_by_student',
+      'CREATE INDEX IF NOT EXISTS fee_adjustments_by_student ON student_fee_adjustments (student_id, academic_year_id)'),
+  Index('fee_receipts_by_student', 'CREATE INDEX IF NOT EXISTS fee_receipts_by_student ON fee_receipts (student_id, academic_year_id)'),
+  Index('fee_receipts_by_date', 'CREATE INDEX IF NOT EXISTS fee_receipts_by_date ON fee_receipts (organization_id, received_on)'),
+  Index('fee_lines_by_receipt', 'CREATE INDEX IF NOT EXISTS fee_lines_by_receipt ON fee_receipt_lines (receipt_id)'),
+];
+
 Future<void> _createIndexes(Migrator m, List<Index> indexes) async {
   for (final index in indexes) {
     await m.createIndex(index);
@@ -99,4 +120,4 @@ Future<void> _createIndexes(Migrator m, List<Index> indexes) async {
 }
 
 /// For a brand-new database.
-Future<void> createExtraIndexes(Migrator m) => _createIndexes(m, [..._v4Indexes, ..._v5Indexes, ..._v6Indexes, ..._v7Indexes, ..._v8Indexes]);
+Future<void> createExtraIndexes(Migrator m) => _createIndexes(m, [..._v4Indexes, ..._v5Indexes, ..._v6Indexes, ..._v7Indexes, ..._v8Indexes, ..._v9Indexes]);

@@ -1212,6 +1212,240 @@
   "msgCodesHint": "Leave (L) is off at first, so parents who applied for leave are not messaged. Switch it on if you want.",
   "msgCodesEmpty": "Choose at least one mark.",
   "msgResetTemplates": "Use the standard texts",
-  "msgResetBody": "Both texts and the number of days go back to the standard ones. Your choice of marks is kept.",
-  "msgTemplatesSaved": "Templates saved"
+  "msgResetBody": "All texts and the number of days go back to the standard ones. Your choice of marks is kept.",
+  "msgTemplatesSaved": "Templates saved",
+  "navFees": "Fees",
+  "feeTakePayment": "Take payment",
+  "feeSetup": "Fee setup",
+  "feeCollectedToday": "Collected today",
+  "feeReceiptsToday": "Receipts today",
+  "feeSearchReceipts": "Search by student, receipt no., GR or reference",
+  "feeNoReceipts": "No receipts yet",
+  "feeNoReceiptsHint": "Receipts appear here as payments are taken.",
+  "feeRegisterTitle": "Receipt register ({count})",
+  "@feeRegisterTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "feeModeCash": "Cash",
+  "feeModeUpi": "UPI",
+  "feeModeCheque": "Cheque",
+  "feeModeBank": "Bank transfer",
+  "feeFindStudent": "Search student by name, code, GR or mobile",
+  "feeFindStudentHint": "Type at least two letters.",
+  "feeNoStructureWarning": "No fees are set for this student's class this year. Set them in Fee setup, or enter amounts by head below.",
+  "feeAmountReceived": "Amount received",
+  "feeAmountHint": "It is shared over the fee heads in order; you can change each amount below.",
+  "feeByHead": "Fee heads",
+  "feeBalanceIs": "Balance {amount}",
+  "@feeBalanceIs": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "feePaidBy": "Paid by",
+  "feeReference": "Transaction / cheque no.",
+  "feeReceivedOn": "Received on",
+  "feeChangeDate": "Change date",
+  "feeNote": "Note (optional)",
+  "feeSaveReceipt": "Save and make receipt ({amount})",
+  "@feeSaveReceipt": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "feeMoreThanDueTitle": "More than the balance",
+  "feeMoreThanDueBody": "You are taking {amount}, but the balance is {balance}. Save anyway?",
+  "@feeMoreThanDueBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "balance": {
+        "type": "String"
+      }
+    }
+  },
+  "feeSaveAnyway": "Save anyway",
+  "feeDue": "Due",
+  "feePaid": "Paid",
+  "feeBalance": "Balance",
+  "feeHead": "Fee head",
+  "feeStudentTitle": "Student fees",
+  "feeUsingGeneral": "Using the class's fees for all students.",
+  "feeUsingCategory": "Using the fees for category {category}.",
+  "@feeUsingCategory": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "feeAdjustmentsTitle": "Concessions and extra charges",
+  "feeAddAdjustment": "Add",
+  "feeRemoveAdjustment": "Remove",
+  "feeNoAdjustments": "None.",
+  "feeReceiptsTitle": "Receipts ({count})",
+  "@feeReceiptsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "feeConcession": "Concession",
+  "feeExtraCharge": "Extra charge",
+  "feeAmount": "Amount",
+  "feeReason": "Reason",
+  "feeReasonHint": "e.g. Staff ward, scholarship, sibling, fine",
+  "feeCancelReceipt": "Cancel receipt",
+  "feeCancelReason": "Reason (e.g. wrong entry, cheque bounced)",
+  "feeReceiptPrefix": "Receipt number",
+  "feeReceiptPrefixHint": "Starting letters, e.g. REC or FEE",
+  "feeReceiptExample": "Next receipts look like {example}",
+  "@feeReceiptExample": {
+    "placeholders": {
+      "example": {
+        "type": "String"
+      }
+    }
+  },
+  "feeHeadsTitle": "Fee heads",
+  "feeAddHead": "Add head",
+  "feeHeadName": "Name of the fee head",
+  "feeRenameHead": "Rename",
+  "feeMoveUp": "Move up",
+  "feeMoveDown": "Move down",
+  "feeDeleteHead": "Delete this fee head?",
+  "feeStructuresTitle": "What each class pays ({year})",
+  "@feeStructuresTitle": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "feeStructuresHint": "Set the fees for all students of a class. If some categories pay differently (for example freeship for SC/ST), add fees for that category; those students then use it instead.",
+  "feeNoClasses": "Add classes first in Settings > Classes and divisions.",
+  "feeAllStudents": "All students",
+  "feeForCategory": "Category: {category}",
+  "@feeForCategory": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "feeNotSet": "Not set",
+  "feeAddCategoryFees": "Different fees for a category",
+  "feeChooseCategory": "Choose category",
+  "feeCopyFromYear": "Copy from another year",
+  "feeCopied": "{count} fee structures copied",
+  "@feeCopied": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "feeCategoryHint": "Students of category {category} in this class pay these amounts instead of the class's general fees.",
+  "@feeCategoryHint": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "feeStructureSaved": "Fees saved",
+  "feeDeleteStructure": "Delete these fees",
+  "feeDeleteStructureBody": "Students will use the class's general fees (or none). Receipts already made are not changed.",
+  "feeErrEmptyName": "Enter a name.",
+  "feeErrDuplicateName": "A fee head with this name already exists.",
+  "feeErrHeadInUse": "This head is already used, so it cannot be deleted. Switch it off instead.",
+  "feeErrNoAmount": "Enter an amount.",
+  "feeErrNegative": "Amounts cannot be negative.",
+  "feeErrNoYear": "No active academic year. Set one in Settings > Academic years.",
+  "feeErrFutureDate": "The payment date cannot be in the future.",
+  "feeErrNoReason": "Enter a reason.",
+  "feeAddInstallment": "Add installment",
+  "feeAllReports": "All reports",
+  "feeAnyBalance": "Any balance",
+  "feeBalanceNote": "Current students of the year. Balance = due − paid; overdue = what should have been paid by today under the installments (the whole balance when there are none).",
+  "feeCancelledCount": "Cancelled receipts: {count} (not counted)",
+  "@feeCancelledCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "feeColCategory": "Category",
+  "feeColReceipt": "Receipt no.",
+  "feeColReceipts": "Receipts",
+  "feeColRoll": "Roll",
+  "feeColStudents": "Students",
+  "feeDashboardTitle": "Fees",
+  "feeDashboardToday": "Today: {amount} ({count} receipts)",
+  "@feeDashboardToday": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "feeInstallmentN": "Installment {n}",
+  "@feeInstallmentN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "feeInstallmentName": "Name",
+  "feeInstallmentTotal": "Paid by then (total)",
+  "feeInstallmentsTitle": "Installments (optional)",
+  "feeInstallmentsHint": "Without installments the whole amount is due at once. With them, enter for each date the TOTAL that should be paid by then (e.g. 31 Jul: 3,000 and 31 Dec: 5,000 for fees of 5,000). Overdue amounts and reminders use these dates.",
+  "feeNextInstallment": "Next: {label} by {date} ({amount} in total)",
+  "@feeNextInstallment": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "feeNothingPending": "No pending fees to remind about",
+  "feeOverdue": "Overdue",
+  "feeOverdueOnly": "Overdue only",
+  "feeOverdueOnlyHint": "Only students past an installment date (all pending if no installments are set)",
+  "feeReminderAgain": "A fee reminder was already opened for this parent today.",
+  "feeReminders": "Fee reminders",
+  "feeReportDayBook": "Fee day book",
+  "feeReportDayBookDesc": "Every receipt in a period with totals by cash, UPI, cheque and bank",
+  "feeReportHeads": "Head-wise collection",
+  "feeReportHeadsDesc": "How much each fee head collected in a period",
+  "feeReportClassSummary": "Class-wise fee balance",
+  "feeReportClassSummaryDesc": "Due, paid, balance and overdue for each class this year",
+  "feeReportDefaulters": "Fee defaulters",
+  "feeReportDefaultersDesc": "Students with fees pending, class-wise, with parent's mobile",
+  "feeReportOverdue": "Overdue fees",
+  "msgKindFee": "Fee reminder",
+  "msgPhBalance": "Balance",
+  "msgPhOverdue": "Overdue",
+  "msgTemplateFee": "Fee reminder"
 }

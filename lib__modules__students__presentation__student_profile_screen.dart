@@ -12,6 +12,8 @@ import '../../../platform/organization/organization_providers.dart';
 import '../../attendance/application/attendance_providers.dart';
 import '../../certificates/application/certificates_providers.dart';
 import '../../certificates/domain/certificate_models.dart';
+import '../../fees/application/fees_providers.dart';
+import '../../fees/domain/fee_models.dart';
 import '../../attendance/data/attendance_repository.dart';
 import '../../attendance/domain/attendance_models.dart';
 import '../../attendance/presentation/attendance_labels.dart';
@@ -142,8 +144,14 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                     if (v == 'left') _markLeft(detail);
                     if (v == 'delete') _delete(detail);
                     if (v == 'certificate') context.go('/certificates/new?student=${detail.id}');
+                    if (v == 'fees') context.go('/fees/student/${detail.id}');
+                    if (v == 'pay') context.go('/fees/pay?student=${detail.id}');
                   },
                   itemBuilder: (_) => [
+                    if (ref.read(enabledModulesProvider).contains('fees')) ...[
+                      PopupMenuItem(value: 'fees', child: Text(l10n.feeStudentTitle)),
+                      PopupMenuItem(value: 'pay', child: Text(l10n.feeTakePayment)),
+                    ],
                     if (ref.read(enabledModulesProvider).contains('certificates'))
                       PopupMenuItem(value: 'certificate', child: Text(l10n.certIssue)),
                     if (detail.status == StudentStatus.active)
@@ -265,6 +273,33 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                       value: data == null || data.$3.isEmpty
                           ? null
                           : data.$3.map((d) => DateFormat('d MMM').format(d)).join(', '),
+                    ),
+                  ]);
+                },
+              ),
+            if (ref.watch(enabledModulesProvider).contains('fees') &&
+                ref.watch(academicControllerProvider).activeYear != null)
+              FutureBuilder<FeeAccount>(
+                future: (() {
+                  ref.watch(feesRevisionProvider);
+                  return ref
+                      .read(feeRepositoryProvider)
+                      .account(detail.id, ref.read(academicControllerProvider).activeYear!.id);
+                })(),
+                builder: (context, snap) {
+                  final a = snap.data;
+                  if (a == null || (a.due == 0 && a.paid == 0)) return const SizedBox.shrink();
+                  return _Section(title: l10n.feeStudentTitle, children: [
+                    InkWell(
+                      onTap: () => context.go('/fees/student/${detail.id}'),
+                      child: Column(children: [
+                        InfoRow(label: l10n.feeDue, value: rupees(a.due)),
+                        InfoRow(label: l10n.feePaid, value: rupees(a.paid)),
+                        InfoRow(
+                          label: l10n.feeBalance,
+                          value: a.overdue > 0 ? '${rupees(a.balance)} (${l10n.feeOverdue} ${rupees(a.overdue)})' : rupees(a.balance),
+                        ),
+                      ]),
                     ),
                   ]);
                 },

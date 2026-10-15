@@ -26,6 +26,7 @@ class MessageTemplatesScreen extends ConsumerStatefulWidget {
 class _MessageTemplatesScreenState extends ConsumerState<MessageTemplatesScreen> {
   final _absent = TextEditingController();
   final _streak = TextEditingController();
+  final _fee = TextEditingController();
   int _days = MessageSettings.defaultStreakDays;
   Set<String> _codes = {};
   bool _loaded = false;
@@ -36,6 +37,7 @@ class _MessageTemplatesScreenState extends ConsumerState<MessageTemplatesScreen>
     super.initState();
     _absent.addListener(_refresh);
     _streak.addListener(_refresh);
+    _fee.addListener(_refresh);
     _reload();
   }
 
@@ -46,6 +48,7 @@ class _MessageTemplatesScreenState extends ConsumerState<MessageTemplatesScreen>
     if (!mounted) return;
     _absent.text = s.absentTemplate;
     _streak.text = s.streakTemplate;
+    _fee.text = s.feeTemplate;
     setState(() {
       _days = s.streakDays;
       _codes = {...s.codes};
@@ -57,6 +60,7 @@ class _MessageTemplatesScreenState extends ConsumerState<MessageTemplatesScreen>
   void dispose() {
     _absent.dispose();
     _streak.dispose();
+    _fee.dispose();
     super.dispose();
   }
 
@@ -73,6 +77,7 @@ class _MessageTemplatesScreenState extends ConsumerState<MessageTemplatesScreen>
             streakTemplate: _streak.text.trim().isEmpty ? MessageSettings.defaultStreakTemplate : _streak.text,
             streakDays: _days,
             codes: _codes,
+            feeTemplate: _fee.text.trim().isEmpty ? MessageSettings.defaultFeeTemplate : _fee.text,
           ));
       ref.read(messagesRevisionProvider.notifier).state++;
       if (mounted) SdToast.show(context, l10n.msgTemplatesSaved);
@@ -108,6 +113,16 @@ class _MessageTemplatesScreenState extends ConsumerState<MessageTemplatesScreen>
       selection: TextSelection.collapsed(offset: at + word.length),
     );
   }
+
+  String _feeExample(String template) => MessageRepository.fillFeeBody(
+        template,
+        names: const ['Ayaan Shaikh'],
+        classes: const ['11th Science A'],
+        balance: '₹2,500',
+        overdue: '₹1,500',
+        date: DateTime.now(),
+        institution: ref.read(activeOrganizationProvider).name,
+      );
 
   String _example(String template) {
     final sample = [
@@ -148,14 +163,29 @@ class _MessageTemplatesScreenState extends ConsumerState<MessageTemplatesScreen>
       MessagePlaceholders.mark: l10n.msgPhMark,
     };
 
-    Widget template(String title, TextEditingController c) => SdSection(
+    final feeWords = <String, String>{
+      MessagePlaceholders.student: l10n.msgPhStudent,
+      MessagePlaceholders.className: l10n.msgPhClass,
+      MessagePlaceholders.balance: l10n.msgPhBalance,
+      MessagePlaceholders.overdue: l10n.msgPhOverdue,
+      MessagePlaceholders.date: l10n.msgPhDate,
+      MessagePlaceholders.institution: l10n.msgPhInstitution,
+    };
+
+    Widget template(
+      String title,
+      TextEditingController c, {
+      Map<String, String>? chips,
+      String Function(String)? example,
+    }) =>
+        SdSection(
           title: title,
           child: SdCard(
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               TextField(controller: c, minLines: 4, maxLines: 10, keyboardType: TextInputType.multiline),
               const SizedBox(height: SdSpace.md),
               Wrap(spacing: SdSpace.xs, runSpacing: SdSpace.xs, children: [
-                for (final e in words.entries)
+                for (final e in (chips ?? words).entries)
                   ActionChip(
                     visualDensity: VisualDensity.compact,
                     label: Text(e.value),
@@ -169,7 +199,7 @@ class _MessageTemplatesScreenState extends ConsumerState<MessageTemplatesScreen>
               Container(
                 padding: const EdgeInsets.all(SdSpace.md),
                 decoration: BoxDecoration(color: sd.subtleFill, borderRadius: BorderRadius.circular(SdRadius.sm)),
-                child: Text(_example(c.text), style: theme.textTheme.bodyMedium),
+                child: Text((example ?? _example)(c.text), style: theme.textTheme.bodyMedium),
               ),
             ]),
           ),
@@ -210,6 +240,8 @@ class _MessageTemplatesScreenState extends ConsumerState<MessageTemplatesScreen>
               onPressed: _days >= 30 ? null : () => setState(() => _days++),
             ),
           ]),
+          const SizedBox(height: SdSpace.xl),
+          template(l10n.msgTemplateFee, _fee, chips: feeWords, example: _feeExample),
           const SizedBox(height: SdSpace.xl),
           SdSection(
             title: l10n.msgCodesTitle,

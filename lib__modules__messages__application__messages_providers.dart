@@ -43,6 +43,7 @@ String messageKindLabel(AppLocalizations l10n, MessageKind kind) => switch (kind
       MessageKind.absent => l10n.msgKindAbsent,
       MessageKind.streak => l10n.msgKindStreak,
       MessageKind.summary => l10n.msgKindSummary,
+      MessageKind.feeDue => l10n.msgKindFee,
     };
 
 String messageChannelLabel(AppLocalizations l10n, String channel) =>

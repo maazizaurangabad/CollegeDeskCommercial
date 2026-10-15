@@ -179,5 +179,31 @@ void main() {
       expect(data.dataRowCount, 1);
       expect(data.rows.single.cells[4], 'Ayaan Shaikh, Sara Shaikh');
     });
+
+    test('fee reminders are filled, recorded and ticked for the day', () async {
+      final body = MessageRepository.fillFeeBody(
+        MessageSettings.defaultFeeTemplate,
+        names: ['Ayaan Shaikh', 'Sara Shaikh'],
+        classes: ['11th Science A', '11th Science A'],
+        balance: '₹2,500',
+        overdue: '₹1,000',
+        date: today,
+        institution: 'Test College',
+      );
+      expect(body, contains('Ayaan Shaikh and Sara Shaikh (11th Science A)'));
+      expect(body, contains('₹2,500'));
+      await messages.recordFeeReminder(
+        students: [(ids[0], 'Ayaan Shaikh', '11th Science A'), (ids[1], 'Sara Shaikh', '11th Science A')],
+        mobile: '9876543210',
+        body: body,
+        date: today,
+      );
+      final sent = await messages.sentOn(today, {MessageKind.feeDue});
+      expect(sent.keys, containsAll([ids[0], ids[1]]));
+      expect(await messages.sentOn(today, {MessageKind.absent}), isEmpty);
+      expect((await messages.history()).single.kind, MessageKind.feeDue);
+      // Absence ticks are not affected by fee reminders.
+      expect((await families()).firstWhere((f) => f.hasNumber).isSent, isFalse);
+    });
   });
 }

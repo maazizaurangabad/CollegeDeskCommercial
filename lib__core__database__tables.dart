@@ -397,6 +397,116 @@ class MessageLogs extends Table with StandardColumns {
   Set<Column> get primaryKey => {id};
 }
 
+/// A kind of fee: Tuition, Admission, Exam... Amounts are whole rupees.
+@DataClassName('FeeHeadRow')
+class FeeHeads extends Table with StandardColumns {
+  TextColumn get name => text()();
+  IntColumn get displayOrder => integer().withDefault(const Constant(0))();
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// What one class pays in one academic year. [category] null means every
+/// student; a structure for a category (OBC, SC...) replaces it for them.
+@DataClassName('FeeStructureRow')
+class FeeStructures extends Table with StandardColumns {
+  TextColumn get academicYearId => text()();
+  TextColumn get programId => text()();
+  TextColumn get category => text().nullable()();
+  TextColumn get note => text().withDefault(const Constant(''))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DataClassName('FeeStructureItemRow')
+class FeeStructureItems extends Table with StandardColumns {
+  TextColumn get structureId => text()();
+  TextColumn get headId => text()();
+  IntColumn get amount => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Installment due dates of a structure: by [dueDate], [amount] in total
+/// should have been paid (cumulative).
+@DataClassName('FeeDueDateRow')
+class FeeDueDates extends Table with StandardColumns {
+  TextColumn get structureId => text()();
+  TextColumn get label => text()();
+  DateTimeColumn get dueDate => dateTime()();
+  IntColumn get amount => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// A change to one student's fees for a year: a concession (negative
+/// amount) or an extra charge (positive), always with a reason.
+@DataClassName('StudentFeeAdjustmentRow')
+class StudentFeeAdjustments extends Table with StandardColumns {
+  TextColumn get studentId => text()();
+  TextColumn get academicYearId => text()();
+  TextColumn get headId => text()();
+  IntColumn get amount => integer()();
+  TextColumn get reason => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// A fee receipt. Numbers run per academic year and are never reused;
+/// a cancelled receipt stays in the register with its reason.
+@DataClassName('FeeReceiptRow')
+class FeeReceipts extends Table with StandardColumns {
+  IntColumn get serialNo => integer()();
+
+  /// e.g. REC/2026-27/0001
+  TextColumn get serialLabel => text()();
+  TextColumn get academicYearId => text()();
+  TextColumn get academicYearLabel => text()();
+  TextColumn get studentId => text()();
+
+  /// As printed on the receipt.
+  TextColumn get studentName => text()();
+  TextColumn get classLabel => text().withDefault(const Constant(''))();
+  TextColumn get grNumber => text().nullable()();
+  DateTimeColumn get receivedOn => dateTime()();
+  IntColumn get totalAmount => integer()();
+
+  /// Balance for the year left after this payment.
+  IntColumn get balanceAfter => integer().nullable()();
+
+  /// cash, upi, cheque, bank
+  TextColumn get mode => text()();
+
+  /// UPI transaction id, cheque number, bank reference.
+  TextColumn get reference => text().nullable()();
+  TextColumn get note => text().nullable()();
+
+  /// issued or cancelled
+  TextColumn get status => text().withDefault(const Constant('issued'))();
+  TextColumn get cancelReason => text().nullable()();
+  IntColumn get printCount => integer().withDefault(const Constant(0))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DataClassName('FeeReceiptLineRow')
+class FeeReceiptLines extends Table with StandardColumns {
+  TextColumn get receiptId => text()();
+  TextColumn get headId => text()();
+  TextColumn get headName => text()();
+  IntColumn get amount => integer()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// Append-only history of changes: who, what, when, old and new values.
 @DataClassName('AuditEntryRow')
 @TableIndex(name: 'audit_by_entity', columns: {#entity, #entityId})

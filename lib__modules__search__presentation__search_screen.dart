@@ -105,6 +105,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         (l10n.attendanceRegister, '/attendance/register', Icons.calendar_view_month_outlined,
             'register monthly month percentage defaulter below 75'),
       if (attendance) (l10n.attendanceTitle, '/attendance', Icons.fact_check_outlined, 'attendance mark absent present today'),
+      if (ref.read(enabledModulesProvider).contains('fees')) ...[
+        (l10n.feeTakePayment, '/fees/pay', Icons.currency_rupee, 'fee fees pay payment collect receipt cash upi cheque'),
+        (l10n.navFees, '/fees', Icons.receipt_long_outlined, 'fee fees receipt register collection today'),
+        (l10n.feeSetup, '/fees/setup', Icons.tune_outlined,
+            'fee fees structure head heads tuition admission category concession freeship amount installment due date'),
+        if (ref.read(enabledModulesProvider).contains('messages'))
+          (l10n.feeReminders, '/fees/reminders', Icons.forum_outlined, 'fee fees reminder reminders pending due whatsapp parent'),
+        if (ref.read(enabledModulesProvider).contains('reports')) ...[
+          (l10n.feeReportDayBook, '/reports/feeDayBook', Icons.menu_book_outlined, 'fee day book collection report cash upi excel pdf'),
+          (l10n.feeReportDefaulters, '/reports/feeDefaulters', Icons.money_off_outlined, 'fee defaulters pending balance overdue report'),
+          (l10n.feeReportClassSummary, '/reports/feeClassSummary', Icons.account_balance_wallet_outlined, 'fee class balance summary report'),
+          (l10n.feeReportHeads, '/reports/feeHeads', Icons.pie_chart_outline, 'fee head wise collection report'),
+        ],
+      ],
       if (ref.read(enabledModulesProvider).contains('messages')) ...[
         (l10n.navMessages, '/messages', Icons.forum_outlined,
             'message messages parent parents whatsapp sms absent absentee summary send notify inform'),
