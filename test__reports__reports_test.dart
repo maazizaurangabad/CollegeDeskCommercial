@@ -9,6 +9,7 @@ import 'package:shiksha_desk/modules/attendance/data/attendance_repository.dart'
 import 'package:shiksha_desk/modules/reports/application/report_builders.dart';
 import 'package:shiksha_desk/modules/students/data/student_repository.dart';
 import 'package:shiksha_desk/modules/students/domain/student_models.dart';
+import 'package:shiksha_desk/modules/students/presentation/student_picker.dart';
 import 'package:shiksha_desk/platform/academic/academic_models.dart';
 import 'package:shiksha_desk/platform/academic/academic_repository.dart';
 import 'package:shiksha_desk/platform/academic/structure_templates.dart';
@@ -110,6 +111,60 @@ void main() {
     final row = s.rows.firstWhere((r) => r.cells[2] == '5');
     expect(row.cells[3], '${((100 + 40 + 80) / 3).toStringAsFixed(1)}%');
     expect(row.cells[4], '1');
+  });
+
+  test('class and master lists: sort by G.R., name or age, either order; Boys / Girls with their own counts', () async {
+    // Ayaan (G1, boy, 2010), Riya (G2, girl, 2009), Zoya (G3, girl, no birth date) + Kabir (G10, boy, 2011).
+    final details = {
+      ids[0]: ('Male', DateTime(2010, 5, 1)),
+      ids[1]: ('Female', DateTime(2009, 3, 1)),
+      ids[2]: ('Female', null),
+    };
+    for (final e in details.entries) {
+      final d = (await students.load(e.key))!.draft
+        ..gender = e.value.$1
+        ..dateOfBirth = e.value.$2;
+      await students.update(e.key, d);
+    }
+    await students.create(StudentDraft(
+      firstName: 'Kabir',
+      gender: 'Male',
+      dateOfBirth: DateTime(2011, 1, 1),
+      divisionId: divA,
+      rollNumber: 4,
+      admissionDate: DateTime(2026, 6, 15),
+      identifiers: {IdentifierType.grNumber: 'G10'},
+    ));
+    const show = {ClassListColumn.gr, ClassListColumn.gender};
+    List<String> names(ReportDataset d) =>
+        d.rows.where((r) => r.kind == ReportRowKind.data).map((r) => r.cells[1]).toList();
+
+    expect(names(await reports.classList(divA, show, sort: StudentSort.gr)), ['Ayaan', 'Riya', 'Zoya', 'Kabir']);
+    expect(names(await reports.classList(divA, show, sort: StudentSort.gr, descending: true)), ['Kabir', 'Zoya', 'Riya', 'Ayaan']);
+    expect(names(await reports.classList(divA, show, sort: StudentSort.name)), ['Ayaan', 'Kabir', 'Riya', 'Zoya']);
+    // Youngest first; no birth date last, in both orders.
+    expect(names(await reports.classList(divA, show, sort: StudentSort.age)), ['Kabir', 'Ayaan', 'Riya', 'Zoya']);
+    expect(names(await reports.classList(divA, show, sort: StudentSort.age, descending: true)), ['Riya', 'Ayaan', 'Kabir', 'Zoya']);
+
+    final girls = await reports.classList(divA, show, sort: StudentSort.name, gender: GenderFilter.girls);
+    expect(names(girls), ['Riya', 'Zoya']);
+    expect(girls.notes.join(' '), contains('${l10n.reportTotal} 2'));
+    expect(girls.notes.join(' '), isNot(contains(l10n.reportBoys)));
+    expect(girls.subtitle.join(' '), contains(l10n.reportGirls));
+
+    final boys = await reports.studentMaster(show: show, gender: GenderFilter.boys, sort: StudentSort.name);
+    expect(names(boys), ['Ayaan', 'Kabir']);
+    expect(boys.rows.firstWhere((r) => r.kind == ReportRowKind.group).cells.first, contains('${l10n.reportTotal} 2'));
+  });
+
+  test('students with an unrecorded gender stay only in All students', () {
+    expect(matchesGender(null, GenderFilter.all), isTrue);
+    expect(matchesGender('', GenderFilter.boys), isFalse);
+    expect(matchesGender('Other', GenderFilter.girls), isFalse);
+    expect(matchesGender('female', GenderFilter.girls), isTrue);
+    expect(matchesGender('M', GenderFilter.boys), isTrue);
+    expect(compareNatural('2', '10'), lessThan(0));
+    expect(compareNatural('10', '100'), lessThan(0));
   });
 
   test('a long report becomes a multi-page PDF with the letterhead', () async {

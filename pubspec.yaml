@@ -1,7 +1,7 @@
 name: shiksha_desk
 description: Shiksha Desk - offline-first education management platform.
 publish_to: 'none'
-version: 1.0.0+15
+version: 1.0.0+16
 
 environment:
   sdk: '>=3.8.0 <4.0.0'

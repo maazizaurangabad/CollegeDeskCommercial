@@ -85,6 +85,7 @@ class StudentRepository extends OrgScopedRepository {
           rollNumber: placements[r.id]?.rollNumber,
           primaryMobile: mobiles[r.id],
           grNumber: grs[r.id],
+          dateOfBirth: r.dateOfBirth,
         ),
     ];
   }

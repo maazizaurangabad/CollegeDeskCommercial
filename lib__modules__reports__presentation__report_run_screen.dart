@@ -11,6 +11,7 @@ import '../../../platform/academic/academic_controller.dart';
 import '../../../platform/reporting/report_dataset.dart';
 import '../../../platform/reporting/report_output.dart';
 import '../../../platform/reporting/report_pdf_preview.dart';
+import '../../students/presentation/student_picker.dart';
 import '../../../platform/reporting/report_preview.dart';
 import '../../attendance/presentation/division_picker.dart';
 import '../../certificates/application/certificates_providers.dart';
@@ -44,6 +45,9 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
   StudentStatus? _status = StudentStatus.active;
   CertificateKind? _certKind;
   bool _overdueOnly = false;
+  StudentSort _sort = StudentSort.roll;
+  bool _descending = false;
+  GenderFilter _gender = GenderFilter.all;
   final Set<ClassListColumn> _columns = {ClassListColumn.gender, ClassListColumn.dateOfBirth, ClassListColumn.gr, ClassListColumn.mobile};
 
   ReportDataset? _data;
@@ -80,8 +84,16 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
         ReportKind.defaulters => await b.defaulters(from: _from, to: _to, threshold: _threshold, programId: _programId),
         ReportKind.absentees => await b.absentees(_date),
         ReportKind.summary => await b.attendanceSummary(from: _from, to: _to),
-        ReportKind.classList => await b.classList(_divisionId!, _columns),
-        ReportKind.master => await b.studentMaster(programId: _programId, status: _status, show: _columns),
+        ReportKind.classList =>
+          await b.classList(_divisionId!, _columns, sort: _sort, descending: _descending, gender: _gender),
+        ReportKind.master => await b.studentMaster(
+            programId: _programId,
+            status: _status,
+            show: _columns,
+            sort: _sort,
+            descending: _descending,
+            gender: _gender,
+          ),
         ReportKind.certificates => await b.certificateRegister(from: _from, to: _to, kind: _certKind),
         ReportKind.feeDayBook => await feeReports(ref, l10n).dayBook(from: _from, to: _to),
         ReportKind.feeHeads => await feeReports(ref, l10n).headWise(from: _from, to: _to),
@@ -202,6 +214,41 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
           onChanged: (v) => setState(() => _status = v),
         ),
       if (widget.kind == ReportKind.classList || widget.kind == ReportKind.master) ...[
+        Row(children: [
+          Expanded(
+            child: SdSelectField<StudentSort>(
+              label: l10n.sortBy,
+              value: _sort,
+              options: [
+                for (final o in const [StudentSort.gr, StudentSort.name, StudentSort.age, StudentSort.roll])
+                  (o, studentSortLabel(l10n, o)),
+              ],
+              onChanged: (v) => setState(() => _sort = v ?? _sort),
+            ),
+          ),
+          const SizedBox(width: SdSpace.sm),
+          Expanded(
+            child: SdSelectField<bool>(
+              label: l10n.orderLabel,
+              value: _descending,
+              options: [(false, l10n.orderAscending), (true, l10n.orderDescending)],
+              onChanged: (v) => setState(() => _descending = v ?? _descending),
+            ),
+          ),
+        ]),
+        const SizedBox(height: SdSpace.sm),
+        SdSelectField<GenderFilter>(
+          label: l10n.fieldGender,
+          value: _gender,
+          options: [for (final g in GenderFilter.values) (g, genderFilterLabel(l10n, g))],
+          onChanged: (v) => setState(() => _gender = v ?? _gender),
+        ),
+        if (_sort == StudentSort.age)
+          Padding(
+            padding: const EdgeInsets.only(top: SdSpace.xs),
+            child: Text(l10n.reportAgeHint, style: theme.textTheme.bodySmall),
+          ),
+        const SizedBox(height: SdSpace.md),
         Text(l10n.reportColumns, style: theme.textTheme.bodySmall),
         const SizedBox(height: SdSpace.sm),
         Wrap(

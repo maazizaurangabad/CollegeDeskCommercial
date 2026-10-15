@@ -11,6 +11,7 @@ import '../../reports/application/reports_providers.dart';
 import '../../students/presentation/student_labels.dart';
 import '../application/certificates_providers.dart';
 import '../domain/certificate_models.dart';
+import 'certificate_view_screen.dart';
 
 enum _Period { month, year, all }
 
@@ -175,12 +176,18 @@ class _CertificatesScreenState extends ConsumerState<CertificatesScreen> {
                             if ((shown[i].fields[CertField.purpose] ?? '').isNotEmpty) shown[i].fields[CertField.purpose]!,
                             if (shown[i].printCount > 1) l10n.certPrintCount(shown[i].printCount),
                           ].join(' · ')),
-                          trailing: shown[i].status == CertificateStatus.cancelled
-                              ? StatusPill(text: l10n.certCancelled, color: sd.absent)
-                              : (shown[i].isDuplicate
-                                  ? StatusPill(text: l10n.certDuplicate, color: sd.leave)
-                                  : const Icon(Icons.chevron_right)),
-                          onTap: () => context.go('/certificates/view/${shown[i].id}'),
+                          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                            if (shown[i].status == CertificateStatus.cancelled)
+                              StatusPill(text: l10n.certCancelled, color: sd.absent)
+                            else if (shown[i].isDuplicate)
+                              StatusPill(text: l10n.certDuplicate, color: sd.leave),
+                            IconButton(
+                              tooltip: l10n.certView,
+                              icon: const Icon(Icons.visibility_outlined),
+                              onPressed: () => openCertificateView(context, shown[i].id),
+                            ),
+                          ]),
+                          onTap: () => openCertificateView(context, shown[i].id),
                         ),
                       ],
                     ]),

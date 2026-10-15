@@ -141,10 +141,14 @@ class StudentListItem {
     this.rollNumber,
     this.primaryMobile,
     this.grNumber,
+    this.dateOfBirth,
   });
 
   final String id;
   final String displayCode;
+
+  /// For age order in lists and reports.
+  final DateTime? dateOfBirth;
 
   /// General Register number, when entered.
   final String? grNumber;

@@ -11,6 +11,7 @@ import '../../certificates/domain/certificate_models.dart';
 import '../../students/data/student_repository.dart';
 import '../../students/domain/student_models.dart';
 import '../../students/presentation/student_labels.dart';
+import '../../students/presentation/student_picker.dart';
 
 /// Columns of the class list that can be switched on or off.
 enum ClassListColumn { gender, dateOfBirth, gr, pen, apaar, mobile, category, bloodGroup }
@@ -229,13 +230,29 @@ class ReportBuilders {
         ClassListColumn.bloodGroup: (l10n.fieldBloodGroup, 14, 40, ReportColumnType.text),
       };
 
+  /// "Girls · Sorted by Name (A–Z) · Age as on 15/10/2026" for the subtitle.
+  String listOptionsLine({required StudentSort sort, required bool descending, required GenderFilter gender}) => [
+        genderFilterLabel(l10n, gender),
+        l10n.reportSortedBy(studentSortLabel(l10n, sort), descending ? l10n.orderDescending : l10n.orderAscending),
+        if (sort == StudentSort.age) l10n.reportAgeAsOn(DateFormat('dd/MM/yyyy').format(DateTime.now())),
+      ].join(' · ');
+
   /// Gender is always kept (it is needed for the Boys / Girls counts);
   /// it is just not shown as a column unless chosen.
-  Future<ReportDataset> classList(String divisionId, Set<ClassListColumn> show) async {
-    final items = (await students.list(academicYearId: academic.activeYear?.id, status: StudentStatus.active))
-        .where((s) => s.divisionId == divisionId)
-        .toList()
-      ..sort((a, b) => (a.rollNumber ?? 9999).compareTo(b.rollNumber ?? 9999));
+  Future<ReportDataset> classList(
+    String divisionId,
+    Set<ClassListColumn> show, {
+    StudentSort sort = StudentSort.roll,
+    bool descending = false,
+    GenderFilter gender = GenderFilter.all,
+  }) async {
+    final items = sortStudents(
+      (await students.list(academicYearId: academic.activeYear?.id, status: StudentStatus.active))
+          .where((s) => s.divisionId == divisionId && matchesGender(s.gender, gender))
+          .toList(),
+      sort,
+      descending: descending,
+    );
     final export = await students.exportRows(items, divisionLabels);
     final chosen = [
       for (final c in ClassListColumn.values)
@@ -244,8 +261,11 @@ class ReportBuilders {
     final genderAt = chosen.indexWhere((c) => c.$1 == ClassListColumn.gender);
     return ReportDataset(
       title: l10n.reportClassListTitle,
-      subtitle: ['${_label(divisionId)} · ${academic.activeYear?.label ?? ''}'],
-      fileName: 'class-list-${_slug(_label(divisionId))}',
+      subtitle: [
+        '${_label(divisionId)} · ${academic.activeYear?.label ?? ''}',
+        listOptionsLine(sort: sort, descending: descending, gender: gender),
+      ],
+      fileName: 'class-list-${_slug(_label(divisionId))}${gender == GenderFilter.all ? '' : '-${gender.name}'}',
       landscape: chosen.length > 5,
       fontSize: 10,
       zebra: true,
@@ -273,8 +293,17 @@ class ReportBuilders {
   }
 
   /// All students (or one class / status), grouped by class in roll order.
-  Future<ReportDataset> studentMaster({String? programId, StudentStatus? status, Set<ClassListColumn>? show}) async {
-    var items = await students.list(academicYearId: academic.activeYear?.id, status: status);
+  Future<ReportDataset> studentMaster({
+    String? programId,
+    StudentStatus? status,
+    Set<ClassListColumn>? show,
+    StudentSort sort = StudentSort.roll,
+    bool descending = false,
+    GenderFilter gender = GenderFilter.all,
+  }) async {
+    var items = (await students.list(academicYearId: academic.activeYear?.id, status: status))
+        .where((s) => matchesGender(s.gender, gender))
+        .toList();
     if (programId != null) {
       final allowed = academic.divisionsOf(programId).map((d) => d.id).toSet();
       items = items.where((s) => allowed.contains(s.divisionId)).toList();
@@ -283,9 +312,11 @@ class ReportBuilders {
       for (final (i, p) in academic.programs.indexed)
         for (final (j, d) in academic.divisionsOf(p.id).indexed) d.id: i * 100 + j,
     };
+    // Grouped by class; inside each class in the chosen order.
+    final position = {for (final (i, s) in sortStudents(items, sort, descending: descending).indexed) s.id: i};
     items.sort((a, b) {
       final byClass = (order[a.divisionId] ?? 99999).compareTo(order[b.divisionId] ?? 99999);
-      return byClass != 0 ? byClass : (a.rollNumber ?? 9999).compareTo(b.rollNumber ?? 9999);
+      return byClass != 0 ? byClass : position[a.id]!.compareTo(position[b.id]!);
     });
     final export = await students.exportRows(items, divisionLabels);
     final columnsShown = show ?? {ClassListColumn.gender, ClassListColumn.dateOfBirth, ClassListColumn.gr, ClassListColumn.mobile};
@@ -320,8 +351,9 @@ class ReportBuilders {
           if (programId != null) academic.programs.where((p) => p.id == programId).firstOrNull?.name ?? '',
           status == null ? l10n.studentsFilterAll : studentStatusLabel(l10n, status),
         ].where((s) => s.isNotEmpty).join(' · '),
+        listOptionsLine(sort: sort, descending: descending, gender: gender),
       ],
-      fileName: 'student-master-list',
+      fileName: 'student-master-list${gender == GenderFilter.all ? '' : '-${gender.name}'}',
       landscape: chosen.length > 4,
       fontSize: 9.5,
       zebra: true,

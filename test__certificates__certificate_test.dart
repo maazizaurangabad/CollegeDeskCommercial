@@ -193,6 +193,18 @@ void main() {
           duplicate: kind == CertificateKind.leaving,
         );
         expect(ascii.decode(bytes.sublist(0, 5)), '%PDF-', reason: kind.name);
+        // A cancelled certificate is viewed with the CANCELLED stamp.
+        final cancelled = await CertificatePdf.build(
+          kind: kind,
+          f: f,
+          serialLabel: '${kind.prefix}/2026-27/0001',
+          issuedOn: DateTime(2026, 10, 14),
+          head: const ReportLetterhead(name: 'Test College', lines: ['Address']),
+          fonts: fonts,
+          institutionWord: 'junior college',
+          cancelled: true,
+        );
+        expect(ascii.decode(cancelled.sublist(0, 5)), '%PDF-', reason: '${kind.name} cancelled');
       }
     });
   });

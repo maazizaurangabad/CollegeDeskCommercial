@@ -21,6 +21,7 @@ abstract final class CertificatePdf {
     required String institutionWord,
     bool duplicate = false,
     bool officeCopy = true,
+    bool cancelled = false,
   }) async {
     final regular = pw.Font.ttf(fonts.regular);
     final bold = pw.Font.ttf(fonts.bold);
@@ -72,6 +73,25 @@ abstract final class CertificatePdf {
             pw.TextSpan(text: date, style: st(size: 10, b: true)),
           ])),
         ]);
+
+    /// Every page: a large CANCELLED stamp over a cancelled certificate
+    /// (only when viewing the register; issuing never sets it).
+    pw.Page page({required PdfPageFormat pageFormat, required pw.EdgeInsets margin, required pw.BuildCallback build}) =>
+        pw.Page(
+          pageTheme: pw.PageTheme(
+            pageFormat: pageFormat,
+            margin: margin,
+            buildForeground: cancelled
+                ? (context) => pw.Center(
+                      child: pw.Transform.rotateBox(
+                        angle: 0.5,
+                        child: pw.Text('CANCELLED', style: st(size: 72, b: true, color: PdfColor.fromInt(0x55C62828))),
+                      ),
+                    )
+                : null,
+          ),
+          build: build,
+        );
 
     pw.Widget duplicateMark() => duplicate
         ? pw.Align(
@@ -156,7 +176,7 @@ abstract final class CertificatePdf {
     }
 
     if (kind == CertificateKind.bonafide || kind == CertificateKind.character) {
-      doc.addPage(pw.Page(
+      doc.addPage(page(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.fromLTRB(30, 24, 30, 24),
         build: (context) => pw.Column(children: [
@@ -217,7 +237,7 @@ abstract final class CertificatePdf {
           if ((f[CertField.pen] ?? '').isNotEmpty) 'PEN: ${f[CertField.pen]}',
           if ((f[CertField.apaar] ?? '').isNotEmpty) 'APAAR: ${f[CertField.apaar]}',
         ];
-        doc.addPage(pw.Page(
+        doc.addPage(page(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.all(22),
           build: (context) => fullPage([
@@ -254,7 +274,7 @@ abstract final class CertificatePdf {
         ));
       case CertificateKind.noDues:
         const sections = ['Library', 'Laboratory', 'Office / Accounts', 'Sports', 'Class Teacher'];
-        doc.addPage(pw.Page(
+        doc.addPage(page(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.all(22),
           build: (context) => fullPage([
@@ -293,7 +313,7 @@ abstract final class CertificatePdf {
           ]),
         ));
       case CertificateKind.noc:
-        doc.addPage(pw.Page(
+        doc.addPage(page(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.all(22),
           build: (context) => fullPage([
@@ -339,7 +359,7 @@ abstract final class CertificatePdf {
         ];
         String blank(String? v, String fill) => (v ?? '').trim().isEmpty ? fill : v!.trim();
         final school = blank(f[CertField.schoolName], head.name);
-        doc.addPage(pw.Page(
+        doc.addPage(page(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.all(28),
           build: (context) => pw.Container(
@@ -434,7 +454,7 @@ abstract final class CertificatePdf {
         final word = institutionWord.toLowerCase().contains('college')
             ? 'College'
             : institutionWord.split(' ').map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1)).join(' ');
-        doc.addPage(pw.Page(
+        doc.addPage(page(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.all(40),
           build: (context) => pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.stretch, children: [

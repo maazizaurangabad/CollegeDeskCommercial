@@ -47,6 +47,7 @@ Future<Uint8List> certificatePdf(
   required DateTime issuedOn,
   bool duplicate = false,
   bool officeCopy = true,
+  bool cancelled = false,
 }) async {
   return CertificatePdf.build(
     kind: kind,
@@ -58,5 +59,6 @@ Future<Uint8List> certificatePdf(
     institutionWord: institutionWord(ref),
     duplicate: duplicate,
     officeCopy: officeCopy,
+    cancelled: cancelled,
   );
 }

@@ -1726,5 +1726,31 @@
         "type": "String"
       }
     }
-  }
+  },
+  "certView": "View",
+  "sortAge": "Age",
+  "genderAllStudents": "All students",
+  "orderLabel": "Order",
+  "orderAscending": "Ascending",
+  "orderDescending": "Descending",
+  "reportSortedBy": "Sorted by {field} ({order})",
+  "@reportSortedBy": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      },
+      "order": {
+        "type": "String"
+      }
+    }
+  },
+  "reportAgeAsOn": "Age as on {date}",
+  "@reportAgeAsOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "reportAgeHint": "Age is worked out as on today's date. Ascending lists the youngest first. Students without a date of birth come last."
 }

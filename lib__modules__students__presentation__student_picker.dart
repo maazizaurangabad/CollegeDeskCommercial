@@ -10,9 +10,27 @@ import '../domain/student_models.dart';
 import 'student_labels.dart';
 
 /// How a list of students is ordered.
-enum StudentSort { roll, gr, name, code }
+enum StudentSort { roll, gr, name, age, code }
 
-/// Compares GR numbers, codes and the like so that 9 comes before 10.
+/// Which students a list shows by gender.
+enum GenderFilter { all, boys, girls }
+
+const _boyValues = {'male', 'm', 'boy', 'boys', 'b'};
+const _girlValues = {'female', 'f', 'girl', 'girls', 'g'};
+
+/// Boys / Girls use the recorded gender; a student with no or another
+/// gender is kept only in "All students".
+bool matchesGender(String? gender, GenderFilter filter) {
+  final g = (gender ?? '').trim().toLowerCase();
+  return switch (filter) {
+    GenderFilter.all => true,
+    GenderFilter.boys => _boyValues.contains(g),
+    GenderFilter.girls => _girlValues.contains(g),
+  };
+}
+
+/// Compares G.R. numbers, codes and the like so that 2 < 10 < 100.
+/// Empty values come last.
 int compareNatural(String? a, String? b) {
   final x = (a ?? '').trim(), y = (b ?? '').trim();
   if (x.isEmpty || y.isEmpty) return x.isEmpty ? (y.isEmpty ? 0 : 1) : -1;
@@ -26,20 +44,37 @@ int compareNatural(String? a, String? b) {
   return x.toLowerCase().compareTo(y.toLowerCase());
 }
 
-/// Sorts students; ties fall back to roll number, then name.
-List<StudentListItem> sortStudents(List<StudentListItem> items, StudentSort sort) {
-  int byRoll(StudentListItem a, StudentListItem b) => (a.rollNumber ?? 1 << 20).compareTo(b.rollNumber ?? 1 << 20);
-  int byName(StudentListItem a, StudentListItem b) => a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase());
-  return [...items]..sort((a, b) {
-      final c = switch (sort) {
-        StudentSort.roll => byRoll(a, b),
+/// Sorts students by [sort], ascending or [descending]. Students without a
+/// value (no G.R., roll or date of birth) always come last. Equal values
+/// fall back to name, then the student's id, so the order never changes
+/// between screen, PDF and Excel. Age ascending means youngest first.
+List<StudentListItem> sortStudents(List<StudentListItem> items, StudentSort sort, {bool descending = false}) {
+  bool missing(StudentListItem s) => switch (sort) {
+        StudentSort.roll => s.rollNumber == null,
+        StudentSort.gr => (s.grNumber ?? '').trim().isEmpty,
+        StudentSort.age => s.dateOfBirth == null,
+        StudentSort.code => s.displayCode.trim().isEmpty,
+        StudentSort.name => false,
+      };
+  int value(StudentListItem a, StudentListItem b) => switch (sort) {
+        StudentSort.roll => a.rollNumber!.compareTo(b.rollNumber!),
         StudentSort.gr => compareNatural(a.grNumber, b.grNumber),
-        StudentSort.name => byName(a, b),
+        StudentSort.name => a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase()),
+        // Younger (later birth date) first when ascending.
+        StudentSort.age => b.dateOfBirth!.compareTo(a.dateOfBirth!),
         StudentSort.code => compareNatural(a.displayCode, b.displayCode),
       };
-      if (c != 0) return c;
-      final r = byRoll(a, b);
-      return r != 0 ? r : byName(a, b);
+  int tie(StudentListItem a, StudentListItem b) {
+    final n = a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase());
+    return n != 0 ? n : a.id.compareTo(b.id);
+  }
+
+  return [...items]..sort((a, b) {
+      final ma = missing(a), mb = missing(b);
+      if (ma || mb) return ma == mb ? tie(a, b) : (ma ? 1 : -1);
+      final c = value(a, b);
+      if (c != 0) return descending ? -c : c;
+      return tie(a, b);
     });
 }
 
@@ -47,7 +82,14 @@ String studentSortLabel(AppLocalizations l10n, StudentSort s) => switch (s) {
       StudentSort.roll => l10n.sortRoll,
       StudentSort.gr => l10n.sortGr,
       StudentSort.name => l10n.sortName,
+      StudentSort.age => l10n.sortAge,
       StudentSort.code => l10n.sortCode,
+    };
+
+String genderFilterLabel(AppLocalizations l10n, GenderFilter g) => switch (g) {
+      GenderFilter.all => l10n.genderAllStudents,
+      GenderFilter.boys => l10n.reportBoys,
+      GenderFilter.girls => l10n.reportGirls,
     };
 
 /// Choose a student: pick a class to see its students straight away (in

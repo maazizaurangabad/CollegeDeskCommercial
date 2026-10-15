@@ -12,6 +12,7 @@ import '../../../platform/organization/organization_providers.dart';
 import '../../attendance/application/attendance_providers.dart';
 import '../../certificates/application/certificates_providers.dart';
 import '../../certificates/domain/certificate_models.dart';
+import '../../certificates/presentation/certificate_view_screen.dart';
 import '../../fees/application/fees_providers.dart';
 import '../../fees/domain/fee_models.dart';
 import '../../attendance/data/attendance_repository.dart';
@@ -313,7 +314,7 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                   return _Section(title: l10n.certStudentSection, children: [
                     for (final c in certs)
                       InkWell(
-                        onTap: () => context.go('/certificates/view/${c.id}'),
+                        onTap: () => openCertificateView(context, c.id),
                         child: InfoRow(
                           label: DateFormat('d MMM y').format(c.issuedOn),
                           value: '${certificateTitle(l10n, c.kind).split(' (').first} · ${c.serialLabel}'
