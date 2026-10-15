@@ -8,6 +8,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
 import '../../../platform/modules/module_providers.dart';
 import '../../../platform/reporting/report_output.dart';
+import '../../../platform/reporting/report_pdf_preview.dart';
 import '../../reports/application/reports_providers.dart';
 import '../../students/presentation/student_labels.dart';
 import '../application/fees_providers.dart';
@@ -28,6 +29,21 @@ class _FeesScreenState extends ConsumerState<FeesScreen> {
   _Period _period = _Period.today;
   String _query = '';
   bool _busy = false;
+
+  Future<void> _preview() async {
+    final l10n = AppLocalizations.of(context);
+    setState(() => _busy = true);
+    try {
+      final (from, to) = _range();
+      final data = await feeReports(ref, l10n).dayBook(from: from, to: to);
+      final head = await reportLetterhead(ref);
+      if (mounted) await showReportPdfPreview(context, data, head);
+    } catch (_) {
+      if (mounted) SdToast.show(context, l10n.saveFailed);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   Future<void> _export({required bool excel}) async {
     final l10n = AppLocalizations.of(context);
@@ -104,6 +120,12 @@ class _FeesScreenState extends ConsumerState<FeesScreen> {
         SdTextField(hint: l10n.feeSearchReceipts, prefixIcon: Icons.search, onChanged: (v) => setState(() => _query = v.trim())),
         const SizedBox(height: SdSpace.md),
         Wrap(spacing: SdSpace.sm, runSpacing: SdSpace.sm, children: [
+          SdButton(
+            label: l10n.reportPreview,
+            icon: Icons.visibility_outlined,
+            variant: SdButtonVariant.secondary,
+            onPressed: _busy ? null : _preview,
+          ),
           SdButton(
             label: l10n.exportExcel,
             icon: Icons.table_chart_outlined,

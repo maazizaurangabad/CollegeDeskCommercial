@@ -10,6 +10,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
 import '../../../platform/reporting/report_dataset.dart';
 import '../../../platform/reporting/report_output.dart';
+import '../../../platform/reporting/report_pdf_preview.dart';
 import '../../../platform/reporting/report_preview.dart';
 import '../../attendance/presentation/division_picker.dart';
 import '../../certificates/application/certificates_providers.dart';
@@ -247,8 +248,20 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
             runSpacing: SdSpace.sm,
             children: [
               SdButton(
+                label: l10n.reportPreview,
+                icon: Icons.visibility_outlined,
+                onPressed: _busy
+                    ? null
+                    : () => _output(() async {
+                          final head = await reportLetterhead(ref);
+                          if (!mounted) return;
+                          await showReportPdfPreview(context, data, head);
+                        }),
+              ),
+              SdButton(
                 label: l10n.reportSavePdf,
                 icon: Icons.picture_as_pdf_outlined,
+                variant: SdButtonVariant.secondary,
                 onPressed: _busy
                     ? null
                     : () => _output(() async {

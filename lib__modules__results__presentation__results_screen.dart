@@ -7,6 +7,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
 import '../../../platform/reporting/report_dataset.dart';
 import '../../../platform/reporting/report_output.dart';
+import '../../../platform/reporting/report_pdf_preview.dart';
 import '../../../platform/reporting/report_preview.dart';
 import '../../attendance/presentation/division_picker.dart';
 import '../../reports/application/reports_providers.dart';
@@ -77,6 +78,8 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
           }
         case 'print':
           await ReportOutput.printPdf(data, head);
+        case 'preview':
+          if (mounted) await showReportPdfPreview(context, data, head);
       }
     } catch (_) {
       if (mounted) SdToast.show(context, l10n.saveFailed);
@@ -157,6 +160,11 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
                   }
                   return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                     Wrap(spacing: SdSpace.sm, runSpacing: SdSpace.sm, children: [
+                      SdButton(
+                        label: l10n.reportPreview,
+                        icon: Icons.visibility_outlined,
+                        onPressed: _busy ? null : () => _output(data, 'preview'),
+                      ),
                       SdButton(
                         label: l10n.reportSavePdf,
                         icon: Icons.picture_as_pdf_outlined,

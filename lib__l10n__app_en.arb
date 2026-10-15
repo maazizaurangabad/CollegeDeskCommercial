@@ -1605,5 +1605,6 @@
   "resKindMarks": "Marks",
   "resKindGrade": "Grade only",
   "resMaxMarks": "Maximum marks",
-  "resPassMarks": "Passing marks"
+  "resPassMarks": "Passing marks",
+  "reportPreview": "Preview"
 }
