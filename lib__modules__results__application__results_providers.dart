@@ -6,6 +6,7 @@ import '../../../platform/reporting/report_dataset.dart';
 import '../../students/application/students_providers.dart';
 import '../data/result_repository.dart';
 import '../domain/result_models.dart';
+import 'mark_sheet_pdf.dart';
 
 final resultRepositoryProvider = Provider<ResultRepository>(
   (ref) => ResultRepository(
@@ -117,3 +118,99 @@ ReportDataset resultSheetDataset(
     signatures: [l10n.reportClassTeacher, l10n.resPrincipal],
   );
 }
+
+/// Subject-wise analysis of a class result: appeared, passed, failed, pass %,
+/// highest and average; toppers and class counts in the notes.
+ReportDataset resultAnalysisDataset(
+  AppLocalizations l10n, {
+  required String title,
+  required String classLabel,
+  required String yearLabel,
+  required List<SubjectColumn> columns,
+  required List<StudentResult> results,
+  required ResultRules rules,
+}) {
+  final rows = <ReportRow>[];
+  final marksCols = columns.where((c) => !c.isGrade).toList();
+  for (var i = 0; i < marksCols.length; i++) {
+    final entries = [
+      for (final r in results)
+        if (r.columns[marksCols[i].name] case final c? when !c.missing && c.obtained != null) c,
+    ];
+    final passed = entries.where((c) => c.passed).length;
+    final best = entries.isEmpty ? 0 : entries.map((c) => c.obtained!).reduce((a, b) => a > b ? a : b);
+    final avg = entries.isEmpty ? 0.0 : entries.map((c) => c.obtained!).reduce((a, b) => a + b) / entries.length;
+    rows.add(ReportRow([
+      '${i + 1}',
+      marksCols[i].name,
+      '${entries.length}',
+      '$passed',
+      '${entries.length - passed}',
+      entries.isEmpty ? '-' : (passed * 100 / entries.length).toStringAsFixed(1),
+      '$best',
+      avg.toStringAsFixed(1),
+    ]));
+  }
+  final done = results.where((r) => r.status != ResultStatus.incomplete).toList();
+  final passed = done.where((r) => r.status == ResultStatus.passed).length;
+  rows.add(ReportRow([
+    '',
+    l10n.resOverall,
+    '${done.length}',
+    '$passed',
+    '${done.where((r) => r.status == ResultStatus.failed).length}',
+    done.isEmpty ? '-' : (passed * 100 / done.length).toStringAsFixed(1),
+    '',
+    '',
+  ], kind: ReportRowKind.total));
+  final toppers = results.where((r) => r.rank != null && r.rank! <= 3).toList()..sort((a, b) => a.rank!.compareTo(b.rank!));
+  int count(ResultClass c) => results.where((r) => r.resultClass == c).length;
+  return ReportDataset(
+    title: l10n.resAnalysisTitle(title),
+    subtitle: ['$classLabel · $yearLabel'],
+    fileName: 'result-analysis-${classLabel.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-')}',
+    columns: [
+      ReportColumn(l10n.reportSr, width: 26, align: ReportAlign.center, type: ReportColumnType.number),
+      ReportColumn(l10n.resChooseColumn, flex: 3),
+      ReportColumn(l10n.resAppeared, width: 60, align: ReportAlign.center, type: ReportColumnType.number),
+      ReportColumn(l10n.resPassed, width: 56, align: ReportAlign.center, type: ReportColumnType.number),
+      ReportColumn(l10n.resFailed, width: 56, align: ReportAlign.center, type: ReportColumnType.number),
+      ReportColumn(l10n.resPassPercent, width: 56, align: ReportAlign.center, type: ReportColumnType.number),
+      ReportColumn(l10n.resHighest, width: 56, align: ReportAlign.center, type: ReportColumnType.number),
+      ReportColumn(l10n.resAverage, width: 56, align: ReportAlign.center, type: ReportColumnType.number),
+    ],
+    rows: rows,
+    notes: [
+      if (toppers.isNotEmpty)
+        '${l10n.resToppers}: ${[for (final t in toppers) '${t.rank}. ${t.name} (${t.total}, ${rules.percentText(t.percent)}%)'].join('   ')}',
+      '${l10n.resDistinction}: ${count(ResultClass.distinction)} · ${l10n.resFirstClass}: ${count(ResultClass.first)} · '
+          '${l10n.resSecondClass}: ${count(ResultClass.second)} · ${l10n.resPassClass}: ${count(ResultClass.pass)} · '
+          '${l10n.resAtkt}: ${results.where((r) => r.status == ResultStatus.atkt).length}',
+    ],
+  );
+}
+
+MarkSheetWords markSheetWords(AppLocalizations l10n) => MarkSheetWords(
+      title: l10n.resMarkSheetTitle,
+      name: l10n.resColName,
+      gr: l10n.resColGr,
+      roll: l10n.sortRoll,
+      className: l10n.resColClass,
+      year: l10n.academicYearShort,
+      subject: l10n.resChooseColumn,
+      max: l10n.resMaxShort,
+      pass: l10n.resPassShort,
+      obtained: l10n.resObtained,
+      remark: l10n.resRemark,
+      total: l10n.reportTotal,
+      percentage: l10n.resColPercent,
+      resultClass: l10n.resColClass,
+      rank: l10n.resColRank,
+      result: l10n.resColResult,
+      gradeSubjects: l10n.resGradeSubjects,
+      classTeacher: l10n.reportClassTeacher,
+      principal: l10n.resPrincipal,
+      parent: l10n.resParentSign,
+      statusLabel: (s) => resultStatusLabel(l10n, s),
+      classLabel: (c) => resultClassLabel(l10n, c),
+    );

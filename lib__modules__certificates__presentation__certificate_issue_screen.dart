@@ -6,11 +6,13 @@ import 'package:printing/printing.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
+import '../../../platform/modules/module_providers.dart';
 import '../../../platform/data/data_providers.dart';
 import '../../../platform/organization/organization_providers.dart';
 import '../../students/application/students_providers.dart';
-import '../../students/domain/student_models.dart';
-import '../../students/presentation/student_labels.dart';
+import '../../students/presentation/student_picker.dart';
+import '../../results/application/results_providers.dart';
+import '../../results/domain/result_models.dart';
 import '../application/certificates_providers.dart';
 import '../domain/certificate_models.dart';
 
@@ -40,7 +42,6 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
   bool get _hasLc => _issuedKinds.contains(_kind);
   bool get _isLeavingKind => _kind == CertificateKind.leaving || _kind == CertificateKind.nirgam;
   bool _busy = false;
-  String _query = '';
 
   @override
   void initState() {
@@ -56,6 +57,29 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
     super.dispose();
   }
 
+  /// Fills the result lines from the final result, when Results has it.
+  /// The office can still change them before issuing.
+  Future<void> _fillResult(String studentId, Map<String, String> fields) async {
+    if (!mounted || !ref.read(enabledModulesProvider).contains('results')) return;
+    final l10n = AppLocalizations.of(context);
+    try {
+      final f = await ref.read(resultRepositoryProvider).finalResultOf(studentId);
+      if (f == null || f.result.status == ResultStatus.incomplete) return;
+      final r = f.result;
+      final passed = r.status != ResultStatus.failed;
+      fields[CertField.examResult] = passed ? l10n.resultPassed : l10n.resultFailed;
+      fields[CertField.examDetails] = [
+        '${f.exams.map((e) => e.name).join(' + ')} ${f.yearLabel}',
+        '${r.total}/${r.maxTotal} (${f.rules.percentText(r.percent)}%)',
+        if (r.status == ResultStatus.atkt) l10n.resAtkt,
+        if (r.resultClass != null) resultClassLabel(l10n, r.resultClass!),
+      ].join(', ');
+      fields[CertField.promotion] = passed ? l10n.promotionYes : l10n.promotionNo;
+    } catch (_) {
+      // The result lines stay empty; the office fills them by hand.
+    }
+  }
+
   Future<void> _choose(String studentId) async {
     setState(() => _busy = true);
     final labels = await ref.read(academicRepositoryProvider).divisionLabels();
@@ -65,6 +89,7 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
       fields[key] = await settings.getValue('cert.$key') ?? '';
     }
     fields[CertField.schoolName] = ref.read(activeOrganizationProvider).name;
+    await _fillResult(studentId, fields);
     final existing = await ref.read(certificateRepositoryProvider).list(studentId: studentId);
     if (!mounted) return;
     for (final c in _controllers.values) {
@@ -252,7 +277,7 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final academic = ref.watch(academicControllerProvider);
+    ref.watch(academicControllerProvider);
 
     return SdPage(
       children: [
@@ -276,39 +301,11 @@ class _CertificateIssueScreenState extends ConsumerState<CertificateIssueScreen>
           SdSection(
             title: l10n.certChooseStudent,
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              SdTextField(
-                hint: l10n.certSearchStudent,
-                prefixIcon: Icons.search,
-                onChanged: (v) => setState(() => _query = v.trim()),
+              StudentPicker(
+                searchHint: l10n.certSearchStudent,
+                enabled: !_busy,
+                onPicked: (s) => _choose(s.id),
               ),
-              const SizedBox(height: SdSpace.md),
-              if (_query.length >= 2)
-                FutureBuilder<List<StudentListItem>>(
-                  future: ref.read(studentRepositoryProvider).list(
-                        query: _query,
-                        academicYearId: academic.activeYear?.id,
-                        limit: 20,
-                      ),
-                  builder: (context, snapshot) {
-                    final items = snapshot.data ?? const <StudentListItem>[];
-                    return SdCard(
-                      padding: EdgeInsets.zero,
-                      child: Column(children: [
-                        for (final s in items)
-                          ListTile(
-                            title: Text(s.fullName),
-                            subtitle: Text([s.displayCode, placementName(academic, s.divisionId) ?? '']
-                                .where((x) => x.isNotEmpty)
-                                .join(' · ')),
-                            trailing: s.status == StudentStatus.active
-                                ? null
-                                : StatusPill(text: studentStatusLabel(l10n, s.status), color: SdColors.of(context).textMuted),
-                            onTap: _busy ? null : () => _choose(s.id),
-                          ),
-                      ]),
-                    );
-                  },
-                ),
             ]),
           ),
         ] else if (_fields != null) ...[

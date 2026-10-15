@@ -7,9 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
-import '../../students/application/students_providers.dart';
-import '../../students/domain/student_models.dart';
-import '../../students/presentation/student_labels.dart';
+import '../../students/presentation/student_picker.dart';
 import '../application/fees_providers.dart';
 import '../domain/fee_models.dart';
 
@@ -25,7 +23,6 @@ class FeePaymentScreen extends ConsumerStatefulWidget {
 }
 
 class _FeePaymentScreenState extends ConsumerState<FeePaymentScreen> {
-  String _query = '';
   FeeAccount? _account;
   List<FeeHead> _heads = const [];
   final _received = TextEditingController();
@@ -172,33 +169,7 @@ class _FeePaymentScreenState extends ConsumerState<FeePaymentScreen> {
     if (widget.studentId == null) {
       return SdPage(children: [
         header(),
-        SdTextField(
-          hint: l10n.feeFindStudent,
-          prefixIcon: Icons.search,
-          onChanged: (v) => setState(() => _query = v.trim()),
-        ),
-        const SizedBox(height: SdSpace.md),
-        if (_query.length >= 2)
-          FutureBuilder<List<StudentListItem>>(
-            future: ref.read(studentRepositoryProvider).list(query: _query, academicYearId: year.id, limit: 20),
-            builder: (context, snapshot) {
-              final items = snapshot.data ?? const <StudentListItem>[];
-              return SdCard(
-                padding: EdgeInsets.zero,
-                child: Column(children: [
-                  for (final s in items)
-                    ListTile(
-                      title: Text(s.fullName),
-                      subtitle: Text([s.displayCode, placementName(academic, s.divisionId) ?? ''].join(' · ')),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => context.go('/fees/pay?student=${s.id}'),
-                    ),
-                ]),
-              );
-            },
-          )
-        else
-          Text(l10n.feeFindStudentHint, style: theme.textTheme.bodySmall),
+        StudentPicker(onPicked: (s) => context.go('/fees/pay?student=${s.id}')),
       ]);
     }
 

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../platform/modules/module_descriptor.dart';
 import 'presentation/marks_entry_screen.dart';
+import 'presentation/result_messages_screen.dart';
 import 'presentation/results_screen.dart';
 import 'presentation/results_setup_screen.dart';
 
@@ -15,7 +16,7 @@ final resultsModule = ModuleDescriptor(
   selectedIcon: Icons.emoji_events,
   route: '/results',
   navOrder: 26,
-  version: '0.5.0',
+  version: '1.0.0',
   dependsOn: const ['students'],
   requiredPermissions: const {'results.manage'},
   builder: (_) => const ResultsScreen(),
@@ -27,6 +28,16 @@ final resultsModule = ModuleDescriptor(
         child: MarksEntryScreen(
           examId: state.uri.queryParameters['exam'] ?? '',
           divisionId: state.uri.queryParameters['division'] ?? '',
+        ),
+      ),
+    ),
+    GoRoute(
+      path: 'send',
+      pageBuilder: (context, state) => NoTransitionPage(
+        key: ValueKey('result-send-${state.uri.query}'),
+        child: ResultMessagesScreen(
+          divisionId: state.uri.queryParameters['division'] ?? '',
+          examKey: state.uri.queryParameters['exam'] ?? 'final',
         ),
       ),
     ),

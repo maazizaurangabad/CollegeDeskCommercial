@@ -1606,5 +1606,125 @@
   "resKindGrade": "Grade only",
   "resMaxMarks": "Maximum marks",
   "resPassMarks": "Passing marks",
-  "reportPreview": "Preview"
+  "reportPreview": "Preview",
+  "sortBy": "Sort",
+  "sortRoll": "Roll no.",
+  "sortGr": "G.R. No",
+  "sortName": "Name",
+  "sortCode": "Student code",
+  "pickerHint": "Choose a class to see its students, or type at least two letters of a name, G.R. No or code.",
+  "batchSelect": "Select",
+  "batchSelected": "{count} selected",
+  "@batchSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchSelectAll": "Select all {count}",
+  "@batchSelectAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchSelectNone": "Clear selection",
+  "batchLeft": "Mark as left",
+  "batchBin": "Move to recycle bin",
+  "batchBinTitle": "Move {count} students to the recycle bin?",
+  "@batchBinTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchBinBody": "They disappear from lists but nothing is erased. You can bring them back from Settings > Recycle bin.",
+  "batchBinDone": "{count} students moved to the recycle bin",
+  "@batchBinDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchLeftTitle": "Mark {count} students as left",
+  "@batchLeftTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "batchLeftDate": "Date of leaving",
+  "batchLeftReason": "Reason (e.g. Passed HSC, Transfer)",
+  "batchLeftDone": "{count} students marked as left",
+  "@batchLeftDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "academicYearShort": "Year",
+  "msgKindResult": "Result",
+  "resAnalysis": "Analysis",
+  "resAnalysisTitle": "Result analysis: {exam}",
+  "@resAnalysisTitle": {
+    "placeholders": {
+      "exam": {
+        "type": "String"
+      }
+    }
+  },
+  "resAppeared": "Appeared",
+  "resAverage": "Average",
+  "resHighest": "Highest",
+  "resPassPercent": "Pass %",
+  "resOverall": "Whole class",
+  "resToppers": "Toppers",
+  "resGradeSubjects": "Grade subjects",
+  "resMarkSheetTitle": "Statement of marks",
+  "resMarkSheets": "Mark sheets",
+  "resMaxShort": "Max",
+  "resPassShort": "Passing",
+  "resObtained": "Obtained",
+  "resRemark": "Remark",
+  "resParentSign": "Parent",
+  "resSendToParents": "Send to parents",
+  "resSentAlready": "The result was already sent to this parent today.",
+  "resNothingToSend": "No results to send yet",
+  "resNothingToSendHint": "Results appear here once all marks of a student are entered.",
+  "resNoMobile": "No mobile number",
+  "resParentMessage": "Dear Parent,\n{exam} result of {student} ({className}):\nMarks {total} out of {max}, {percent}%\nResult: {result}\n- {institution}",
+  "@resParentMessage": {
+    "placeholders": {
+      "exam": {
+        "type": "String"
+      },
+      "student": {
+        "type": "String"
+      },
+      "className": {
+        "type": "String"
+      },
+      "total": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      },
+      "percent": {
+        "type": "String"
+      },
+      "result": {
+        "type": "String"
+      },
+      "institution": {
+        "type": "String"
+      }
+    }
+  }
 }

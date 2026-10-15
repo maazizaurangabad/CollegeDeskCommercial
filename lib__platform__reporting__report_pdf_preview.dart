@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 
@@ -8,25 +10,35 @@ import 'report_output.dart';
 
 /// Opens the report as it will print: every page of the real PDF, with
 /// zoom, and print / share from the same screen.
-Future<void> showReportPdfPreview(BuildContext context, ReportDataset data, ReportLetterhead head) {
+Future<void> showReportPdfPreview(BuildContext context, ReportDataset data, ReportLetterhead head) =>
+    showPdfPreview(context, title: data.title, fileName: data.fileName, build: () => ReportOutput.pdf(data, head));
+
+/// The same full-screen preview for any PDF (mark sheets, cards...).
+Future<void> showPdfPreview(
+  BuildContext context, {
+  required String title,
+  required String fileName,
+  required Future<Uint8List> Function() build,
+}) {
   return Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(
     fullscreenDialog: true,
-    builder: (_) => _ReportPdfPreviewPage(data: data, head: head),
+    builder: (_) => _PdfPreviewPage(title: title, fileName: fileName, makePdf: build),
   ));
 }
 
-class _ReportPdfPreviewPage extends StatelessWidget {
-  const _ReportPdfPreviewPage({required this.data, required this.head});
+class _PdfPreviewPage extends StatelessWidget {
+  const _PdfPreviewPage({required this.title, required this.fileName, required this.makePdf});
 
-  final ReportDataset data;
-  final ReportLetterhead head;
+  final String title;
+  final String fileName;
+  final Future<Uint8List> Function() makePdf;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(data.title.isEmpty ? l10n.reportPreview : data.title),
+        title: Text(title.isEmpty ? l10n.reportPreview : title),
         leading: IconButton(
           tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
           icon: const Icon(Icons.close),
@@ -34,8 +46,8 @@ class _ReportPdfPreviewPage extends StatelessWidget {
         ),
       ),
       body: PdfPreview(
-        build: (_) => ReportOutput.pdf(data, head),
-        pdfFileName: '${data.fileName}.pdf',
+        build: (_) => makePdf(),
+        pdfFileName: '$fileName.pdf',
         canChangePageFormat: false,
         canChangeOrientation: false,
         canDebug: false,

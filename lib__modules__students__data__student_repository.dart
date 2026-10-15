@@ -29,7 +29,7 @@ class StudentRepository extends OrgScopedRepository {
     String query = '',
     String? academicYearId,
     StudentStatus? status,
-    int limit = 1000,
+    int limit = 50000,
   }) async {
     final tokens = query
         .toLowerCase()
@@ -64,6 +64,13 @@ class StudentRepository extends OrgScopedRepository {
       }
     }
     final mobiles = await _primaryMobiles();
+    final grs = {
+      for (final i in await (db.select(db.studentIdentifiers)
+            ..where((t) =>
+                t.organizationId.equals(orgId) & t.deletedAt.isNull() & t.idType.equals(IdentifierType.grNumber.code)))
+          .get())
+        i.studentId: i.idValue,
+    };
 
     return [
       for (final r in rows)
@@ -77,6 +84,7 @@ class StudentRepository extends OrgScopedRepository {
           divisionId: placements[r.id]?.divisionId,
           rollNumber: placements[r.id]?.rollNumber,
           primaryMobile: mobiles[r.id],
+          grNumber: grs[r.id],
         ),
     ];
   }
@@ -398,6 +406,30 @@ class StudentRepository extends OrgScopedRepository {
         rowVersion: Value(row!.rowVersion + 1),
       ));
       await changes.record(table: 'students', rowId: studentId, operation: 'delete', before: {'deleted': false}, after: {'deleted': true});
+    });
+  }
+
+  /// Moves several students to the recycle bin at once. Returns how many.
+  Future<int> moveManyToRecycleBin(Iterable<String> studentIds) {
+    return db.transaction(() async {
+      var n = 0;
+      for (final id in studentIds.toSet()) {
+        await moveToRecycleBin(id);
+        n++;
+      }
+      return n;
+    });
+  }
+
+  /// Marks several students as left on the same date and reason.
+  Future<int> markManyLeft(Iterable<String> studentIds, {required DateTime date, required String reason}) {
+    return db.transaction(() async {
+      var n = 0;
+      for (final id in studentIds.toSet()) {
+        await markLeft(id, date: date, reason: reason);
+        n++;
+      }
+      return n;
     });
   }
 

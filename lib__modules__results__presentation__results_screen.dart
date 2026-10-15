@@ -5,12 +5,14 @@ import 'package:go_router/go_router.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
+import '../../../platform/modules/module_providers.dart';
 import '../../../platform/reporting/report_dataset.dart';
 import '../../../platform/reporting/report_output.dart';
 import '../../../platform/reporting/report_pdf_preview.dart';
 import '../../../platform/reporting/report_preview.dart';
 import '../../attendance/presentation/division_picker.dart';
 import '../../reports/application/reports_providers.dart';
+import '../application/mark_sheet_pdf.dart';
 import '../application/results_providers.dart';
 import '../domain/result_models.dart';
 
@@ -32,6 +34,9 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
   bool _showClass = false;
   bool _busy = false;
 
+  /// What the sheet on screen was made from (for mark sheets and analysis).
+  ({List<SubjectColumn> columns, List<StudentResult> results, String exam, String classLabel, String year, ResultRules rules})? _last;
+
   Future<ReportDataset?> _sheet(AppLocalizations l10n, List<Exam> exams) async {
     final academic = ref.read(academicControllerProvider);
     final year = academic.activeYear;
@@ -49,14 +54,17 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
       examId: key == _finalKey ? null : key,
     );
     final examName = key == _finalKey ? l10n.resFinalResult : exams.where((e) => e.id == key).firstOrNull?.name ?? '';
+    final rules = await repo.rules();
+    final classLabel = '${program?.name ?? ''} ${division.name}'.trim();
+    _last = (columns: r.columns, results: r.results, exam: examName, classLabel: classLabel, year: year.label, rules: rules);
     return resultSheetDataset(
       l10n,
       title: examName,
-      classLabel: '${program?.name ?? ''} ${division.name}'.trim(),
+      classLabel: classLabel,
       yearLabel: year.label,
       columns: r.columns,
       results: r.results,
-      rules: await repo.rules(),
+      rules: rules,
       showRank: _showRank,
       showClass: _showClass,
     );
@@ -80,6 +88,44 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
           await ReportOutput.printPdf(data, head);
         case 'preview':
           if (mounted) await showReportPdfPreview(context, data, head);
+        case 'analysis':
+          {
+          final last = _last;
+          if (last == null) return;
+          final analysis = resultAnalysisDataset(
+            l10n,
+            title: last.exam,
+            classLabel: last.classLabel,
+            yearLabel: last.year,
+            columns: last.columns,
+            results: last.results,
+            rules: last.rules,
+          );
+          if (mounted) await showReportPdfPreview(context, analysis, head);
+          }
+        case 'marksheets':
+          {
+          final last = _last;
+          if (last == null) return;
+          final fonts = await ReportOutput.fonts();
+          if (!mounted) return;
+          await showPdfPreview(
+            context,
+            title: l10n.resMarkSheets,
+            fileName: 'mark-sheets-${last.classLabel.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-')}',
+            build: () => MarkSheetPdf.build(
+              results: last.results,
+              columns: last.columns,
+              examName: last.exam,
+              classLabel: last.classLabel,
+              yearLabel: last.year,
+              rules: last.rules,
+              head: head,
+              fonts: fonts,
+              words: markSheetWords(l10n),
+            ),
+          );
+          }
       }
     } catch (_) {
       if (mounted) SdToast.show(context, l10n.saveFailed);
@@ -165,6 +211,27 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
                         icon: Icons.visibility_outlined,
                         onPressed: _busy ? null : () => _output(data, 'preview'),
                       ),
+                      SdButton(
+                        label: l10n.resMarkSheets,
+                        icon: Icons.description_outlined,
+                        variant: SdButtonVariant.secondary,
+                        onPressed: _busy ? null : () => _output(data, 'marksheets'),
+                      ),
+                      SdButton(
+                        label: l10n.resAnalysis,
+                        icon: Icons.insights_outlined,
+                        variant: SdButtonVariant.secondary,
+                        onPressed: _busy ? null : () => _output(data, 'analysis'),
+                      ),
+                      if (ref.watch(enabledModulesProvider).contains('messages'))
+                        SdButton(
+                          label: l10n.resSendToParents,
+                          icon: Icons.forum_outlined,
+                          variant: SdButtonVariant.secondary,
+                          onPressed: () => context.go(
+                            '/results/send?division=$_divisionId&exam=${_examKey ?? _finalKey}',
+                          ),
+                        ),
                       SdButton(
                         label: l10n.reportSavePdf,
                         icon: Icons.picture_as_pdf_outlined,

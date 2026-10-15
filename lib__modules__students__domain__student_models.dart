@@ -140,10 +140,14 @@ class StudentListItem {
     this.divisionId,
     this.rollNumber,
     this.primaryMobile,
+    this.grNumber,
   });
 
   final String id;
   final String displayCode;
+
+  /// General Register number, when entered.
+  final String? grNumber;
   final String fullName;
   final StudentStatus status;
   final String? gender;

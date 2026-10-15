@@ -14,7 +14,10 @@ enum MessageKind {
   summary,
 
   /// Fees pending.
-  feeDue;
+  feeDue,
+
+  /// Exam result.
+  result;
 
   static MessageKind byName(String name) => values.firstWhere((k) => k.name == name, orElse: () => absent);
 }

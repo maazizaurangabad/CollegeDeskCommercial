@@ -269,5 +269,46 @@ void main() {
       expect(r.distinction, 70);
       expect(r.firstClass, 60);
     });
+
+    test('final result of one student (also after leaving) and the class analysis', () async {
+      await results.addScienceTemplate(programId);
+      final subjects = await results.subjects(programId: programId);
+      String id(String name) => subjects.firstWhere((s) => s.name == name).id;
+      final term2 = (await results.exams(yearId)).last.id;
+      await results.saveMarks(term2, {
+        for (final (i, st) in ids.indexed)
+          st: {
+            id('English'): MarkEntry(marks: 60 + i * 10),
+            id('Urdu'): const MarkEntry(marks: 70),
+            id('Physics'): const MarkEntry(marks: 65),
+            id('Chemistry'): const MarkEntry(marks: 66),
+            id('Biology'): const MarkEntry(marks: 67),
+            id('Mathematics'): const MarkEntry(marks: 68),
+          },
+      });
+      final f = await results.finalResultOf(ids[0]);
+      expect(f, isNotNull);
+      expect(f!.result.total, 396);
+      expect(f.result.status, ResultStatus.passed);
+      expect(f.exams.single.name, '2nd Term Examination');
+      expect(f.yearLabel, '2026-27');
+
+      await StudentRepository(db, testSession, testCipher).markLeft(ids[0], date: DateTime(2027, 4, 30), reason: 'Passed');
+      expect((await results.finalResultOf(ids[0]))!.result.total, 396);
+
+      final r = await results.classResult(divisionId: divisionId, programId: programId, academicYearId: yearId);
+      final analysis = resultAnalysisDataset(
+        AppLocalizationsEn(),
+        title: 'Final result',
+        classLabel: '11th Science A',
+        yearLabel: '2026-27',
+        columns: r.columns,
+        results: r.results,
+        rules: await results.rules(),
+      );
+      // Ayaan has left, so only Rehan is in the class now.
+      expect(analysis.rows.first.cells.sublist(1, 8), ['English', '1', '1', '0', '100.0', '70', '70.0']);
+      expect(analysis.notes.first, contains('1. Rehan Shaikh'));
+    });
   });
 }

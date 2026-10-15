@@ -304,7 +304,8 @@ class MessageRepository extends OrgScopedRepository {
     });
   }
 
-  /// Records a fee reminder to one family (siblings share one message).
+  /// Records a message to one family about [students] (siblings share one
+  /// message): a fee reminder by default, or [kind] such as a result.
   /// [students] are (studentId, name, class).
   Future<void> recordFeeReminder({
     required List<(String, String, String)> students,
@@ -313,6 +314,7 @@ class MessageRepository extends OrgScopedRepository {
     required DateTime date,
     String? recipient,
     String channel = 'whatsapp',
+    MessageKind kind = MessageKind.feeDue,
   }) {
     return db.transaction(() async {
       final ts = now();
@@ -321,7 +323,7 @@ class MessageRepository extends OrgScopedRepository {
         await _insert(
           batch: batch,
           ts: ts,
-          kind: MessageKind.feeDue,
+          kind: kind,
           date: date,
           studentId: id,
           studentName: name,

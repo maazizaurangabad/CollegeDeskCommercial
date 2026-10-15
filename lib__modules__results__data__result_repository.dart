@@ -578,4 +578,40 @@ class ResultRepository extends OrgScopedRepository {
     );
     return (columns: columns, results: results, exams: used);
   }
+
+  /// One student's final result from their latest class (also after they
+  /// have left). Null when there are no counted exams or no subjects.
+  Future<({StudentResult result, String yearLabel, String classLabel, List<Exam> exams, ResultRules rules})?> finalResultOf(
+      String studentId) async {
+    final enrollment = await (db.select(db.enrollments)
+          ..where((t) => t.organizationId.equals(orgId) & t.studentId.equals(studentId) & t.deletedAt.isNull())
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+          ..limit(1))
+        .getSingleOrNull();
+    if (enrollment == null) return null;
+    final division = await (db.select(db.divisions)..where((t) => t.id.equals(enrollment.divisionId))).getSingleOrNull();
+    if (division == null) return null;
+    final program = await (db.select(db.programs)..where((t) => t.id.equals(division.programId))).getSingleOrNull();
+    final year = await (db.select(db.academicYears)..where((t) => t.id.equals(enrollment.academicYearId))).getSingleOrNull();
+    final used = (await exams(enrollment.academicYearId)).where((e) => e.countsInFinal).toList();
+    final columns = SubjectColumn.of(await subjects(programId: division.programId));
+    if (used.isEmpty || columns.isEmpty) return null;
+    final name = (await students.namesFor([studentId]))[studentId]?.fullName ?? '';
+    final rules = await this.rules();
+    final results = ResultCalculator.compute(
+      roster: [(id: studentId, name: name, roll: enrollment.rollNumber, gr: null)],
+      columns: columns,
+      examIds: used.map((e) => e.id).toList(),
+      marks: await marks(used.map((e) => e.id), [studentId]),
+      choices: await choices(enrollment.academicYearId, [studentId]),
+      rules: rules,
+    );
+    return (
+      result: results.single,
+      yearLabel: year?.label ?? '',
+      classLabel: '${program?.name ?? ''} ${division.name}'.trim(),
+      exams: used,
+      rules: rules,
+    );
+  }
 }

@@ -17,6 +17,7 @@ import '../../../platform/data/data_providers.dart';
 import '../application/students_providers.dart';
 import '../domain/student_models.dart';
 import 'student_labels.dart';
+import 'student_picker.dart';
 
 class StudentsScreen extends ConsumerStatefulWidget {
   const StudentsScreen({super.key});
@@ -34,6 +35,68 @@ class _StudentsScreenState extends ConsumerState<StudentsScreen> {
   StudentStatus? _status = StudentStatus.active;
   Future<List<StudentListItem>>? _future;
   List<StudentListItem> _shown = const [];
+
+  /// null: roll order when a class is chosen, otherwise by name.
+  StudentSort? _sort;
+  bool _selecting = false;
+  final Set<String> _selected = {};
+  bool _working = false;
+
+  StudentSort get _effectiveSort => _sort ?? (_programId != null ? StudentSort.roll : StudentSort.name);
+
+  void _endSelection() => setState(() {
+        _selecting = false;
+        _selected.clear();
+      });
+
+  Future<void> _batch(String action) async {
+    final l10n = AppLocalizations.of(context);
+    final ids = _selected.toList();
+    if (ids.isEmpty) return;
+    final repo = ref.read(studentRepositoryProvider);
+    try {
+      if (action == 'bin') {
+        final ok = await SdDialog.confirm(
+          context,
+          title: l10n.batchBinTitle(ids.length),
+          message: l10n.batchBinBody,
+          confirmLabel: l10n.batchBin,
+          cancelLabel: l10n.cancel,
+          destructive: true,
+        );
+        if (!ok || !mounted) return;
+        setState(() => _working = true);
+        final n = await repo.moveManyToRecycleBin(ids);
+        if (mounted) SdToast.show(context, l10n.batchBinDone(n));
+      } else {
+        final date = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(2000),
+          lastDate: DateTime.now(),
+          helpText: l10n.batchLeftDate,
+        );
+        if (date == null || !mounted) return;
+        final reason = await SdDialog.prompt(
+          context,
+          title: l10n.batchLeftTitle(ids.length),
+          label: l10n.batchLeftReason,
+          confirmLabel: l10n.batchLeft,
+          cancelLabel: l10n.cancel,
+        );
+        if (reason == null || !mounted) return;
+        setState(() => _working = true);
+        final n = await repo.markManyLeft(ids, date: date, reason: reason);
+        if (mounted) SdToast.show(context, l10n.batchLeftDone(n));
+      }
+      ref.read(studentsRevisionProvider.notifier).state++;
+      if (mounted) _endSelection();
+    } catch (e) {
+      if (mounted) SdToast.show(context, studentErrorMessage(l10n, e));
+    } finally {
+      if (mounted) setState(() => _working = false);
+    }
+  }
 
   Future<void> _export({required bool excel}) async {
     final l10n = AppLocalizations.of(context);
@@ -188,6 +251,12 @@ class _StudentsScreenState extends ConsumerState<StudentsScreen> {
               ],
               onSelected: (v) => setState(() => _status = v),
             ),
+            _FilterChipMenu<StudentSort>(
+              label: l10n.sortBy,
+              valueText: studentSortLabel(l10n, _effectiveSort),
+              options: [for (final o in StudentSort.values) (o, studentSortLabel(l10n, o))],
+              onSelected: (v) => setState(() => _sort = v),
+            ),
           ],
         ),
         const SizedBox(height: SdSpace.lg),
@@ -208,6 +277,7 @@ class _StudentsScreenState extends ConsumerState<StudentsScreen> {
               final allowed = _divisionId != null ? {_divisionId} : divisionsOfProgram.map((d) => d.id).toSet();
               items = items.where((s) => allowed.contains(s.divisionId)).toList();
             }
+            items = sortStudents(items, _effectiveSort);
             _shown = items;
             if (items.isEmpty) {
               final nothingSaved = _query.isEmpty && _programId == null;
@@ -227,7 +297,53 @@ class _StudentsScreenState extends ConsumerState<StudentsScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(l10n.studentsCount(items.length), style: theme.textTheme.bodySmall),
+                if (!_selecting)
+                  Row(children: [
+                    Expanded(child: Text(l10n.studentsCount(items.length), style: theme.textTheme.bodySmall)),
+                    SdButton(
+                      label: l10n.batchSelect,
+                      icon: Icons.checklist,
+                      variant: SdButtonVariant.text,
+                      onPressed: () => setState(() => _selecting = true),
+                    ),
+                  ])
+                else
+                  SdCard(
+                    child: Wrap(
+                      spacing: SdSpace.sm,
+                      runSpacing: SdSpace.sm,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(l10n.batchSelected(_selected.length), style: theme.textTheme.titleSmall),
+                        SdButton(
+                          label: _selected.length == items.length ? l10n.batchSelectNone : l10n.batchSelectAll(items.length),
+                          variant: SdButtonVariant.text,
+                          onPressed: () => setState(() {
+                            if (_selected.length == items.length) {
+                              _selected.clear();
+                            } else {
+                              _selected
+                                ..clear()
+                                ..addAll(items.map((i) => i.id));
+                            }
+                          }),
+                        ),
+                        SdButton(
+                          label: l10n.batchLeft,
+                          icon: Icons.logout,
+                          variant: SdButtonVariant.secondary,
+                          onPressed: _working || _selected.isEmpty ? null : () => _batch('left'),
+                        ),
+                        SdButton(
+                          label: l10n.batchBin,
+                          icon: Icons.delete_outline,
+                          variant: SdButtonVariant.secondary,
+                          onPressed: _working || _selected.isEmpty ? null : () => _batch('bin'),
+                        ),
+                        SdButton(label: l10n.cancel, variant: SdButtonVariant.text, onPressed: _endSelection),
+                      ],
+                    ),
+                  ),
                 const SizedBox(height: SdSpace.sm),
                 SdCard(
                   padding: EdgeInsets.zero,
@@ -239,6 +355,11 @@ class _StudentsScreenState extends ConsumerState<StudentsScreen> {
                         _StudentRow(
                           item: items[i],
                           wide: wide,
+                          selecting: _selecting,
+                          selected: _selected.contains(items[i].id),
+                          onToggle: () => setState(() {
+                            if (!_selected.remove(items[i].id)) _selected.add(items[i].id);
+                          }),
                           placement: placementName(academic, items[i].divisionId),
                           photo: studentPhoto(mediaDir, items[i].photoFileName),
                         ),
@@ -298,6 +419,7 @@ class _TableHeader extends StatelessWidget {
         children: [
           const SizedBox(width: 48),
           Expanded(flex: 4, child: Text(l10n.fieldName, style: style)),
+          Expanded(flex: 2, child: Text(l10n.idGr, style: style)),
           Expanded(flex: 2, child: Text(l10n.studentCode, style: style)),
           Expanded(flex: 3, child: Text(l10n.sectionPlacement, style: style)),
           Expanded(flex: 2, child: Text(l10n.fieldMobile, style: style)),
@@ -309,9 +431,20 @@ class _TableHeader extends StatelessWidget {
 }
 
 class _StudentRow extends StatelessWidget {
-  const _StudentRow({required this.item, required this.wide, required this.placement, required this.photo});
+  const _StudentRow({
+    required this.item,
+    required this.wide,
+    required this.placement,
+    required this.photo,
+    this.selecting = false,
+    this.selected = false,
+    this.onToggle,
+  });
 
   final StudentListItem item;
+  final bool selecting;
+  final bool selected;
+  final VoidCallback? onToggle;
   final bool wide;
   final String? placement;
   final File? photo;
@@ -326,13 +459,18 @@ class _StudentRow extends StatelessWidget {
         : (item.rollNumber == null ? placement! : '$placement · ${l10n.rollShort(item.rollNumber!)}');
     final statusColor = item.status == StudentStatus.active ? sd.present : sd.textMuted;
 
-    void open() => context.go('/students/${item.id}');
+    void open() => selecting ? onToggle?.call() : context.go('/students/${item.id}');
+    final gr = (item.grNumber ?? '').isEmpty ? '' : '${l10n.idGr} ${item.grNumber} · ';
+    final Widget avatar = selecting
+        ? Checkbox(value: selected, onChanged: (_) => onToggle?.call())
+        : StudentAvatar(name: item.fullName, photo: photo);
 
     if (!wide) {
       return ListTile(
-        leading: StudentAvatar(name: item.fullName, photo: photo),
+        leading: avatar,
+        selected: selected,
         title: Text(item.fullName),
-        subtitle: Text('${item.displayCode} · $where'),
+        subtitle: Text('$gr${item.displayCode} · $where'),
         trailing: item.status == StudentStatus.active
             ? const Icon(Icons.chevron_right)
             : StatusPill(text: studentStatusLabel(l10n, item.status), color: statusColor),
@@ -345,9 +483,12 @@ class _StudentRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: SdSpace.lg, vertical: SdSpace.sm),
         child: Row(
           children: [
-            StudentAvatar(name: item.fullName, photo: photo, size: 36),
+            selecting
+                ? SizedBox(width: 36, child: Checkbox(value: selected, onChanged: (_) => onToggle?.call()))
+                : StudentAvatar(name: item.fullName, photo: photo, size: 36),
             const SizedBox(width: SdSpace.md),
             Expanded(flex: 4, child: Text(item.fullName, style: theme.textTheme.bodyMedium)),
+            Expanded(flex: 2, child: Text(item.grNumber ?? '—', style: theme.textTheme.bodySmall)),
             Expanded(flex: 2, child: Text(item.displayCode, style: theme.textTheme.bodySmall)),
             Expanded(flex: 3, child: Text(where, style: theme.textTheme.bodySmall)),
             Expanded(flex: 2, child: Text(item.primaryMobile ?? '—', style: theme.textTheme.bodySmall)),
