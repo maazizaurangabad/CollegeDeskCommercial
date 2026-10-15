@@ -154,7 +154,7 @@ void main() {
 
     final boys = await reports.studentMaster(show: show, gender: GenderFilter.boys, sort: StudentSort.name);
     expect(names(boys), ['Ayaan', 'Kabir']);
-    expect(boys.rows.firstWhere((r) => r.kind == ReportRowKind.group).cells.first, contains('${l10n.reportTotal} 2'));
+    expect(boys.rows.firstWhere((r) => r.kind == ReportRowKind.group).groupTitle, contains('${l10n.reportTotal} 2'));
   });
 
   test('students with an unrecorded gender stay only in All students', () {
