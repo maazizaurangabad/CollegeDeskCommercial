@@ -604,7 +604,7 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                           icon: const Icon(Icons.chat_outlined),
                           onPressed: () async {
                             final ok = await openWhatsApp(mobile: number, text: '');
-                            if (mounted) SdToast.show(this.context, ok ? l10n.p360WhatsAppOpened : l10n.msgOpenFailed);
+                            if (mounted) SdToast.show(context, ok ? l10n.p360WhatsAppOpened : l10n.msgOpenFailed);
                           },
                         ),
                       ],

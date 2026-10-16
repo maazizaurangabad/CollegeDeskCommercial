@@ -12,7 +12,6 @@ import 'package:shiksha_desk/modules/reports/application/report_builders.dart';
 import 'package:shiksha_desk/modules/students/data/student_repository.dart';
 import 'package:shiksha_desk/modules/students/domain/student_models.dart';
 import 'package:shiksha_desk/modules/students/presentation/student_picker.dart';
-import 'package:shiksha_desk/platform/academic/academic_models.dart';
 import 'package:shiksha_desk/platform/academic/academic_repository.dart';
 import 'package:shiksha_desk/platform/academic/structure_templates.dart';
 import 'package:shiksha_desk/platform/data/app_settings_repository.dart';

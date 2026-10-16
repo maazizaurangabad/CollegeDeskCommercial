@@ -364,7 +364,7 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
                     : () => _output(() async {
                           final head = await reportLetterhead(ref);
                           if (!mounted) return;
-                          await showReportPdfPreview(context, data, head);
+                          await showReportPdfPreview(this.context, data, head);
                         }),
               ),
               SdButton(
@@ -375,7 +375,7 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
                     ? null
                     : () => _output(() async {
                           final saved = await ReportOutput.savePdf(data, await reportLetterhead(ref), title: l10n.reportSavePdf);
-                          if (saved && mounted) SdToast.show(context, l10n.exported);
+                          if (saved && mounted) SdToast.show(this.context, l10n.exported);
                         }),
               ),
               if (Platform.isAndroid)
