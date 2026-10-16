@@ -126,6 +126,12 @@ jobs:
           # so the encrypted database must not be backed up separately either.
           sed -i 's/<application/<application android:allowBackup="false" android:fullBackupContent="false"/' "$M"
           grep -n "android:label\|allowBackup" "$M"
+          # Document scanner (ML Kit): Google Play Services downloads the
+          # scanner as soon as the app is installed, not on the first scan.
+          if ! grep -q 'com.google.mlkit.vision.DEPENDENCIES' "$M"; then
+            sed -i '0,/<activity/s//<meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="document_ui" \/>\n        <activity/' "$M"
+          fi
+          grep -n "mlkit" "$M"
           # Fingerprint unlock (local_auth) needs a FragmentActivity.
           for f in $(find android/app/src/main -name 'MainActivity.kt' -o -name 'MainActivity.java'); do
             sed -i 's/FlutterActivity/FlutterFragmentActivity/g' "$f"
