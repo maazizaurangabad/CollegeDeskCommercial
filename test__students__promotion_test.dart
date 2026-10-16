@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shiksha_desk/core/database/app_database.dart';
 import 'package:shiksha_desk/modules/fees/data/fee_repository.dart';
 import 'package:shiksha_desk/modules/results/data/result_repository.dart';
 import 'package:shiksha_desk/modules/results/domain/result_models.dart';
