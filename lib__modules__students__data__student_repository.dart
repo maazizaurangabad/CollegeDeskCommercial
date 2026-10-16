@@ -712,6 +712,78 @@ class StudentRepository extends OrgScopedRepository {
     ];
   }
 
+  /// Mother's and father's names, masked Aadhaar and photo file for the
+  /// given students, for list reports. Never decrypts Aadhaar.
+  Future<Map<String, StudentReportFacts>> reportFacts(Iterable<String> studentIds) async {
+    final ids = studentIds.toSet();
+    if (ids.isEmpty) return const {};
+    final links = await (db.select(db.studentGuardians)
+          ..where((t) => t.organizationId.equals(orgId) & t.deletedAt.isNull() & t.studentId.isIn(ids)))
+        .get();
+    final guardians = {
+      for (final g in await (db.select(db.guardians)
+            ..where((t) => t.organizationId.equals(orgId) & t.id.isIn(links.map((l) => l.guardianId).toSet())))
+          .get())
+        g.id: g,
+    };
+    final mother = <String, String>{}, father = <String, String>{};
+    for (final l in links) {
+      final g = guardians[l.guardianId];
+      if (g == null || g.name.trim().isEmpty) continue;
+      final relation = g.relation.trim().toLowerCase();
+      if (relation == 'mother') mother.putIfAbsent(l.studentId, () => g.name);
+      if (relation == 'father') father.putIfAbsent(l.studentId, () => g.name);
+    }
+    final aadhaar = {
+      for (final r in await (db.select(db.studentIdentifiers)
+            ..where((t) =>
+                t.organizationId.equals(orgId) &
+                t.deletedAt.isNull() &
+                t.idType.equals(IdentifierType.aadhaar.code) &
+                t.studentId.isIn(ids)))
+          .get())
+        if ((r.lastFour ?? '').isNotEmpty) r.studentId: Aadhaar.mask(r.lastFour!),
+    };
+    final photos = {
+      for (final r in await (db.select(db.students)..where((t) => t.organizationId.equals(orgId) & t.id.isIn(ids))).get())
+        if ((r.photoFileName ?? '').isNotEmpty) r.id: r.photoFileName!,
+    };
+    return {
+      for (final id in ids)
+        id: StudentReportFacts(
+          motherName: mother[id],
+          fatherName: father[id],
+          aadhaarMasked: aadhaar[id],
+          photoFileName: photos[id],
+        ),
+    };
+  }
+
+  /// Full Aadhaar numbers (1234 5678 9012) for an authorised report.
+  /// Each one is written to the change log as a reveal, like [revealAadhaar].
+  Future<Map<String, String>> revealAadhaarFor(Iterable<String> studentIds) async {
+    final ids = studentIds.toSet();
+    if (ids.isEmpty) return const {};
+    final rows = await (db.select(db.studentIdentifiers)
+          ..where((t) =>
+              t.organizationId.equals(orgId) &
+              t.deletedAt.isNull() &
+              t.idType.equals(IdentifierType.aadhaar.code) &
+              t.studentId.isIn(ids)))
+        .get();
+    final out = <String, String>{};
+    for (final row in rows) {
+      out[row.studentId] = Aadhaar.format(await cipher.decrypt(row.idValue));
+      await changes.record(
+        table: 'student_identifiers',
+        rowId: row.id,
+        operation: 'reveal',
+        after: {'id_type': IdentifierType.aadhaar.code, 'student_id': row.studentId, 'purpose': 'report'},
+      );
+    }
+    return out;
+  }
+
   // ============================================================== helpers
 
   Future<void> _validate(StudentDraft draft, {String? excludeId, required List<ExtraFieldDefinition> extraFields}) async {

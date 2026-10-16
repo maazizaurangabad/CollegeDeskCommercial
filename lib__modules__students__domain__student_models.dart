@@ -342,3 +342,18 @@ class StudentKeys {
   final String? divisionId;
   final int? rollNumber;
 }
+
+/// Extra facts a student list report may show, beyond the list item.
+/// Aadhaar is only the masked form (last four digits); the full number
+/// needs [StudentRepository.revealAadhaarFor].
+@immutable
+class StudentReportFacts {
+  const StudentReportFacts({this.motherName, this.fatherName, this.aadhaarMasked, this.photoFileName});
+
+  final String? motherName;
+  final String? fatherName;
+
+  /// "XXXX XXXX 7881", or null when no Aadhaar is recorded.
+  final String? aadhaarMasked;
+  final String? photoFileName;
+}

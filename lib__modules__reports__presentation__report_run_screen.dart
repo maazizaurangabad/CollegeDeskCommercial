@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
+import '../../../platform/data/data_providers.dart';
+import '../../../platform/organization/organization_providers.dart';
 import '../../../platform/reporting/report_dataset.dart';
 import '../../../platform/reporting/report_output.dart';
 import '../../../platform/reporting/report_pdf_preview.dart';
@@ -48,7 +50,39 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
   StudentSort _sort = StudentSort.roll;
   bool _descending = false;
   GenderFilter _gender = GenderFilter.all;
-  final Set<ClassListColumn> _columns = {ClassListColumn.gender, ClassListColumn.dateOfBirth, ClassListColumn.gr, ClassListColumn.mobile};
+  List<ClassListColumn> _layout = const [];
+  bool _fullAadhaar = false;
+
+  bool get _isNameList => widget.kind == ReportKind.classList || widget.kind == ReportKind.master;
+  bool get _master => widget.kind == ReportKind.master;
+  String get _layoutKey => 'reports.layout.${widget.kind.name}';
+
+  @override
+  void initState() {
+    super.initState();
+    _layout = StudentListLayout.defaults(master: _master);
+    if (_isNameList) _loadLayout();
+  }
+
+  /// The last column layout used for this report.
+  Future<void> _loadLayout() async {
+    try {
+      final raw = await ref.read(appSettingsRepositoryProvider).getValue(_layoutKey);
+      if (mounted) setState(() => _layout = StudentListLayout.decode(raw, master: _master));
+    } catch (_) {
+      // Keep the standard layout.
+    }
+  }
+
+  void _setLayout(List<ClassListColumn> layout) {
+    setState(() {
+      _layout = StudentListLayout.normalise(layout, master: _master);
+      if (!_layout.contains(ClassListColumn.aadhaar)) _fullAadhaar = false;
+    });
+    ref.read(appSettingsRepositoryProvider).setValue(_layoutKey, StudentListLayout.encode(_layout)).ignore();
+  }
+
+  bool get _canFullAadhaar => ref.read(permissionCheckerProvider)('students.view_sensitive');
 
   ReportDataset? _data;
   bool _busy = false;
@@ -60,10 +94,22 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
   ReportDataset? get _view =>
       _data?.arranged(filters: _filters, sortColumn: _sortColumn, ascending: _ascending);
 
-  bool get _needsDivision => widget.kind == ReportKind.register || widget.kind == ReportKind.classList;
+  bool get _needsDivision =>
+      widget.kind == ReportKind.register || widget.kind == ReportKind.classList || widget.kind == ReportKind.photoRegister;
 
   Future<void> _run() async {
     final l10n = AppLocalizations.of(context);
+    final fullAadhaar = _isNameList && _fullAadhaar && _canFullAadhaar && _layout.contains(ClassListColumn.aadhaar);
+    if (fullAadhaar) {
+      final ok = await SdDialog.confirm(
+        context,
+        title: l10n.reportAadhaarFullConfirmTitle,
+        message: l10n.reportAadhaarFullConfirm,
+        confirmLabel: l10n.reportAadhaarFullConfirmYes,
+        cancelLabel: l10n.cancel,
+      );
+      if (!ok || !mounted) return;
+    }
     setState(() {
       _busy = true;
       _data = null;
@@ -84,16 +130,25 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
         ReportKind.defaulters => await b.defaulters(from: _from, to: _to, threshold: _threshold, programId: _programId),
         ReportKind.absentees => await b.absentees(_date),
         ReportKind.summary => await b.attendanceSummary(from: _from, to: _to),
-        ReportKind.classList =>
-          await b.classList(_divisionId!, _columns, sort: _sort, descending: _descending, gender: _gender),
-        ReportKind.master => await b.studentMaster(
-            programId: _programId,
-            status: _status,
-            show: _columns,
+        ReportKind.classList => await b.classList(
+            _divisionId!,
+            _layout,
             sort: _sort,
             descending: _descending,
             gender: _gender,
+            fullAadhaar: fullAadhaar,
           ),
+        ReportKind.master => await b.studentMaster(
+            programId: _programId,
+            status: _status,
+            show: _layout,
+            sort: _sort,
+            descending: _descending,
+            gender: _gender,
+            fullAadhaar: fullAadhaar,
+          ),
+        ReportKind.photoRegister =>
+          await b.photoRegister(_divisionId!, sort: _sort, descending: _descending, gender: _gender),
         ReportKind.certificates => await b.certificateRegister(from: _from, to: _to, kind: _certKind),
         ReportKind.feeDayBook => await feeReports(ref, l10n).dayBook(from: _from, to: _to),
         ReportKind.feeHeads => await feeReports(ref, l10n).headWise(from: _from, to: _to),
@@ -213,14 +268,14 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
           options: [for (final s in StudentStatus.values) (s, studentStatusLabel(l10n, s))],
           onChanged: (v) => setState(() => _status = v),
         ),
-      if (widget.kind == ReportKind.classList || widget.kind == ReportKind.master) ...[
+      if (_isNameList || widget.kind == ReportKind.photoRegister) ...[
         Row(children: [
           Expanded(
             child: SdSelectField<StudentSort>(
               label: l10n.sortBy,
               value: _sort,
               options: [
-                for (final o in const [StudentSort.gr, StudentSort.name, StudentSort.age, StudentSort.roll])
+                for (final o in const [StudentSort.gr, StudentSort.name, StudentSort.age, StudentSort.roll, StudentSort.gender])
                   (o, studentSortLabel(l10n, o)),
               ],
               onChanged: (v) => setState(() => _sort = v ?? _sort),
@@ -248,27 +303,34 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
             padding: const EdgeInsets.only(top: SdSpace.xs),
             child: Text(l10n.reportAgeHint, style: theme.textTheme.bodySmall),
           ),
-        const SizedBox(height: SdSpace.md),
-        Text(l10n.reportColumns, style: theme.textTheme.bodySmall),
-        const SizedBox(height: SdSpace.sm),
-        Wrap(
-          spacing: SdSpace.sm,
-          runSpacing: SdSpace.sm,
-          children: [
-            for (final c in ClassListColumn.values)
-              FilterChip(
-                label: Text(_columnLabel(l10n, c)),
-                selected: _columns.contains(c),
-                onSelected: (on) => setState(() {
-                  if (on) {
-                    _columns.add(c);
-                  } else {
-                    _columns.remove(c);
-                  }
-                }),
-              ),
+        if (widget.kind == ReportKind.photoRegister)
+          Padding(
+            padding: const EdgeInsets.only(top: SdSpace.md),
+            child: Text(l10n.reportPhotoRegisterHint, style: theme.textTheme.bodySmall),
+          ),
+        if (_isNameList) ...[
+          const SizedBox(height: SdSpace.md),
+          _ColumnChooser(
+            layout: _layout,
+            available: StudentListLayout.available(master: _master),
+            label: (c) => _columnLabel(l10n, c),
+            onChanged: _setLayout,
+            onReset: () => _setLayout(StudentListLayout.defaults(master: _master)),
+          ),
+          if (_layout.contains(ClassListColumn.aadhaar)) ...[
+            const SizedBox(height: SdSpace.sm),
+            if (_canFullAadhaar)
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.reportAadhaarFull),
+                subtitle: Text(_fullAadhaar ? l10n.reportAadhaarFullHint : l10n.reportAadhaarMaskedHint),
+                value: _fullAadhaar,
+                onChanged: (v) => setState(() => _fullAadhaar = v),
+              )
+            else
+              Text(l10n.reportAadhaarMaskedHint, style: theme.textTheme.bodySmall),
           ],
-        ),
+        ],
         const SizedBox(height: SdSpace.md),
       ],
     ];
@@ -331,6 +393,7 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
                 variant: SdButtonVariant.secondary,
                 onPressed: _busy ? null : () => _output(() async => ReportOutput.printPdf(data, await reportLetterhead(ref))),
               ),
+              if (!data.pdfOnly)
               SdButton(
                 label: l10n.exportExcel,
                 icon: Icons.table_chart_outlined,
@@ -339,6 +402,7 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
                     ? null
                     : () => _output(() async => ReportOutput.saveExcel(data, await reportLetterhead(ref), title: l10n.exportExcel)),
               ),
+              if (!data.pdfOnly)
               SdButton(
                 label: l10n.exportCsv,
                 variant: SdButtonVariant.text,
@@ -420,13 +484,116 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
   }
 
   String _columnLabel(AppLocalizations l10n, ClassListColumn c) => switch (c) {
+        ClassListColumn.serial => l10n.reportSrNo,
+        ClassListColumn.roll => l10n.reportRoll,
+        ClassListColumn.name => l10n.fieldName,
+        ClassListColumn.code => l10n.studentCode,
         ClassListColumn.gender => l10n.fieldGender,
         ClassListColumn.dateOfBirth => l10n.fieldDateOfBirth,
         ClassListColumn.gr => l10n.idGr,
         ClassListColumn.pen => l10n.idPen,
         ClassListColumn.apaar => l10n.idApaar,
+        ClassListColumn.aadhaar => l10n.idAadhaar,
+        ClassListColumn.motherName => l10n.reportMotherName,
+        ClassListColumn.fatherName => l10n.fieldFatherName,
         ClassListColumn.mobile => l10n.fieldMobile,
         ClassListColumn.category => l10n.fieldCategory,
         ClassListColumn.bloodGroup => l10n.fieldBloodGroup,
+        ClassListColumn.status => l10n.studentsFilterStatus,
       };
+}
+
+/// Columns of a student list: tick to show, ▲▼ to move. Shown columns come
+/// first, in their order; the rest are listed below to switch on.
+class _ColumnChooser extends StatelessWidget {
+  const _ColumnChooser({
+    required this.layout,
+    required this.available,
+    required this.label,
+    required this.onChanged,
+    required this.onReset,
+  });
+
+  final List<ClassListColumn> layout;
+  final List<ClassListColumn> available;
+  final String Function(ClassListColumn c) label;
+  final ValueChanged<List<ClassListColumn>> onChanged;
+  final VoidCallback onReset;
+
+  void _move(int from, int to) {
+    final next = [...layout];
+    final c = next.removeAt(from);
+    next.insert(to, c);
+    onChanged(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final sd = SdColors.of(context);
+    final hidden = available.where((c) => !layout.contains(c)).toList();
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: sd.border),
+        borderRadius: BorderRadius.circular(SdRadius.md),
+      ),
+      padding: const EdgeInsets.all(SdSpace.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(children: [
+            Expanded(child: Text(l10n.reportColumnsOrder, style: theme.textTheme.titleSmall)),
+            TextButton.icon(onPressed: onReset, icon: const Icon(Icons.restart_alt, size: 18), label: Text(l10n.reportColumnsReset)),
+          ]),
+          Text(l10n.reportColumnsHint, style: theme.textTheme.bodySmall?.copyWith(color: sd.textMuted)),
+          const SizedBox(height: SdSpace.xs),
+          for (var i = 0; i < layout.length; i++)
+            Row(
+              children: [
+                SizedBox(
+                  width: 28,
+                  child: Text('${i + 1}.', style: theme.textTheme.bodySmall?.copyWith(color: sd.textMuted)),
+                ),
+                Checkbox(
+                  value: true,
+                  onChanged: StudentListLayout.fixed.contains(layout[i])
+                      ? null
+                      : (_) => onChanged([...layout]..removeAt(i)),
+                ),
+                Expanded(child: Text(label(layout[i]))),
+                IconButton(
+                  tooltip: l10n.reportColumnUp,
+                  icon: const Icon(Icons.arrow_upward, size: 18),
+                  // Sr. No. stays first.
+                  onPressed: i <= 1 || layout[i] == ClassListColumn.serial ? null : () => _move(i, i - 1),
+                ),
+                IconButton(
+                  tooltip: l10n.reportColumnDown,
+                  icon: const Icon(Icons.arrow_downward, size: 18),
+                  onPressed: i == 0 || i == layout.length - 1 ? null : () => _move(i, i + 1),
+                ),
+              ],
+            ),
+          if (hidden.isNotEmpty) ...[
+            const Divider(),
+            Text(l10n.reportColumnsMore, style: theme.textTheme.bodySmall?.copyWith(color: sd.textMuted)),
+            const SizedBox(height: SdSpace.xs),
+            Wrap(
+              spacing: SdSpace.sm,
+              runSpacing: SdSpace.sm,
+              children: [
+                for (final c in hidden)
+                  ActionChip(
+                    avatar: const Icon(Icons.add, size: 18),
+                    label: Text(label(c)),
+                    onPressed: () => onChanged([...layout, c]),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }

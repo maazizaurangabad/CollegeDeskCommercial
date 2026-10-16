@@ -16,7 +16,7 @@ class ReportsScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final groups = <String, List<ReportKind>>{
       l10n.reportGroupAttendance: [ReportKind.register, ReportKind.defaulters, ReportKind.absentees, ReportKind.summary],
-      l10n.reportGroupStudents: [ReportKind.classList, ReportKind.master],
+      l10n.reportGroupStudents: [ReportKind.classList, ReportKind.master, ReportKind.photoRegister],
       l10n.navCertificates: [ReportKind.certificates],
       if (ref.watch(enabledModulesProvider).contains('fees'))
         l10n.navFees: [ReportKind.feeDayBook, ReportKind.feeHeads, ReportKind.feeClassSummary, ReportKind.feeDefaulters],

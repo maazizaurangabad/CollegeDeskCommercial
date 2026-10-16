@@ -10,7 +10,7 @@ import '../domain/student_models.dart';
 import 'student_labels.dart';
 
 /// How a list of students is ordered.
-enum StudentSort { roll, gr, name, age, code }
+enum StudentSort { roll, gr, name, age, code, gender }
 
 /// Which students a list shows by gender.
 enum GenderFilter { all, boys, girls }
@@ -28,6 +28,10 @@ bool matchesGender(String? gender, GenderFilter filter) {
     GenderFilter.girls => _girlValues.contains(g),
   };
 }
+
+/// 0 boys, 1 girls, 2 anything else (blank is handled as "missing").
+int _genderRank(String? gender) =>
+    matchesGender(gender, GenderFilter.boys) ? 0 : (matchesGender(gender, GenderFilter.girls) ? 1 : 2);
 
 /// Compares G.R. numbers, codes and the like so that 2 < 10 < 100.
 /// Empty values come last.
@@ -55,6 +59,7 @@ List<StudentListItem> sortStudents(List<StudentListItem> items, StudentSort sort
         StudentSort.age => s.dateOfBirth == null,
         StudentSort.code => s.displayCode.trim().isEmpty,
         StudentSort.name => false,
+        StudentSort.gender => (s.gender ?? '').trim().isEmpty,
       };
   int value(StudentListItem a, StudentListItem b) => switch (sort) {
         StudentSort.roll => a.rollNumber!.compareTo(b.rollNumber!),
@@ -63,6 +68,10 @@ List<StudentListItem> sortStudents(List<StudentListItem> items, StudentSort sort
         // Younger (later birth date) first when ascending.
         StudentSort.age => b.dateOfBirth!.compareTo(a.dateOfBirth!),
         StudentSort.code => compareNatural(a.displayCode, b.displayCode),
+        // Boys, then girls, then any other recorded gender (by its name).
+        StudentSort.gender => _genderRank(a.gender).compareTo(_genderRank(b.gender)) != 0
+            ? _genderRank(a.gender).compareTo(_genderRank(b.gender))
+            : (a.gender ?? '').trim().toLowerCase().compareTo((b.gender ?? '').trim().toLowerCase()),
       };
   int tie(StudentListItem a, StudentListItem b) {
     final n = a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase());
@@ -84,6 +93,7 @@ String studentSortLabel(AppLocalizations l10n, StudentSort s) => switch (s) {
       StudentSort.name => l10n.sortName,
       StudentSort.age => l10n.sortAge,
       StudentSort.code => l10n.sortCode,
+      StudentSort.gender => l10n.sortGender,
     };
 
 String genderFilterLabel(AppLocalizations l10n, GenderFilter g) => switch (g) {
