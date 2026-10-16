@@ -29,8 +29,13 @@ enum ReportRowKind { data, group, total }
 
 @immutable
 class ReportRow {
-  const ReportRow(this.cells, {this.kind = ReportRowKind.data, this.highlight = false, this.textColors = const {}})
-      : groupTitle = null;
+  const ReportRow(
+    this.cells, {
+    this.kind = ReportRowKind.data,
+    this.highlight = false,
+    this.textColors = const {},
+    this.images = const {},
+  }) : groupTitle = null;
 
   /// A heading row inside the table, e.g. a class name.
   const ReportRow.group(String title)
@@ -38,6 +43,7 @@ class ReportRow {
         kind = ReportRowKind.group,
         highlight = false,
         textColors = const {},
+        images = const {},
         groupTitle = title;
 
   final List<String> cells;
@@ -48,6 +54,10 @@ class ReportRow {
 
   /// column index -> ARGB colour for that cell's text.
   final Map<int, int> textColors;
+
+  /// column index -> picture (JPEG/PNG bytes), drawn in the PDF in place of
+  /// the cell text. Only for columns listed in [ReportDataset.imageColumns].
+  final Map<int, Uint8List> images;
   final String? groupTitle;
 }
 
@@ -82,6 +92,9 @@ class ReportDataset {
     this.countLabels,
     this.groupLabel = 'Group',
     this.zebra = false,
+    this.imageColumns = const {},
+    this.imageHeight = 56,
+    this.pdfOnly = false,
   });
 
   final String title;
@@ -118,6 +131,16 @@ class ReportDataset {
   /// Alternate row shading, for long name lists.
   final bool zebra;
 
+  /// Columns that hold pictures (e.g. a photo register). In the PDF each
+  /// is drawn as a thumbnail [imageHeight] points high, or a placeholder
+  /// box with the cell text when the row has no picture.
+  final Set<int> imageColumns;
+  final double imageHeight;
+
+  /// Offered as PDF only (preview, print, save, share): pictures cannot go
+  /// into Excel or CSV.
+  final bool pdfOnly;
+
   int get dataRowCount => rows.where((r) => r.kind == ReportRowKind.data).length;
 
   bool get hasGroups => rows.any((r) => r.kind == ReportRowKind.group);
@@ -138,6 +161,9 @@ class ReportDataset {
         countLabels: countLabels,
         groupLabel: groupLabel,
         zebra: zebra,
+        imageColumns: imageColumns,
+        imageHeight: imageHeight,
+        pdfOnly: pdfOnly,
       );
 
   /// Distinct values of a column, for filter choices.

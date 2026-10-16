@@ -78,6 +78,28 @@ abstract final class PdfReportRenderer {
           ),
         );
 
+    // A photo keeps its shape inside a passport-like box; without one, a
+    // light box with the cell text ("No photo").
+    final imageHeight = data.imageHeight;
+    final imageWidth = imageHeight * 0.8;
+    pw.Widget picture(Uint8List? bytes, String text) {
+      pw.Widget inner;
+      if (bytes == null) {
+        inner = pw.Container(
+          alignment: pw.Alignment.center,
+          decoration: pw.BoxDecoration(color: shade, border: pw.Border.all(color: line, width: 0.5)),
+          child: pw.Text(text, textAlign: pw.TextAlign.center, style: pw.TextStyle(font: regular, fontSize: fs - 1.5, color: PdfColors.grey600)),
+        );
+      } else {
+        inner = pw.Image(pw.MemoryImage(bytes), fit: pw.BoxFit.contain);
+      }
+      return pw.Container(
+        alignment: pw.Alignment.center,
+        padding: const pw.EdgeInsets.all(3),
+        child: pw.SizedBox(width: imageWidth, height: imageHeight, child: inner),
+      );
+    }
+
     pw.TableRow headerRow() => pw.TableRow(
           repeat: true, // drawn again at the top of every page the table runs onto
           decoration: pw.BoxDecoration(color: brand),
@@ -101,9 +123,13 @@ abstract final class PdfReportRenderer {
       final striped = data.zebra && (dataIndex++).isOdd;
       return pw.TableRow(
         decoration: r.highlight ? pw.BoxDecoration(color: warn) : (striped ? pw.BoxDecoration(color: zebra) : null),
+        verticalAlignment: data.imageColumns.isEmpty ? null : pw.TableCellVerticalAlignment.middle,
         children: [
           for (var i = 0; i < data.columns.length; i++)
-            cell(
+            if (data.imageColumns.contains(i))
+              picture(r.images[i], i < r.cells.length ? r.cells[i] : '')
+            else
+              cell(
               i < r.cells.length ? r.cells[i] : '',
               i,
               color: r.textColors[i] == null ? null : PdfColor.fromInt(r.textColors[i]!),
