@@ -2019,5 +2019,146 @@
       }
     }
   },
-  "searchClassListed": "Everyone in the chosen class, by roll number. Type to narrow it down."
+  "searchClassListed": "Everyone in the chosen class, by roll number. Type to narrow it down.",
+  "promoTitle": "Year-end promotion",
+  "promoSettingsSubtitle": "Move students to next year's classes, from the final results",
+  "promoIntro": "At the end of the year, students who passed move to the next class, students who failed stay in the same class, and students of the last class are marked as left. You check every class before anything is saved, and you can undo it afterwards.",
+  "promoSetup": "1. Choose the years",
+  "promoFrom": "Year ending",
+  "promoTo": "Promote into",
+  "promoNoNextYear": "Next academic year is not added yet. Add it first (Settings > Academic years); you can keep this year active until promotion.",
+  "promoAddYear": "Add next year",
+  "promoAtkt": "Promote ATKT students",
+  "promoAtktHint": "Standard rule: students with ATKT (allowed to keep terms) move to the next class. Turn off to keep them in the same class.",
+  "promoRolls": "Roll numbers in the new class",
+  "promoRollsName": "New roll numbers by name (A–Z)",
+  "promoRollsGr": "New roll numbers by G.R. No",
+  "promoRollsKeep": "Keep the old roll number",
+  "promoLeaveReason": "Reason for students who complete the last class",
+  "promoLeaveReasonDefault": "Passed and completed the course",
+  "promoCopyFees": "Copy fee structures to next year",
+  "promoCopyFeesHint": "Fee amounts and installments of this year are copied (only for classes that have none yet).",
+  "promoMakeActive": "Make next year the active year afterwards",
+  "promoMakeActiveHint": "Attendance, fees and new admissions then go to next year.",
+  "promoLoad": "Check students",
+  "promoCheck": "2. Check each class",
+  "promoCheckHint": "Suggested from the final result. Change any student, or a whole class with the list button. Set the next class of a class here if it is missing.",
+  "promoCountPromote": "Promote {count}",
+  "@promoCountPromote": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "promoCountRepeat": "Same class {count}",
+  "@promoCountRepeat": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "promoCountLeave": "Leave {count}",
+  "@promoCountLeave": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "promoCountSkip": "Decide later {count}",
+  "@promoCountSkip": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "promoCountNoResult": "No final result {count}",
+  "@promoCountNoResult": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "promoLastClass": "Last class: students leave",
+  "promoSetAll": "Set the whole class",
+  "promoSetAllTo": "All: {action}",
+  "@promoSetAllTo": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "promoNextClass": "Next class after {name}",
+  "@promoNextClass": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "promoNoNext": "None (last class)",
+  "promoNoResult": "No result",
+  "promoAction": "Next year",
+  "promoActionPromote": "Promote",
+  "promoActionRepeat": "Same class again",
+  "promoActionLeave": "Leaves (completed)",
+  "promoActionSkip": "Decide later",
+  "promoRun": "Promote students",
+  "promoConfirmTitle": "Promote students?",
+  "promoConfirm": "{promoted} will move to the next class, {repeated} will stay in the same class, {left} will be marked as left, {skipped} will be decided later. Last year's records stay as they are. You can undo this.",
+  "@promoConfirm": {
+    "placeholders": {
+      "promoted": {
+        "type": "int"
+      },
+      "repeated": {
+        "type": "int"
+      },
+      "left": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "promoFailed": "Promotion could not be saved. Nothing was changed.",
+  "promoDone": "Promotion done",
+  "promoDoneSummary": "{promoted} promoted · {repeated} same class · {left} left · {skipped} later",
+  "@promoDoneSummary": {
+    "placeholders": {
+      "promoted": {
+        "type": "int"
+      },
+      "repeated": {
+        "type": "int"
+      },
+      "left": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "promoFeesCopied": "{count} fee structures copied to next year",
+  "@promoFeesCopied": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "promoUndo": "Undo promotion",
+  "promoUndoConfirm": "Every student goes back to last year's class as before. Fee structures copied and the active year stay as they are.",
+  "promoUndone": "Promotion undone",
+  "promoUndoneShort": "Undone",
+  "promoHistory": "Earlier promotions",
+  "promoNobody": "Nobody to promote",
+  "promoNobodyHint": "Every student of this year is already placed in next year, or there are no students."
 }

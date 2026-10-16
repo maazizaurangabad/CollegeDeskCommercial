@@ -61,6 +61,12 @@ class SettingsScreen extends ConsumerWidget {
                 onTap: () => context.go('/messages/templates'),
               ),
             _Tile(
+              icon: Icons.upgrade,
+              title: l10n.promoTitle,
+              subtitle: l10n.promoSettingsSubtitle,
+              onTap: () => context.go('/students/promotion'),
+            ),
+            _Tile(
               icon: Icons.history_outlined,
               title: l10n.settingsImports,
               subtitle: l10n.settingsImportsSubtitle,

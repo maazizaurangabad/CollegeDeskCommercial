@@ -357,7 +357,7 @@ class FeeRepository extends OrgScopedRepository {
               t.organizationId.equals(orgId) &
               t.academicYearId.equals(academicYearId) &
               t.deletedAt.isNull() &
-              t.status.equals('active')))
+              t.status.isIn(yearMemberStatuses)))
         .get();
     if (enrollments.isEmpty) return [];
     final ids = enrollments.map((e) => e.studentId).toSet();

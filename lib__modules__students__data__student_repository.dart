@@ -57,7 +57,7 @@ class StudentRepository extends OrgScopedRepository {
             ..where((t) =>
                 t.organizationId.equals(orgId) &
                 t.academicYearId.equals(academicYearId) &
-                t.status.equals(EnrollmentStatus.active.name) &
+                t.status.isIn(yearMemberStatuses) &
                 t.deletedAt.isNull()))
           .get();
       for (final e in enrollments) {

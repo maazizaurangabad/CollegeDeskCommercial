@@ -26,6 +26,11 @@ enum StudentStatus { active, left, alumni, archived }
 
 enum EnrollmentStatus { active, left, promoted, detained, graduated, transferred }
 
+/// Enrollment statuses that still count a student in that year's class
+/// (class lists, result sheets, fee balances of that year): after
+/// promotion the old year keeps its students.
+const yearMemberStatuses = ['active', 'promoted', 'detained', 'graduated'];
+
 /// Fixed choice lists. Categories are editable per institution (Settings).
 abstract final class StudentChoices {
   static const genders = ['Male', 'Female', 'Other'];

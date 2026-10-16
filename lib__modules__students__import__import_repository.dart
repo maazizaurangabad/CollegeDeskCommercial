@@ -262,8 +262,9 @@ class ImportRepository extends OrgScopedRepository {
   }
 
   Future<List<ImportBatchInfo>> listBatches() async {
+    // Promotions have their own history and undo (Promotion screen).
     final rows = await (db.select(db.importBatches)
-          ..where((t) => t.organizationId.equals(orgId))
+          ..where((t) => t.organizationId.equals(orgId) & t.kind.isNotValue('promotion'))
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
         .get();
     return [

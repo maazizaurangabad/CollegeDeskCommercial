@@ -132,6 +132,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         (l10n.settingsAttendance, '/settings/attendance', Icons.fact_check_outlined,
             'holiday holidays calendar exam day weekly off sunday saturday mark marks code codes leave medical edit window सुट्टी'),
       (l10n.settingsImports, '/settings/imports', Icons.history_outlined, 'import history undo excel'),
+      (l10n.promoTitle, '/students/promotion', Icons.upgrade,
+          'promotion promote next year class year end new session pass fail atkt repeat detained 12th left'),
       (l10n.settingsRecycleBin, '/settings/recycle-bin', Icons.delete_outline, 'deleted restore bin trash'),
       (l10n.settingsModules, '/settings/modules', Icons.extension_outlined, 'module modules switch on off'),
       (l10n.settingsBackup, '/settings/backup', Icons.backup_outlined, 'backup restore password drive automatic'),

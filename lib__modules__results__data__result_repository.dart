@@ -354,7 +354,7 @@ class ResultRepository extends OrgScopedRepository {
               t.divisionId.equals(divisionId) &
               t.academicYearId.equals(academicYearId) &
               t.deletedAt.isNull() &
-              t.status.equals('active')))
+              t.status.isIn(yearMemberStatuses)))
         .get();
     if (rows.isEmpty) return [];
     final ids = rows.map((r) => r.studentId).toSet();
