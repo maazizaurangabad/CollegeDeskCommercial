@@ -8,6 +8,7 @@ import '../../../platform/data/data_providers.dart';
 import '../data/field_definition_repository.dart';
 import '../data/student_repository.dart';
 import '../domain/record_completeness.dart';
+import '../import/import_report.dart';
 import '../domain/student_models.dart';
 import '../import/import_repository.dart';
 
@@ -85,6 +86,14 @@ final motherRequiredProvider = FutureProvider<bool>((ref) {
   ref.watch(studentsRevisionProvider);
   return StudentFormSettings.motherRequired(ref.watch(appSettingsRepositoryProvider));
 });
+
+/// The last import's report: kept until the user closes it or starts a
+/// new import (in memory only, never saved: it holds the sheet's cells).
+final lastImportReportProvider = StateProvider<ImportReport?>((ref) => null);
+
+/// A skipped import row being added by hand: its row number and what the
+/// sheet had, to fill the Add Student form.
+final importPrefillProvider = StateProvider<({int rowNumber, StudentDraft draft})?>((ref) => null);
 
 final completenessChecksProvider = FutureProvider<Set<CompletenessCheck>>((ref) {
   ref.watch(studentsRevisionProvider);

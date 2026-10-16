@@ -21,9 +21,13 @@ import 'student_labels.dart';
 
 /// Add a new student ([studentId] null) or edit an existing one.
 class StudentFormScreen extends ConsumerStatefulWidget {
-  const StudentFormScreen({super.key, this.studentId});
+  const StudentFormScreen({super.key, this.studentId, this.fromImport = false});
 
   final String? studentId;
+
+  /// Adding a row the import skipped: the form starts with what the sheet
+  /// had, and returns to the import report after saving.
+  final bool fromImport;
 
   @override
   ConsumerState<StudentFormScreen> createState() => _StudentFormScreenState();
@@ -53,6 +57,19 @@ class _StudentFormScreenState extends ConsumerState<StudentFormScreen> {
   }
 
   Future<void> _init() async {
+    final prefill = widget.fromImport ? ref.read(importPrefillProvider) : null;
+    if (!_isEdit && prefill != null) {
+      final draft = prefill.draft;
+      if (!draft.guardians.any((g) => g.relation.toLowerCase() == 'mother')) {
+        draft.guardians.add(GuardianDraft(relation: 'Mother', isPrimary: draft.guardians.isEmpty));
+      }
+      final academic = ref.read(academicControllerProvider);
+      setState(() {
+        _draft = draft;
+        _programId = academic.divisions.where((d) => d.id == draft.divisionId).firstOrNull?.programId;
+      });
+      return;
+    }
     if (!_isEdit) {
       setState(() => _draft = StudentDraft(guardians: [
             GuardianDraft(relation: 'Father', isPrimary: true),
@@ -131,6 +148,14 @@ class _StudentFormScreenState extends ConsumerState<StudentFormScreen> {
       ref.read(studentsRevisionProvider.notifier).state++;
       if (!mounted) return;
       SdToast.show(context, l10n.studentSaved);
+      final prefill = widget.fromImport ? ref.read(importPrefillProvider) : null;
+      final report = ref.read(lastImportReportProvider);
+      if (prefill != null && report != null) {
+        ref.read(lastImportReportProvider.notifier).state = report.markResolved(prefill.rowNumber);
+        ref.read(importPrefillProvider.notifier).state = null;
+        context.go('/students/import-report');
+        return;
+      }
       context.go('/students/$id');
     } catch (e) {
       if (mounted) {
@@ -199,7 +224,9 @@ class _StudentFormScreenState extends ConsumerState<StudentFormScreen> {
             IconButton(
               tooltip: l10n.cancel,
               icon: const Icon(Icons.close),
-              onPressed: () => context.go(_isEdit ? '/students/${widget.studentId}' : '/students'),
+              onPressed: () => context.go(
+                _isEdit ? '/students/${widget.studentId}' : (widget.fromImport ? '/students/import-report' : '/students'),
+              ),
             ),
             const SizedBox(width: SdSpace.xs),
             Expanded(

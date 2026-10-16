@@ -19,6 +19,7 @@ import '../domain/student_models.dart';
 import '../import/import_fields.dart';
 import '../import/import_labels.dart';
 import '../import/import_planner.dart';
+import '../import/import_report.dart';
 import '../import/import_repository.dart';
 import 'student_labels.dart';
 
@@ -65,6 +66,8 @@ class _StudentImportScreenState extends ConsumerState<StudentImportScreen> {
     final path = picked?.files.single.path;
     if (path == null) return;
     final ext = p.extension(path).toLowerCase();
+    // A new import replaces the last report.
+    ref.read(lastImportReportProvider.notifier).state = null;
     if (ext == '.xls') {
       setState(() => _message = l10n.importXlsWarning);
       return;
@@ -192,10 +195,20 @@ class _StudentImportScreenState extends ConsumerState<StudentImportScreen> {
       if (_plan!.missingPlacements.isNotEmpty) {
         await ref.read(academicControllerProvider.notifier).reload();
       }
+      // The report stays until it is closed or another import starts.
+      ref.read(lastImportReportProvider.notifier).state = ImportReport.from(
+        plan: _plan!,
+        result: result,
+        sourceName: _fileName,
+        headers: _headers,
+        mapping: _mapping,
+      );
+      if (!mounted) return;
       setState(() {
         _result = result;
         _step = _Step.done;
       });
+      context.go('/students/import-report');
     } catch (e) {
       final detail = e is ImportRowFailure
           ? '${l10n.importRowLabel(e.rowNumber)}: ${studentErrorMessage(l10n, e.cause)}'

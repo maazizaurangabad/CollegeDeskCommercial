@@ -2,6 +2,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../domain/student_models.dart';
 import 'import_fields.dart';
 import 'import_planner.dart';
+import 'import_report.dart';
 
 String importFieldLabel(AppLocalizations l10n, ImportField f) => switch (f) {
       ImportField.ignore => l10n.fieldIgnore,
@@ -70,3 +71,31 @@ String rowIssueLabel(AppLocalizations l10n, RowIssue issue) {
   };
   return issue.detail == null || issue.code == RowIssueCode.alreadyExists ? base : '$base (${issue.detail})';
 }
+
+String importRowKindLabel(AppLocalizations l10n, ImportRowKind kind) => switch (kind) {
+      ImportRowKind.skipped => l10n.irKindSkipped,
+      ImportRowKind.alreadySaved => l10n.irKindAlreadySaved,
+      ImportRowKind.possibleDuplicate => l10n.irKindPossibleDuplicate,
+      ImportRowKind.savedWithWarnings => l10n.irKindWarnings,
+      ImportRowKind.saved => l10n.irKindSaved,
+    };
+
+/// What to do about a problem, in a sentence.
+String importFixLabel(AppLocalizations l10n, RowIssueCode code) => switch (code) {
+      RowIssueCode.missingName => l10n.irFixMissingName,
+      RowIssueCode.badDate => l10n.irFixBadDate,
+      RowIssueCode.badNumber => l10n.irFixBadNumber,
+      RowIssueCode.badBloodGroup => l10n.irFixBadBloodGroup,
+      RowIssueCode.invalidAadhaar => l10n.irFixInvalidAadhaar,
+      RowIssueCode.invalidMobile => l10n.irFixInvalidMobile,
+      RowIssueCode.duplicateInFile => l10n.irFixDuplicateInFile,
+      RowIssueCode.duplicateRoll => l10n.irFixDuplicateRoll,
+      RowIssueCode.notPlaced => l10n.irFixNotPlaced,
+      RowIssueCode.willCreatePlacement => l10n.irFixNone,
+      RowIssueCode.alreadyExists => l10n.irFixAlreadyExists,
+      RowIssueCode.possibleDuplicate => l10n.irFixPossibleDuplicate,
+      RowIssueCode.aadhaarTaken => l10n.irFixAadhaarTaken,
+      RowIssueCode.motherMissing => l10n.irFixMotherMissing,
+      RowIssueCode.requiredExtraMissing => l10n.irFixRequiredExtra,
+      RowIssueCode.badChoice => l10n.irFixBadChoice,
+    };

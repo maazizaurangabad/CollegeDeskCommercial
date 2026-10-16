@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../platform/modules/module_descriptor.dart';
+import 'presentation/import_report_screen.dart';
 import 'presentation/photo_import_screen.dart';
 import 'presentation/student_form_screen.dart';
 import 'presentation/student_import_screen.dart';
@@ -24,12 +25,19 @@ final studentsModule = ModuleDescriptor(
       pageBuilder: (context, state) => const NoTransitionPage(child: StudentImportScreen()),
     ),
     GoRoute(
+      path: 'import-report',
+      pageBuilder: (context, state) => const NoTransitionPage(child: ImportReportScreen()),
+    ),
+    GoRoute(
       path: 'import-photos',
       pageBuilder: (context, state) => const NoTransitionPage(child: PhotoImportScreen()),
     ),
     GoRoute(
       path: 'new',
-      pageBuilder: (context, state) => const NoTransitionPage(child: StudentFormScreen()),
+      pageBuilder: (context, state) => NoTransitionPage(
+        key: ValueKey('student-new-${state.uri.query}'),
+        child: StudentFormScreen(fromImport: state.uri.queryParameters['fromImport'] == '1'),
+      ),
     ),
     GoRoute(
       path: ':id',

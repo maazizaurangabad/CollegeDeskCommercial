@@ -35,12 +35,21 @@ class ImportBatchInfo {
 }
 
 class ImportResult {
-  const ImportResult({required this.batchId, required this.added, required this.updated, required this.skipped});
+  const ImportResult({
+    required this.batchId,
+    required this.added,
+    required this.updated,
+    required this.skipped,
+    this.outcomes = const [],
+  });
 
   final String batchId;
   final int added;
   final int updated;
   final int skipped;
+
+  /// What actually happened to each row: 'added', 'updated' or 'skipped'.
+  final List<({int rowNumber, String action, String? studentId})> outcomes;
 }
 
 /// A row that stopped the whole import; nothing was saved.
@@ -121,6 +130,7 @@ class ImportRepository extends OrgScopedRepository {
 
       // 3. Each row.
       var added = 0, updated = 0, skipped = 0;
+      final outcomes = <({int rowNumber, String action, String? studentId})>[];
       for (final row in plan.rows) {
         if (row.pendingPlacement != null) row.draft.divisionId = createdDivisions[row.pendingPlacement];
         var action = 'skipped';
@@ -150,6 +160,7 @@ class ImportRepository extends OrgScopedRepository {
           default:
             skipped++;
         }
+        outcomes.add((rowNumber: row.rowNumber, action: action, studentId: studentId));
         await db.into(db.importRows).insert(ImportRowsCompanion.insert(
               id: Uuid7.generate(ts),
               organizationId: orgId,
@@ -172,7 +183,7 @@ class ImportRepository extends OrgScopedRepository {
         operation: 'insert',
         after: {'kind': 'students', 'source': sourceName, 'added': added, 'updated': updated, 'skipped': skipped},
       );
-      return ImportResult(batchId: batchId, added: added, updated: updated, skipped: skipped);
+      return ImportResult(batchId: batchId, added: added, updated: updated, skipped: skipped, outcomes: outcomes);
     });
   }
 
