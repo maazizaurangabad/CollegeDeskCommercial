@@ -25,6 +25,7 @@ enum RowIssueCode {
   alreadyExists,
   possibleDuplicate,
   aadhaarTaken,
+  motherMissing,
   requiredExtraMissing,
   badChoice,
 }
@@ -50,7 +51,11 @@ class ImportOptions {
     this.createMissingPlacements = true,
     this.existing = ExistingPolicy.skip,
     this.nameOrder = NameOrder.firstMiddleLast,
+    this.motherRequired = true,
   });
+
+  /// Warn about rows without a mother's name (still imported).
+  bool motherRequired;
 
   /// Put every row in this division (when the sheet has no class column).
   String? fixedDivisionId;
@@ -357,6 +362,9 @@ class ImportPlanner {
     if (father != null) d.guardians.add(GuardianDraft(name: _titleCase(father), relation: 'Father'));
     if (mother != null) d.guardians.add(GuardianDraft(name: _titleCase(mother), relation: 'Mother'));
     if (guardian != null) d.guardians.add(GuardianDraft(name: _titleCase(guardian), relation: 'Guardian'));
+    if (options.motherRequired && mother == null) {
+      issues.add(const RowIssue(RowIssueCode.motherMissing, RowSeverity.warning));
+    }
     if (d.guardians.isEmpty && (mobile != null || altMobile != null)) {
       // In Maharashtra the middle name is the father's name.
       final fatherGuess = [d.middleName, d.lastName].where((s) => s.isNotEmpty).join(' ');

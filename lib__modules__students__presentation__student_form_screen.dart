@@ -39,6 +39,11 @@ class _StudentFormScreenState extends ConsumerState<StudentFormScreen> {
   String? _newPhotoPath;
   bool _saving = false;
 
+  /// "Other…" chosen in a dropdown: type the value instead.
+  static const _other = '__other__';
+  bool _otherTongue = false;
+  bool _otherNationality = false;
+
   bool get _isEdit => widget.studentId != null;
 
   @override
@@ -49,7 +54,10 @@ class _StudentFormScreenState extends ConsumerState<StudentFormScreen> {
 
   Future<void> _init() async {
     if (!_isEdit) {
-      setState(() => _draft = StudentDraft(guardians: [GuardianDraft(relation: 'Father', isPrimary: true)]));
+      setState(() => _draft = StudentDraft(guardians: [
+            GuardianDraft(relation: 'Father', isPrimary: true),
+            GuardianDraft(relation: 'Mother'),
+          ]));
       return;
     }
     final detail = await ref.read(studentRepositoryProvider).load(widget.studentId!);
@@ -59,6 +67,10 @@ class _StudentFormScreenState extends ConsumerState<StudentFormScreen> {
       return;
     }
     final academic = ref.read(academicControllerProvider);
+    // Every record gets a place for the mother's name (board forms need it).
+    if (!detail.draft.guardians.any((g) => g.relation.toLowerCase() == 'mother')) {
+      detail.draft.guardians.add(GuardianDraft(relation: 'Mother', isPrimary: detail.draft.guardians.isEmpty));
+    }
     setState(() {
       _draft = detail.draft;
       _hasSavedAadhaar = detail.identifier(IdentifierType.aadhaar) != null;
@@ -176,7 +188,7 @@ class _StudentFormScreenState extends ConsumerState<StudentFormScreen> {
     final photo = _newPhotoPath != null ? File(_newPhotoPath!) : studentPhoto(mediaDir, draft.photoFileName);
     List<(String, String)> choices(List<String> values) => [for (final v in values) (v, v)];
 
-    String? number(String? v) => (v == null || v.trim().isEmpty || double.tryParse(v.trim()) != null) ? null : l10n.issueInvalidNumber;
+    final motherRequired = ref.watch(motherRequiredProvider).valueOrNull ?? true;
     String? mobile(String? v) => (v == null || v.trim().isEmpty || MobileNumber.isValid(v)) ? null : l10n.fieldMobile;
     final digitsOnly = [FilteringTextInputFormatter.allow(RegExp(r'[0-9 ]'))];
 
@@ -274,8 +286,24 @@ class _StudentFormScreenState extends ConsumerState<StudentFormScreen> {
                   onChanged: (v) => setState(() => draft.dateOfBirth = v),
                 ),
                 _text(l10n.fieldPlaceOfBirth, draft.placeOfBirth, (v) => draft.placeOfBirth = v),
-                _text(l10n.fieldNationality, draft.nationality, (v) => draft.nationality = v),
-                _text(l10n.fieldMotherTongue, draft.motherTongue, (v) => draft.motherTongue = v),
+                ..._choiceOrText(
+                  l10n,
+                  label: l10n.fieldNationality,
+                  value: draft.nationality,
+                  choices: StudentChoices.nationalities,
+                  typing: _otherNationality,
+                  onTyping: (v) => setState(() => _otherNationality = v),
+                  onChanged: (v) => draft.nationality = v,
+                ),
+                ..._choiceOrText(
+                  l10n,
+                  label: l10n.fieldMotherTongue,
+                  value: draft.motherTongue,
+                  choices: StudentChoices.motherTongues,
+                  typing: _otherTongue,
+                  onTyping: (v) => setState(() => _otherTongue = v),
+                  onChanged: (v) => draft.motherTongue = v,
+                ),
                 SdSelectField<String>(
                   label: l10n.fieldCategory,
                   value: draft.category,
@@ -297,10 +325,20 @@ class _StudentFormScreenState extends ConsumerState<StudentFormScreen> {
                   clearLabel: l10n.notSet,
                   onChanged: (v) => setState(() => draft.bloodGroup = v),
                 ),
-                _text(l10n.fieldHeight, draft.heightCm?.toString() ?? '', (v) => draft.heightCm = double.tryParse(v.trim()),
-                    keyboard: const TextInputType.numberWithOptions(decimal: true), validator: number),
-                _text(l10n.fieldWeight, draft.weightKg?.toString() ?? '', (v) => draft.weightKg = double.tryParse(v.trim()),
-                    keyboard: const TextInputType.numberWithOptions(decimal: true), validator: number),
+                SdSelectField<double>(
+                  label: l10n.fieldHeightPick,
+                  value: draft.heightCm,
+                  options: _withCurrent(StudentChoices.heightOptions(), draft.heightCm, StudentChoices.heightLabel),
+                  clearLabel: l10n.notSet,
+                  onChanged: (v) => setState(() => draft.heightCm = v),
+                ),
+                SdSelectField<double>(
+                  label: l10n.fieldWeightPick,
+                  value: draft.weightKg,
+                  options: _withCurrent(StudentChoices.weightOptions(), draft.weightKg, StudentChoices.weightLabel),
+                  clearLabel: l10n.notSet,
+                  onChanged: (v) => setState(() => draft.weightKg = v),
+                ),
                 SdDateField(
                   label: l10n.fieldMeasuredOn,
                   value: draft.measuredOn,
@@ -313,6 +351,9 @@ class _StudentFormScreenState extends ConsumerState<StudentFormScreen> {
                     key: ObjectKey(draft.guardians[i]),
                     number: i + 1,
                     guardian: draft.guardians[i],
+                    // The first mother's name is required when the institution says so.
+                    motherRequired: motherRequired &&
+                        identical(draft.guardians[i], draft.guardians.where((g) => g.relation.toLowerCase() == 'mother').firstOrNull),
                     mobileValidator: mobile,
                     onPrimary: () => setState(() {
                       for (final g in draft.guardians) {
@@ -410,6 +451,49 @@ class _StudentFormScreenState extends ConsumerState<StudentFormScreen> {
     );
   }
 
+  /// Dropdown options plus the saved value when it is not one of them
+  /// (e.g. 165.5 cm typed earlier), so nothing saved is lost.
+  List<(double, String)> _withCurrent(List<(double, String)> options, double? current, String? Function(double?) label) {
+    if (current == null || options.any((o) => o.$1 == current)) return options;
+    return [...options, (current, label(current) ?? '$current')]..sort((a, b) => a.$1.compareTo(b.$1));
+  }
+
+  /// A dropdown of common values with "Other…" to type any other value.
+  List<Widget> _choiceOrText(
+    AppLocalizations l10n, {
+    required String label,
+    required String value,
+    required List<String> choices,
+    required bool typing,
+    required ValueChanged<bool> onTyping,
+    required ValueChanged<String> onChanged,
+  }) {
+    final saved = value.trim();
+    final options = [
+      for (final c in choices) (c, c),
+      if (saved.isNotEmpty && !choices.contains(saved)) (saved, saved),
+      (_other, l10n.choiceOther),
+    ];
+    return [
+      SdSelectField<String>(
+        label: label,
+        value: typing ? _other : (saved.isEmpty ? null : saved),
+        options: options,
+        clearLabel: l10n.notSet,
+        onChanged: (v) {
+          if (v == _other) {
+            onTyping(true);
+          } else {
+            onChanged(v ?? '');
+            onTyping(false);
+          }
+        },
+      ),
+      if (typing)
+        _text(l10n.choiceOtherType(label), choices.contains(saved) ? '' : saved, onChanged),
+    ];
+  }
+
   Widget _extraField(
     AppLocalizations l10n,
     StudentDraft draft,
@@ -476,8 +560,11 @@ class _GuardianEditor extends StatelessWidget {
     required this.onPrimary,
     required this.onRemove,
     required this.onRelation,
+    this.motherRequired = false,
   });
 
+  /// This is the student's mother and her name must be filled in.
+  final bool motherRequired;
   final ValueChanged<String> onRelation;
   final int number;
   final GuardianDraft guardian;
@@ -511,10 +598,15 @@ class _GuardianEditor extends StatelessWidget {
           Row(
             children: [
               Expanded(child: Text(l10n.guardianNumber(number), style: Theme.of(context).textTheme.titleSmall)),
-              TextButton(onPressed: onRemove, child: Text(l10n.guardianRemove)),
+              if (!motherRequired) TextButton(onPressed: onRemove, child: Text(l10n.guardianRemove)),
             ],
           ),
-          field(l10n.fieldName, guardian.name, (v) => guardian.name = v),
+          field(
+            motherRequired ? '${l10n.fieldMotherName} *' : l10n.fieldName,
+            guardian.name,
+            (v) => guardian.name = v,
+            validator: motherRequired ? ((v) => (v == null || v.trim().isEmpty) ? l10n.issueMotherRequired : null) : null,
+          ),
           SdSelectField<String>(
             label: l10n.fieldRelation,
             value: guardian.relation,

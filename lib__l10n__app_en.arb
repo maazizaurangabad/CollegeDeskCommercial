@@ -1932,5 +1932,20 @@
   "reportPhotoRegisterTitle": "Student Register with Photograph",
   "reportPhotoRegisterDesc": "Sr. No., name, mother's name, date of birth and photo of each student in a class (PDF)",
   "reportPhotoRegisterHint": "Printed as PDF on A4 landscape. Students without a photo get an empty photo box.",
-  "sortGender": "Gender"
+  "sortGender": "Gender",
+  "choiceOther": "Other…",
+  "choiceOtherType": "{field} (type it)",
+  "@choiceOtherType": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "fieldHeightPick": "Height",
+  "fieldWeightPick": "Weight",
+  "issueMotherMissing": "Mother's name missing (needed for board exam forms)",
+  "issueMotherRequired": "Enter the mother's name (needed for HSC / SSC forms)",
+  "motherRequiredTitle": "Mother's name is required",
+  "motherRequiredHint": "Every student must have a mother's name, as HSC / SSC board forms need it. Imports warn about rows without it."
 }

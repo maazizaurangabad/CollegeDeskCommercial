@@ -28,6 +28,7 @@ class StudentFieldsScreen extends ConsumerWidget {
     final fields = ref.watch(extraFieldsProvider);
     final categories = ref.watch(studentCategoriesProvider).valueOrNull ?? StudentChoices.defaultCategories;
     final checks = ref.watch(completenessChecksProvider).valueOrNull ?? defaultCompletenessChecks;
+    final motherRequired = ref.watch(motherRequiredProvider).valueOrNull ?? true;
     void changed() => ref.read(studentsRevisionProvider.notifier).state++;
 
     return SdPage(
@@ -54,6 +55,23 @@ class StudentFieldsScreen extends ConsumerWidget {
             },
           ),
         ),
+        SdCard(
+          child: SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(l10n.motherRequiredTitle),
+            subtitle: Text(l10n.motherRequiredHint),
+            value: motherRequired,
+            onChanged: (v) async {
+              final ok = await runWithFeedback(
+                context,
+                () => StudentFormSettings.setMotherRequired(ref.read(appSettingsRepositoryProvider), v),
+                (_) => l10n.saveFailed,
+              );
+              if (ok) changed();
+            },
+          ),
+        ),
+        const SizedBox(height: SdSpace.xl),
         SdSection(
           title: l10n.extraFieldsTitle,
           child: fields.when(

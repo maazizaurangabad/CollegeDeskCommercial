@@ -64,6 +64,7 @@ String rowIssueLabel(AppLocalizations l10n, RowIssue issue) {
     RowIssueCode.alreadyExists => l10n.issueAlreadyExists,
     RowIssueCode.possibleDuplicate => l10n.issuePossibleDuplicate,
     RowIssueCode.aadhaarTaken => l10n.issueAadhaarTaken,
+    RowIssueCode.motherMissing => l10n.issueMotherMissing,
     RowIssueCode.requiredExtraMissing => l10n.issueRequiredExtraRow,
     RowIssueCode.badChoice => l10n.issueBadChoice,
   };

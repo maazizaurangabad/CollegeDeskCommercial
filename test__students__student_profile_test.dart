@@ -71,7 +71,8 @@ void main() {
         extraFields: const [],
         academicYearId: 'y1',
       );
-      expect(c.total, 6);
+      // Name, DOB, gender, parent mobile, class, G.R. and mother's name.
+      expect(c.total, 7);
       expect(c.percent, 100);
       // Father's name and photo are not recorded but are not counted.
       expect(c.missing, isEmpty);
@@ -84,9 +85,9 @@ void main() {
         extraFields: const [],
         academicYearId: 'y1',
       );
-      expect(c.done, 6);
-      expect(c.total, 8);
-      expect(c.percent, 75);
+      expect(c.done, 7);
+      expect(c.total, 9);
+      expect(c.percent, 78);
       expect(c.missing.map((i) => i.check), [CompletenessCheck.fatherName, CompletenessCheck.photo]);
 
       final filled = RecordCompleteness.evaluate(

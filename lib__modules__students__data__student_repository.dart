@@ -584,6 +584,21 @@ class StudentRepository extends OrgScopedRepository {
     if (d.guardians.isEmpty && incoming.guardians.isNotEmpty) {
       d.guardians = incoming.guardians;
       changed = true;
+    } else {
+      // A mother or father the sheet names but the record lacks is added;
+      // a nameless entry of that relation gets the name. Nothing is replaced.
+      for (final g in incoming.guardians) {
+        final relation = g.relation.trim().toLowerCase();
+        if (g.name.trim().isEmpty || (relation != 'mother' && relation != 'father')) continue;
+        final same = d.guardians.where((x) => x.relation.trim().toLowerCase() == relation).toList();
+        if (same.any((x) => x.name.trim().isNotEmpty)) continue;
+        if (same.isNotEmpty) {
+          same.first.name = g.name;
+        } else {
+          d.guardians.add(GuardianDraft(name: g.name, relation: g.relation));
+        }
+        changed = true;
+      }
     }
     for (final e in incoming.identifiers.entries) {
       final has = e.key == IdentifierType.aadhaar

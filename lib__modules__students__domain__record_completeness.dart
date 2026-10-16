@@ -34,6 +34,8 @@ const defaultCompletenessChecks = <CompletenessCheck>{
   CompletenessCheck.guardianMobile,
   CompletenessCheck.classThisYear,
   CompletenessCheck.grNumber,
+  // Needed for HSC / SSC board forms.
+  CompletenessCheck.motherName,
 };
 
 /// One line of the checklist: a standard check or a required own field.

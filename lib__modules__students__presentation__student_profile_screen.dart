@@ -676,8 +676,8 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
           title: l10n.sectionHealth,
           child: Column(children: [
             InfoRow(label: l10n.fieldBloodGroup, value: d.bloodGroup),
-            InfoRow(label: l10n.fieldHeight, value: d.heightCm?.toStringAsFixed(1)),
-            InfoRow(label: l10n.fieldWeight, value: d.weightKg?.toStringAsFixed(1)),
+            InfoRow(label: l10n.fieldHeightPick, value: StudentChoices.heightLabel(d.heightCm)),
+            InfoRow(label: l10n.fieldWeightPick, value: StudentChoices.weightLabel(d.weightKg)),
             InfoRow(label: l10n.fieldMeasuredOn, value: _fmt(d.measuredOn)),
           ]),
         ),

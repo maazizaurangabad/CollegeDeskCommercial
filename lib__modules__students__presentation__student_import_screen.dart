@@ -161,6 +161,7 @@ class _StudentImportScreenState extends ConsumerState<StudentImportScreen> {
         fingerprint: ref.read(startupStateProvider).fieldCipher.fingerprint,
       );
       if (_hasClassColumn) _options.fixedDivisionId = null;
+      _options.motherRequired = await ref.read(motherRequiredProvider.future);
       final plan = await planner.plan(_dataRows, _mapping, _options, firstRowNumber: _headerRow + 2);
       setState(() {
         _plan = plan;

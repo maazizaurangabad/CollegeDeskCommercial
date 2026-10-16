@@ -92,7 +92,8 @@ void main() {
 
     test('rows are cleaned and checked before anything is saved', () async {
       planner = await freshPlanner();
-      final plan = await planner.plan(sheet, mapping, ImportOptions());
+      // This sheet has no mother column; that warning is tested separately.
+      final plan = await planner.plan(sheet, mapping, ImportOptions(motherRequired: false));
       final r = plan.rows;
 
       expect(r[0].draft.firstName, 'Ayaan');
@@ -176,6 +177,43 @@ void main() {
       // Dates are stored as plain calendar dates (in UTC), so compare the day itself.
       expect([d.dateOfBirth!.year, d.dateOfBirth!.month, d.dateOfBirth!.day], [2010, 3, 14]);
       expect(d.lastName, 'Joshi');
+    });
+
+    test('a missing mother is a warning; fill-empty adds the mother and keeps the father', () async {
+      final warn = await (await freshPlanner()).plan(
+        [
+          ['Imran Shaikh', 'G-70'],
+        ],
+        ['fullName', 'grNumber'],
+        ImportOptions(),
+      );
+      expect(warn.rows.single.issues.map((i) => i.code), contains(RowIssueCode.motherMissing));
+      expect(warn.rows.single.severity, RowSeverity.warning);
+
+      final id = await students.create(StudentDraft(
+        firstName: 'Imran',
+        lastName: 'Shaikh',
+        identifiers: {IdentifierType.grNumber: 'G-71'},
+        guardians: [GuardianDraft(name: 'Salim Shaikh', relation: 'Father', mobile: '9876543210', isPrimary: true)],
+      ));
+      final p = await (await freshPlanner()).plan(
+        [
+          ['Imran Shaikh', 'G-71', 'RUKHSANA BEGUM'],
+        ],
+        ['fullName', 'grNumber', 'motherName'],
+        ImportOptions(existing: ExistingPolicy.fillEmpty),
+      );
+      final result = await imports.commitStudents(
+        plan: p,
+        options: ImportOptions(existing: ExistingPolicy.fillEmpty),
+        sourceName: 'mothers.csv',
+        extraFields: const [],
+        activeYearId: null,
+      );
+      expect(result.updated, 1);
+      final guardians = (await students.load(id))!.guardians;
+      expect(guardians.map((g) => (g.relation, g.name)), containsAll([('Father', 'Salim Shaikh'), ('Mother', 'Rukhsana Begum')]));
+      expect(guardians.firstWhere((g) => g.relation == 'Father').mobile, '9876543210');
     });
 
     test('saved column matchings are kept per name', () async {

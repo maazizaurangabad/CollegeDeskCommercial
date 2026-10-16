@@ -70,6 +70,22 @@ abstract final class CompletenessSettings {
       settings.setValue(settingKey, RecordCompleteness.encodeChecks(checks));
 }
 
+/// Whether every student needs a mother's name (board exam forms).
+abstract final class StudentFormSettings {
+  static const motherRequiredKey = 'students.mother_required';
+
+  static Future<bool> motherRequired(AppSettingsRepository settings) async =>
+      (await settings.getValue(motherRequiredKey)) != 'false';
+
+  static Future<void> setMotherRequired(AppSettingsRepository settings, bool value) =>
+      settings.setValue(motherRequiredKey, '$value');
+}
+
+final motherRequiredProvider = FutureProvider<bool>((ref) {
+  ref.watch(studentsRevisionProvider);
+  return StudentFormSettings.motherRequired(ref.watch(appSettingsRepositoryProvider));
+});
+
 final completenessChecksProvider = FutureProvider<Set<CompletenessCheck>>((ref) {
   ref.watch(studentsRevisionProvider);
   return CompletenessSettings.load(ref.watch(appSettingsRepositoryProvider));

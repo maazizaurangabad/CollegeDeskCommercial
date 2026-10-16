@@ -32,6 +32,48 @@ abstract final class StudentChoices {
   static const relations = ['Father', 'Mother', 'Guardian', 'Other'];
   static const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
   static const defaultCategories = ['Open', 'SC', 'ST', 'OBC', 'VJ/NT', 'SBC', 'EWS', 'Other'];
+  static const nationalities = ['Indian'];
+  static const motherTongues = [
+    'Marathi',
+    'Urdu',
+    'Hindi',
+    'English',
+    'Gujarati',
+    'Kannada',
+    'Telugu',
+    'Tamil',
+    'Bengali',
+    'Punjabi',
+    'Sindhi',
+    'Konkani',
+    'Malayalam',
+    'Odia',
+  ];
+
+  /// Height choices from 3 ft to 7 ft in steps of one inch, as whole
+  /// centimetres: (cm, "5 ft 6 in (168 cm)").
+  static List<(double, String)> heightOptions() => [
+        for (var inches = 36; inches <= 84; inches++) ((inches * 2.54).roundToDouble(), heightLabel((inches * 2.54).roundToDouble())!),
+      ];
+
+  /// "5 ft 6 in (168 cm)", "6 ft (183 cm)"; null for no height.
+  static String? heightLabel(double? cm) {
+    if (cm == null || cm <= 0) return null;
+    final totalInches = (cm / 2.54).round();
+    final feet = totalInches ~/ 12, inches = totalInches % 12;
+    final cmText = cm == cm.roundToDouble() ? cm.toStringAsFixed(0) : cm.toStringAsFixed(1);
+    return inches == 0 ? '$feet ft ($cmText cm)' : '$feet ft $inches in ($cmText cm)';
+  }
+
+  /// Weight choices from 10 to 150 kg: (kg, "52 kg").
+  static List<(double, String)> weightOptions() => [
+        for (var kg = 10; kg <= 150; kg++) (kg.toDouble(), weightLabel(kg.toDouble())!),
+      ];
+
+  static String? weightLabel(double? kg) {
+    if (kg == null || kg <= 0) return null;
+    return '${kg == kg.roundToDouble() ? kg.toStringAsFixed(0) : kg.toStringAsFixed(1)} kg';
+  }
 }
 
 /// One guardian as entered in the student form.
