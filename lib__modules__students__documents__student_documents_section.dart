@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -62,8 +63,8 @@ class _StudentDocumentsSectionState extends ConsumerState<StudentDocumentsSectio
       switch (source) {
         case _Source.scan:
           final scanner = DocumentScanner(
+            // Pages come back as JPEG pictures (the scanner's standard).
             options: DocumentScannerOptions(
-              documentFormat: DocumentFormat.jpeg,
               mode: ScannerMode.full,
               pageLimit: 20,
               isGalleryImport: true,
@@ -71,7 +72,8 @@ class _StudentDocumentsSectionState extends ConsumerState<StudentDocumentsSectio
           );
           try {
             final result = await scanner.scanDocument();
-            for (final path in result.images) {
+            final List<String>? pages = result.images;
+            for (final path in pages ?? const <String>[]) {
               saved.add(await files.addImage(studentId, await File(path).readAsBytes()));
             }
           } finally {

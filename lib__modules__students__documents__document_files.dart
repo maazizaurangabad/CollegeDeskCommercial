@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
@@ -20,7 +19,7 @@ class DocumentUnreadable implements Exception {
 
 /// Scanned pages, photos and PDFs of student documents, kept inside the
 /// institution's media folder (so they are part of every backup) under
-/// documents/<student>/.
+/// documents/STUDENT-ID/.
 class DocumentFiles {
   DocumentFiles(this.mediaDir);
 
