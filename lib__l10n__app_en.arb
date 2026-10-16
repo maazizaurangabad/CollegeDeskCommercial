@@ -2187,6 +2187,16 @@
   "docCamera": "Take a photo",
   "docUpload": "Upload photo or PDF",
   "docScanUnavailable": "The document scanner is not available on this phone. Use \"Take a photo\" instead.",
+  "docScanFailedTitle": "Scanner could not open",
+  "docScanFailedMessage": "The phone's document scanner did not start. The first time, it downloads itself through Google Play Services: keep the internet on, wait a minute and try again. Also update \"Google Play Services\" from the Play Store.\n\nYou can take a photo now instead.\n\nReason: {reason}",
+  "@docScanFailedMessage": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "docScanNoPages": "The scanner closed without any pages. Please try again, or use \"Take a photo\".",
   "docTooLarge": "This PDF is larger than 10 MB. Please make it smaller first.",
   "docUnreadable": "This file is not a photo or PDF the app can read.",
   "docPagesAdded": "{count} pages added",

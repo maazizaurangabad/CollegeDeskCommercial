@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 import 'package:image_picker/image_picker.dart';
@@ -70,14 +71,33 @@ class _StudentDocumentsSectionState extends ConsumerState<StudentDocumentsSectio
               isGalleryImport: true,
             ),
           );
+          Object? failure;
           try {
             final result = await scanner.scanDocument();
             final List<String>? pages = result.images;
             for (final path in pages ?? const <String>[]) {
               saved.add(await files.addImage(studentId, await File(path).readAsBytes()));
             }
+            if (saved.isEmpty && mounted) SdToast.show(context, l10n.docScanNoPages);
+          } on DocumentTooLarge {
+            rethrow;
+          } on DocumentUnreadable {
+            rethrow;
+          } catch (e) {
+            // Closing the scanner without scanning is not an error.
+            if (!_isScanCancel(e)) failure = e;
           } finally {
             await scanner.close();
+          }
+          if (failure != null && mounted) {
+            final useCamera = await SdDialog.confirm(
+              context,
+              title: l10n.docScanFailedTitle,
+              message: l10n.docScanFailedMessage(_scanReason(failure)),
+              confirmLabel: l10n.docCamera,
+              cancelLabel: l10n.cancel,
+            );
+            if (useCamera && mounted) return _pickPages(_Source.camera);
           }
         case _Source.camera:
           final shot = await ImagePicker().pickImage(source: ImageSource.camera, maxWidth: 2400, imageQuality: 90);
@@ -102,10 +122,21 @@ class _StudentDocumentsSectionState extends ConsumerState<StudentDocumentsSectio
     } on DocumentUnreadable {
       if (mounted) SdToast.show(context, l10n.docUnreadable);
     } catch (_) {
-      // Cancelled, or the scanner is not available on this phone.
-      if (mounted && saved.isEmpty && source == _Source.scan) SdToast.show(context, l10n.docScanUnavailable);
+      // Camera or file picker closed without choosing anything.
     }
     return saved;
+  }
+
+  /// The scanner reports "Operation cancelled" when the user closes it.
+  bool _isScanCancel(Object e) => e.toString().toLowerCase().contains('cancel');
+
+  /// A short, readable reason from the scanner's error (for screenshots).
+  String _scanReason(Object e) {
+    var text = e.toString();
+    if (e is PlatformException) text = e.message ?? e.code;
+    text = text.replaceAll(RegExp(r'^[\w.]*Exception:\s*'), '').trim();
+    if (text.length > 160) text = '${text.substring(0, 160)}…';
+    return text.isEmpty ? '-' : text;
   }
 
   Future<void> _addPages(DocumentLine line, _Source source) async {
