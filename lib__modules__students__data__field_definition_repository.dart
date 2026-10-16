@@ -32,6 +32,19 @@ class FieldDefinitionRepository extends OrgScopedRepository {
     ];
   }
 
+  /// Adds a ready-made set of fields (e.g. Junior College / FYJC), skipping
+  /// any whose name already exists. Returns how many were added.
+  Future<int> addSet(List<({String label, String type, List<String> options})> fields) async {
+    final existing = {for (final f in await listForStudents()) f.label.toLowerCase()};
+    var added = 0;
+    for (final f in fields) {
+      if (existing.contains(f.label.toLowerCase())) continue;
+      await add(label: f.label, type: f.type, options: f.options);
+      added++;
+    }
+    return added;
+  }
+
   Future<void> add({required String label, required String type, List<String> options = const [], bool isRequired = false}) {
     return db.transaction(() async {
       final clean = label.trim();

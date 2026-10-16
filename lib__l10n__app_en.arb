@@ -867,9 +867,9 @@
   "activityStudentRestored": "A student was restored",
   "activityStudentLeft": "A student was marked as left",
   "activityImportUndone": "An import was undone",
-  "searchHint": "Search students, numbers, mobiles, classes, settings",
+  "searchHint": "Name, roll no., G.R., code, PEN, APAAR, mobile, FYJC ID…",
   "searchRecent": "Recent searches",
-  "searchExplain": "Type a name, student code, GR, PEN, APAAR or Saral number, or a parent's mobile. Classes and Settings pages are found too. On Windows, press Ctrl + K from anywhere.",
+  "searchExplain": "Search students by name, roll number, G.R. No, student code, PEN, APAAR, Saral ID, admission number, a parent's name or mobile, or your own fields such as FYJC Application ID. Choose a class to list all its students. Classes and Settings pages are found too. Aadhaar is never searched. On Windows, press Ctrl + K from anywhere.",
   "searchClasses": "Classes",
   "searchPages": "Pages",
   "searchNothing": "Nothing found",
@@ -1996,5 +1996,28 @@
   "irFixAadhaarTaken": "This Aadhaar belongs to another saved student. Check the number.",
   "irFixMotherMissing": "Add the mother's name (needed for HSC / SSC forms).",
   "irFixRequiredExtra": "Fill in the required field in the sheet.",
-  "irFixBadChoice": "Use one of the allowed choices for this field."
+  "irFixBadChoice": "Use one of the allowed choices for this field.",
+  "fyjcFieldsTitle": "Junior College (FYJC) fields",
+  "fyjcFieldsHint": "For colleges admitting through the FYJC portal: Name as per FYJC, FYJC Application ID, 10th percentage, admission round, UDISE status, Aadhaar validation status and DOB as per APAAR. Schools can skip this. FYJC passwords are never stored.",
+  "fyjcFieldsAdd": "Add FYJC fields",
+  "fyjcFieldsAlready": "The FYJC fields are already added.",
+  "fyjcFieldsAdded": "{count} FYJC fields added",
+  "@fyjcFieldsAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchFailed": "Search did not work",
+  "searchFailedHint": "Please try again. If it keeps happening, restart the app.",
+  "searchShowMore": "Show more ({count} left)",
+  "@searchShowMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchClassListed": "Everyone in the chosen class, by roll number. Type to narrow it down."
 }

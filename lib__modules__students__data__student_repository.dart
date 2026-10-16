@@ -8,6 +8,7 @@ import '../../../core/ids/uuid7.dart';
 import '../../../core/security/field_cipher.dart';
 import '../../../core/validation/aadhaar.dart';
 import '../../../core/validation/mobile.dart';
+import '../../../platform/data/app_settings_repository.dart';
 import '../domain/student_models.dart';
 
 /// The one place student records are read and written.
@@ -1123,6 +1124,41 @@ class StudentRepository extends OrgScopedRepository {
         .getSingleOrNull();
   }
 
+  static Iterable<String> _extraValues(String json) {
+    try {
+      final map = jsonDecode(json);
+      if (map is! Map) return const [];
+      return [
+        for (final v in map.values)
+          if (v is String && v.trim().isNotEmpty && v != 'true' && v != 'false') v,
+      ];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Version of what the search text holds; raised when it gains content.
+  static const searchIndexVersion = '2';
+  static const _searchIndexKey = 'students.search_index_version';
+
+  /// Brings every student's search text up to date once after an update
+  /// (version 2 adds own-field values). Changes nothing else.
+  Future<bool> ensureSearchIndex(AppSettingsRepository settings) async {
+    if (await settings.getValue(_searchIndexKey) == searchIndexVersion) return false;
+    final ids = await (db.selectOnly(db.students)
+          ..addColumns([db.students.id])
+          ..where(db.students.organizationId.equals(orgId)))
+        .map((r) => r.read(db.students.id)!)
+        .get();
+    await db.transaction(() async {
+      for (final id in ids) {
+        await _refreshSearchText(id);
+      }
+    });
+    await settings.setValue(_searchIndexKey, searchIndexVersion);
+    return true;
+  }
+
   Future<void> _refreshSearchText(String studentId) async {
     final s = await _studentRow(studentId);
     final ids = (await _identifierRows(studentId)).where((i) => i.idType != IdentifierType.aadhaar.code);
@@ -1140,6 +1176,8 @@ class StudentRepository extends OrgScopedRepository {
       s.displayCode,
       for (final i in ids) i.idValue,
       for (final g in guardians) ...[g.name, g.mobile, g.altMobile],
+      // The institution's own fields (e.g. FYJC Application ID); not yes/no.
+      ..._extraValues(s.extraJson),
     ].whereType<String>().join(' ').toLowerCase();
     await (db.update(db.students)..where((t) => t.id.equals(studentId))).write(StudentsCompanion(searchText: Value(text)));
   }

@@ -71,6 +71,41 @@ class StudentFieldsScreen extends ConsumerWidget {
             },
           ),
         ),
+        const SizedBox(height: SdSpace.md),
+        SdCard(
+          child: Row(
+            children: [
+              Icon(Icons.school_outlined, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: SdSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.fyjcFieldsTitle, style: Theme.of(context).textTheme.titleSmall),
+                    Text(l10n.fyjcFieldsHint, style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              ),
+              const SizedBox(width: SdSpace.md),
+              SdButton(
+                label: l10n.fyjcFieldsAdd,
+                icon: Icons.add,
+                variant: SdButtonVariant.secondary,
+                onPressed: () async {
+                  var added = 0;
+                  final ok = await runWithFeedback(
+                    context,
+                    () async => added = await ref.read(fieldDefinitionRepositoryProvider).addSet(JuniorCollegeFields.fields),
+                    (_) => l10n.saveFailed,
+                  );
+                  if (!ok || !context.mounted) return;
+                  changed();
+                  SdToast.show(context, added == 0 ? l10n.fyjcFieldsAlready : l10n.fyjcFieldsAdded(added));
+                },
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: SdSpace.xl),
         SdSection(
           title: l10n.extraFieldsTitle,

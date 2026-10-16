@@ -385,6 +385,29 @@ class StudentKeys {
   final int? rollNumber;
 }
 
+/// Optional fields for junior colleges admitting through the FYJC portal
+/// (schools do not need them). Added from Settings > Student fields as
+/// ordinary own fields; FYJC passwords are never stored.
+abstract final class JuniorCollegeFields {
+  static const fields = <({String label, String type, List<String> options})>[
+    (label: 'Name as per FYJC', type: 'text', options: []),
+    (label: 'FYJC Application ID', type: 'text', options: []),
+    (label: '10th percentage', type: 'number', options: []),
+    (
+      label: 'Admission round',
+      type: 'choice',
+      options: ['Round 1', 'Round 2', 'Round 3', 'Round 4', 'Special Round', 'Open to All', 'Quota'],
+    ),
+    (label: 'UDISE status', type: 'text', options: []),
+    (
+      label: 'Aadhaar validation status',
+      type: 'choice',
+      options: ['Not checked', 'Valid', 'Name mismatch', 'Date of birth mismatch', 'Invalid'],
+    ),
+    (label: 'DOB as per APAAR', type: 'date', options: []),
+  ];
+}
+
 /// Extra facts a student list report may show, beyond the list item.
 /// Aadhaar is only the masked form (last four digits); the full number
 /// needs [StudentRepository.revealAadhaarFor].

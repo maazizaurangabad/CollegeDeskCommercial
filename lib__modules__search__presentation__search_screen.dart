@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,15 +9,18 @@ import 'package:go_router/go_router.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
+import '../../../platform/academic/academic_models.dart';
 import '../../../platform/data/data_providers.dart';
 import '../../../platform/modules/module_providers.dart';
 import '../../students/application/students_providers.dart';
 import '../../students/domain/student_models.dart';
 import '../../students/presentation/student_labels.dart';
+import '../application/student_search.dart';
 
-/// One search box for the whole app: students (by name, code, GR, PEN,
-/// APAAR, Saral, admission number or a guardian's mobile), classes and
-/// Settings pages.
+/// One search box for the whole app: students (by name, code, G.R., roll
+/// number, PEN, APAAR, Saral, admission number, a parent's name or mobile,
+/// or the institution's own fields such as FYJC Application ID), classes
+/// and Settings pages. Students can be narrowed by year, class and status.
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
@@ -33,9 +37,25 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Future<List<StudentListItem>>? _students;
   List<String> _recent = const [];
 
+  // Filters for students.
+  String? _yearId;
+  String? _programId;
+  String? _divisionId;
+  StudentStatus? _status = StudentStatus.active;
+  int _shown = _page;
+  static const _page = 60;
+
   @override
   void initState() {
     super.initState();
+    // Once after an update, so own fields (FYJC ID...) can be searched.
+    ref
+        .read(studentRepositoryProvider)
+        .ensureSearchIndex(ref.read(appSettingsRepositoryProvider))
+        .then((changed) {
+          if (changed && mounted) _run();
+        })
+        .catchError((Object _) {});
     ref.read(appSettingsRepositoryProvider).getValue(_recentKey).then((raw) {
       if (raw == null || !mounted) return;
       setState(() => _recent = (jsonDecode(raw) as List<dynamic>).map((e) => '$e').toList());
@@ -53,17 +73,35 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 200), () {
       if (!mounted) return;
-      final q = value.trim();
-      setState(() {
-        _query = q;
-        _students = q.length < 2
-            ? null
-            : ref.read(studentRepositoryProvider).list(
-                  query: q,
-                  academicYearId: ref.read(academicControllerProvider).activeYear?.id,
-                  limit: 30,
-                );
-      });
+      _query = value.trim();
+      _run();
+    });
+  }
+
+  /// The chosen classes: one division, all divisions of a class, or none.
+  Set<String>? _divisionIds() {
+    final academic = ref.read(academicControllerProvider);
+    if (_yearId != null && _yearId != academic.activeYear?.id) return null;
+    if (_divisionId != null) return {_divisionId!};
+    if (_programId != null) return academic.divisionsOf(_programId!).map((d) => d.id).toSet();
+    return null;
+  }
+
+  void _run() {
+    final q = _query;
+    final classes = _divisionIds();
+    final searchable = q.length >= 2 || rollQuery(q) != null || (q.isEmpty && classes != null);
+    setState(() {
+      _shown = _page;
+      _students = searchable
+          ? searchStudents(
+              ref.read(studentRepositoryProvider),
+              query: q,
+              academicYearId: _yearId ?? ref.read(academicControllerProvider).activeYear?.id,
+              divisionIds: classes,
+              status: _status,
+            )
+          : null;
     });
   }
 
@@ -147,6 +185,135 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     ];
   }
 
+  Widget _filters(AppLocalizations l10n, AcademicSnapshot academic) {
+    final activeId = academic.activeYear?.id;
+    final yearId = _yearId ?? activeId;
+    final current = yearId == activeId;
+    Widget box(Widget child) => SizedBox(width: 200, child: child);
+    return Wrap(
+      spacing: SdSpace.sm,
+      runSpacing: SdSpace.sm,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        if (academic.years.length > 1)
+          box(SdSelectField<String>(
+            label: l10n.academicYearShort,
+            value: yearId,
+            options: [for (final y in academic.years) (y.id, y.label)],
+            onChanged: (v) {
+              _yearId = v;
+              _programId = null;
+              _divisionId = null;
+              _run();
+            },
+          )),
+        if (current) ...[
+          box(SdSelectField<String>(
+            label: l10n.studentsFilterClass,
+            value: _programId,
+            options: [for (final p in academic.programs) (p.id, p.name)],
+            clearLabel: l10n.studentsFilterAll,
+            onChanged: (v) {
+              _programId = v;
+              _divisionId = null;
+              _run();
+            },
+          )),
+          if (_programId != null)
+            box(SdSelectField<String>(
+              label: l10n.studentsFilterDivision,
+              value: _divisionId,
+              options: [for (final d in academic.divisionsOf(_programId!)) (d.id, d.name)],
+              clearLabel: l10n.studentsFilterAll,
+              onChanged: (v) {
+                _divisionId = v;
+                _run();
+              },
+            )),
+        ],
+        for (final (value, label) in [
+          (StudentStatus.active, studentStatusLabel(l10n, StudentStatus.active)),
+          (StudentStatus.left, studentStatusLabel(l10n, StudentStatus.left)),
+          (null, l10n.studentsFilterAll),
+        ])
+          ChoiceChip(
+            label: Text(label),
+            selected: _status == value,
+            showCheckmark: false,
+            onSelected: (_) {
+              _status = value;
+              _run();
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _studentResults(AppLocalizations l10n, AcademicSnapshot academic, Directory? mediaDir) {
+    final theme = Theme.of(context);
+    return FutureBuilder<List<StudentListItem>>(
+      future: _students,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: SdSpace.xl),
+            child: SdEmptyState(icon: Icons.error_outline, title: l10n.searchFailed, message: l10n.searchFailedHint),
+          );
+        }
+        final items = snapshot.data;
+        if (items == null) return const SdSkeleton(height: 96);
+        if (items.isEmpty) return const SizedBox.shrink();
+        final shown = items.take(_shown).toList();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: SdSpace.xl),
+          child: SdSection(
+            title: l10n.searchStudents(items.length),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                LayoutBuilder(builder: (context, constraints) {
+                  final columns = constraints.maxWidth >= 960 ? 3 : (constraints.maxWidth >= 620 ? 2 : 1);
+                  final width = (constraints.maxWidth - SdSpace.md * (columns - 1)) / columns;
+                  return Wrap(
+                    spacing: SdSpace.md,
+                    runSpacing: SdSpace.md,
+                    children: [
+                      for (final s in shown)
+                        SizedBox(
+                          width: width,
+                          child: _StudentCard(
+                            student: s,
+                            classLabel: placementName(academic, s.divisionId),
+                            photo: studentPhoto(mediaDir, s.photoFileName),
+                            onTap: () => _go('/students/${s.id}'),
+                          ),
+                        ),
+                    ],
+                  );
+                }),
+                if (items.length > shown.length) ...[
+                  const SizedBox(height: SdSpace.md),
+                  Align(
+                    child: SdButton(
+                      label: l10n.searchShowMore(items.length - shown.length),
+                      variant: SdButtonVariant.secondary,
+                      onPressed: () => setState(() => _shown += _page),
+                    ),
+                  ),
+                ],
+                if (_query.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: SdSpace.sm),
+                    child: Text(l10n.searchClassListed, style: theme.textTheme.bodySmall),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -200,8 +367,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ),
           ],
         ),
+        const SizedBox(height: SdSpace.md),
+        _filters(l10n, academic),
         const SizedBox(height: SdSpace.xl),
-        if (q.isEmpty) ...[
+        if (q.isEmpty && _students == null) ...[
           if (_recent.isNotEmpty)
             SdSection(
               title: l10n.searchRecent,
@@ -224,41 +393,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           else
             Text(l10n.searchExplain, style: theme.textTheme.bodyMedium),
         ] else ...[
-          if (_students != null)
-            FutureBuilder<List<StudentListItem>>(
-              future: _students,
-              builder: (context, snapshot) {
-                final items = snapshot.data;
-                if (items == null) return const SdSkeleton(height: 64);
-                if (items.isEmpty) return const SizedBox.shrink();
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: SdSpace.xl),
-                  child: SdSection(
-                    title: l10n.searchStudents(items.length),
-                    child: SdCard(
-                      padding: EdgeInsets.zero,
-                      child: Column(children: [
-                        for (final s in items)
-                          ListTile(
-                            leading: StudentAvatar(name: s.fullName, photo: studentPhoto(mediaDir, s.photoFileName)),
-                            title: Text(s.fullName),
-                            subtitle: Text([
-                              s.displayCode,
-                              placementName(academic, s.divisionId) ?? '',
-                              if (s.rollNumber != null) l10n.rollShort(s.rollNumber!),
-                              s.primaryMobile ?? '',
-                            ].where((x) => x.isNotEmpty).join(' · ')),
-                            trailing: s.status == StudentStatus.active
-                                ? const Icon(Icons.chevron_right)
-                                : StatusPill(text: studentStatusLabel(l10n, s.status), color: SdColors.of(context).textMuted),
-                            onTap: () => _go('/students/${s.id}'),
-                          ),
-                      ]),
-                    ),
-                  ),
-                );
-              },
-            ),
+          if (_students != null) _studentResults(l10n, academic, mediaDir),
           if (divisions.isNotEmpty) ...[
             SdSection(
               title: l10n.searchClasses,
@@ -301,6 +436,73 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// One student in the search results: photo, name, class and roll, G.R.
+/// and code, and a status chip when the student is not active.
+class _StudentCard extends StatelessWidget {
+  const _StudentCard({required this.student, required this.classLabel, required this.photo, required this.onTap});
+
+  final StudentListItem student;
+  final String? classLabel;
+  final File? photo;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final sd = SdColors.of(context);
+    final s = student;
+    final line1 = [
+      if ((classLabel ?? '').isNotEmpty) classLabel!,
+      if (s.rollNumber != null) l10n.rollShort(s.rollNumber!),
+    ].join(' · ');
+    final line2 = [
+      if ((s.grNumber ?? '').isNotEmpty) '${l10n.idGr} ${s.grNumber}',
+      s.displayCode,
+    ].join(' · ');
+    return Material(
+      color: theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(SdRadius.md),
+        side: BorderSide(color: sd.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(SdSpace.md),
+          child: Row(
+            children: [
+              StudentAvatar(name: s.fullName, photo: photo, size: 52),
+              const SizedBox(width: SdSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s.fullName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    if (line1.isNotEmpty)
+                      Text(line1, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary)),
+                    Text(line2, style: theme.textTheme.bodySmall?.copyWith(color: sd.textMuted)),
+                  ],
+                ),
+              ),
+              if (s.status != StudentStatus.active)
+                StatusPill(text: studentStatusLabel(l10n, s.status), color: sd.textMuted)
+              else
+                Icon(Icons.chevron_right, color: sd.textMuted),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
