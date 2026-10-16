@@ -2160,5 +2160,127 @@
   "promoUndoneShort": "Undone",
   "promoHistory": "Earlier promotions",
   "promoNobody": "Nobody to promote",
-  "promoNobodyHint": "Every student of this year is already placed in next year, or there are no students."
+  "promoNobodyHint": "Every student of this year is already placed in next year, or there are no students.",
+  "docTitle": "Documents",
+  "docDownloadAll": "All as PDF",
+  "docAll": "All documents",
+  "docAllTitle": "Documents of {name}",
+  "@docAllTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "docAllReceived": "All required documents received",
+  "docMissingCount": "{count} required documents pending",
+  "@docMissingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "docHint": "Tap a document to record it (received, number, original or copy, verified). Add pages with the camera icon: Scan (finds the page edges, several pages at once) or Camera on a phone, or Upload a photo / PDF on any device. The PDF icon opens one document; \"All as PDF\" puts every document in one PDF to save, share or print.",
+  "docAddPages": "Add pages",
+  "docScan": "Scan document",
+  "docCamera": "Take a photo",
+  "docUpload": "Upload photo or PDF",
+  "docScanUnavailable": "The document scanner is not available on this phone. Use \"Take a photo\" instead.",
+  "docTooLarge": "This PDF is larger than 10 MB. Please make it smaller first.",
+  "docUnreadable": "This file is not a photo or PDF the app can read.",
+  "docPagesAdded": "{count} pages added",
+  "@docPagesAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "docViewPdf": "Open as PDF",
+  "docNoFiles": "No scanned pages yet. Add pages first.",
+  "docPdfFailed": "The PDF could not be made. Please try again.",
+  "docGenerated": "Made with Shiksha Desk on {date}",
+  "@docGenerated": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "docReceived": "Received",
+  "docPending": "Pending",
+  "docNotNeeded": "Not needed",
+  "docNotRecorded": "Not recorded",
+  "docRequired": "Required",
+  "docPages": "{count} pages",
+  "@docPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "docPagesTitle": "Pages",
+  "docPageN": "Page {n}",
+  "@docPageN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "docRemovePage": "Remove page",
+  "docNumber": "Certificate / document no.",
+  "docIssuedOn": "Issued on",
+  "docOriginal": "Original",
+  "docCopy": "Copy",
+  "docOriginalWithUs": "The original is with the office",
+  "docReturned": "Original returned on",
+  "docReturnedOn": "Returned {date}",
+  "@docReturnedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "docVerified": "Verified",
+  "docVerifiedLabel": "Verified against the original",
+  "docVerifiedHint": "Tick once someone has checked it.",
+  "docNote": "Note",
+  "docRemove": "Remove this record",
+  "docRemoveConfirm": "The record goes to the recycle bin; its scanned files are kept.",
+  "docTypesTitle": "Documents students submit",
+  "docTypesHint": "These appear on every student's Documents tab. Mark the ones every student must submit; they show as pending until received.",
+  "docTypeAdd": "Add document",
+  "docTypeName": "Document name",
+  "docTypeRemove": "Remove document type",
+  "docTypeRemoveConfirm": "Remove \"{name}\" from the list? Documents already recorded for students are kept.",
+  "@docTypeRemoveConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "docOnlyReserved": "Only reserved categories",
+  "docAllClasses": "All classes",
+  "docSomeClasses": "{count} classes",
+  "@docSomeClasses": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "docTypeClasses": "Required for which classes: {name}",
+  "@docTypeClasses": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "docSensitive": "Holds Aadhaar"
 }

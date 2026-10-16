@@ -8,6 +8,7 @@ import '../../students/application/students_providers.dart';
 import '../../students/domain/record_completeness.dart';
 import '../../students/domain/student_models.dart';
 import '../../students/presentation/student_profile_cards.dart';
+import '../../students/documents/document_types_section.dart';
 import 'settings_page_header.dart';
 
 /// Extra student fields and the category list for this institution.
@@ -183,6 +184,8 @@ class StudentFieldsScreen extends ConsumerWidget {
             ),
           ),
         ),
+        const SizedBox(height: SdSpace.xl),
+        const DocumentTypesSection(),
         const SizedBox(height: SdSpace.xl),
         SdSection(
           title: l10n.p360ChecksTitle,

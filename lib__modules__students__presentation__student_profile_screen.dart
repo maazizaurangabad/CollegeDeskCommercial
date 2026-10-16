@@ -24,12 +24,13 @@ import '../application/student_profile_providers.dart';
 import '../application/student_profile_report.dart';
 import '../application/students_providers.dart';
 import '../domain/student_models.dart';
+import '../documents/student_documents_section.dart';
 import '../import/photo_resize.dart';
 import 'student_labels.dart';
 import 'student_profile_cards.dart';
 
 /// Parts of the Student 360° profile, in menu order.
-enum _Part { overview, personal, academic, attendance, fees, results, certificates, messages, history }
+enum _Part { overview, personal, academic, documents, attendance, fees, results, certificates, messages, history }
 
 /// Last part and year shown, so coming back from Fees, Attendance or a
 /// certificate opens the profile where the user left it.
@@ -300,6 +301,7 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
       _Part.overview,
       _Part.personal,
       _Part.academic,
+      _Part.documents,
       if (modules.contains('attendance')) _Part.attendance,
       if (modules.contains('fees')) _Part.fees,
       if (modules.contains('results')) _Part.results,
@@ -416,6 +418,7 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
         _Part.overview => Icons.dashboard_outlined,
         _Part.personal => Icons.person_outline,
         _Part.academic => Icons.badge_outlined,
+        _Part.documents => Icons.folder_copy_outlined,
         _Part.attendance => Icons.fact_check_outlined,
         _Part.fees => Icons.currency_rupee,
         _Part.results => Icons.emoji_events_outlined,
@@ -428,6 +431,7 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
         _Part.overview => l10n.p360TabOverview,
         _Part.personal => l10n.p360TabPersonal,
         _Part.academic => l10n.p360TabAcademic,
+        _Part.documents => l10n.docTitle,
         _Part.attendance => l10n.navAttendance,
         _Part.fees => l10n.navFees,
         _Part.results => l10n.navResults,
@@ -523,6 +527,12 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
         return _personal(l10n, detail);
       case _Part.academic:
         return _academic(l10n, detail, yearLabel, enrollment, labels);
+      case _Part.documents:
+        return StudentDocumentsSection(
+          detail: detail,
+          programId: academic.divisions.where((d) => d.id == enrollment?.divisionId).firstOrNull?.programId,
+          classLine: enrollment == null ? null : labels[enrollment.divisionId],
+        );
       case _Part.attendance:
         if (key == null) return noYear;
         return AttendanceSummaryCard(yearKey: key, yearLabel: yearLabel, onOpen: openAttendance);

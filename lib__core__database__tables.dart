@@ -566,6 +566,31 @@ class Marks extends Table with StandardColumns {
   Set<Column> get primaryKey => {id};
 }
 
+/// A paper a student submitted (10th marksheet, LC, caste certificate...):
+/// whether it was received, its details, and its scanned pages.
+@DataClassName('StudentDocumentRow')
+class StudentDocuments extends Table with StandardColumns {
+  TextColumn get studentId => text()();
+
+  /// Key of the document type (Settings > Student fields > Documents).
+  TextColumn get typeKey => text()();
+
+  /// received / pending / notNeeded
+  TextColumn get status => text().withDefault(const Constant('received'))();
+  TextColumn get number => text().nullable()();
+  DateTimeColumn get issuedOn => dateTime().nullable()();
+  BoolColumn get isOriginal => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get returnedOn => dateTime().nullable()();
+  BoolColumn get verified => boolean().withDefault(const Constant(false))();
+  TextColumn get note => text().nullable()();
+
+  /// JSON list of files inside the media folder (pages in order).
+  TextColumn get filesJson => text().withDefault(const Constant('[]'))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// Append-only history of changes: who, what, when, old and new values.
 @DataClassName('AuditEntryRow')
 @TableIndex(name: 'audit_by_entity', columns: {#entity, #entityId})

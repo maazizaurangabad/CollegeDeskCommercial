@@ -47,12 +47,13 @@ part 'app_database.g.dart';
   Exams,
   SubjectChoices,
   Marks,
+  StudentDocuments,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   /// Bump this and add a step in migrations.dart for every schema change.
-  static const int currentSchemaVersion = 10;
+  static const int currentSchemaVersion = 11;
 
   @override
   int get schemaVersion => currentSchemaVersion;
