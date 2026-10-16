@@ -12,7 +12,13 @@ import 'division_picker.dart';
 
 /// One division, one month: every student's marks day by day, with totals.
 class AttendanceRegisterScreen extends ConsumerStatefulWidget {
-  const AttendanceRegisterScreen({super.key});
+  const AttendanceRegisterScreen({super.key, this.initialDivisionId, this.backTo});
+
+  /// Class to open with (e.g. from a student's profile).
+  final String? initialDivisionId;
+
+  /// Where the back button returns; the Attendance home when null.
+  final String? backTo;
 
   @override
   ConsumerState<AttendanceRegisterScreen> createState() => _AttendanceRegisterScreenState();
@@ -23,6 +29,12 @@ class _AttendanceRegisterScreenState extends ConsumerState<AttendanceRegisterScr
   DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
   Future<MonthGrid>? _future;
   String? _key;
+
+  @override
+  void initState() {
+    super.initState();
+    _divisionId = widget.initialDivisionId;
+  }
 
   Future<MonthGrid>? _load(int revision) {
     if (_divisionId == null) return null;
@@ -51,7 +63,7 @@ class _AttendanceRegisterScreenState extends ConsumerState<AttendanceRegisterScr
             IconButton(
               tooltip: l10n.back,
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => context.go('/attendance'),
+              onPressed: () => context.go(widget.backTo ?? '/attendance'),
             ),
             const SizedBox(width: SdSpace.xs),
             Expanded(child: Text(l10n.attendanceRegister, style: theme.textTheme.headlineSmall)),

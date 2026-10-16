@@ -1,0 +1,19 @@
+Shiksha Desk - Build 3d-1 (Student 360 profile) - version 1.0.0+17
+Upload each file to the path shown (rename __ to / folders):
+
+1. lib__modules__students__presentation__student_profile_screen.dart  ->  lib/modules/students/presentation/student_profile_screen.dart
+2. lib__modules__students__presentation__student_profile_cards.dart  ->  lib/modules/students/presentation/student_profile_cards.dart  (NEW)
+3. lib__modules__students__application__student_profile_providers.dart  ->  lib/modules/students/application/student_profile_providers.dart  (NEW)
+4. lib__modules__students__application__student_profile_report.dart  ->  lib/modules/students/application/student_profile_report.dart  (NEW)
+5. lib__modules__students__domain__record_completeness.dart  ->  lib/modules/students/domain/record_completeness.dart  (NEW)
+6. lib__modules__students__application__students_providers.dart  ->  lib/modules/students/application/students_providers.dart
+7. lib__modules__students__presentation__student_labels.dart  ->  lib/modules/students/presentation/student_labels.dart
+8. lib__modules__settings__presentation__student_fields_screen.dart  ->  lib/modules/settings/presentation/student_fields_screen.dart
+9. lib__modules__results__data__result_repository.dart  ->  lib/modules/results/data/result_repository.dart
+10. lib__modules__messages__data__message_repository.dart  ->  lib/modules/messages/data/message_repository.dart
+11. lib__modules__attendance__data__attendance_repository.dart  ->  lib/modules/attendance/data/attendance_repository.dart
+12. lib__modules__attendance__attendance_module.dart  ->  lib/modules/attendance/attendance_module.dart
+13. lib__modules__attendance__presentation__attendance_register_screen.dart  ->  lib/modules/attendance/presentation/attendance_register_screen.dart
+14. lib__l10n__app_en.arb  ->  lib/l10n/app_en.arb
+15. pubspec.yaml  ->  pubspec.yaml
+16. test__students__student_profile_test.dart  ->  test/students/student_profile_test.dart  (NEW)

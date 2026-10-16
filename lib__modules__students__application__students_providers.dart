@@ -7,6 +7,7 @@ import '../../../platform/data/app_settings_repository.dart';
 import '../../../platform/data/data_providers.dart';
 import '../data/field_definition_repository.dart';
 import '../data/student_repository.dart';
+import '../domain/record_completeness.dart';
 import '../domain/student_models.dart';
 import '../import/import_repository.dart';
 
@@ -56,6 +57,22 @@ abstract final class StudentCategories {
 final studentCategoriesProvider = FutureProvider<List<String>>((ref) {
   ref.watch(studentsRevisionProvider);
   return StudentCategories.load(ref.watch(appSettingsRepositoryProvider));
+});
+
+/// Which checks count in "Record completeness" (Settings > Student fields).
+abstract final class CompletenessSettings {
+  static const settingKey = 'students.completeness_checks';
+
+  static Future<Set<CompletenessCheck>> load(AppSettingsRepository settings) async =>
+      RecordCompleteness.decodeChecks(await settings.getValue(settingKey));
+
+  static Future<void> save(AppSettingsRepository settings, Set<CompletenessCheck> checks) =>
+      settings.setValue(settingKey, RecordCompleteness.encodeChecks(checks));
+}
+
+final completenessChecksProvider = FutureProvider<Set<CompletenessCheck>>((ref) {
+  ref.watch(studentsRevisionProvider);
+  return CompletenessSettings.load(ref.watch(appSettingsRepositoryProvider));
 });
 
 final importRepositoryProvider = Provider<ImportRepository>(

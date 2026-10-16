@@ -8,6 +8,9 @@ import '../../students/data/student_repository.dart';
 import '../../students/domain/student_models.dart';
 import '../domain/result_models.dart';
 
+/// One line of a student's results: one exam, or (exam null) the final result.
+typedef StudentExamResult = ({Exam? exam, StudentResult result});
+
 /// Results: subjects per class, exams, subject choices, marks, and the
 /// worked-out result. Every rule lives here or in [ResultCalculator].
 class ResultRepository extends OrgScopedRepository {
@@ -613,5 +616,78 @@ class ResultRepository extends OrgScopedRepository {
       exams: used,
       rules: rules,
     );
+  }
+
+  // =========================================================== one student
+
+  /// One student's results for a year, for the profile: each exam with any
+  /// marks for them, then the final result. Worked out exactly as the class
+  /// result sheet (same rules; rank among the class). Only reads: no exams
+  /// are created here. Null when the student had no class that year, or the
+  /// class has no subjects or exams.
+  Future<({List<StudentExamResult> lines, ResultRules rules})?> studentResults(
+    String studentId,
+    String academicYearId,
+  ) async {
+    final enrollment = await (db.select(db.enrollments)
+          ..where((t) =>
+              t.organizationId.equals(orgId) &
+              t.studentId.equals(studentId) &
+              t.academicYearId.equals(academicYearId) &
+              t.deletedAt.isNull())
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+          ..limit(1))
+        .getSingleOrNull();
+    if (enrollment == null) return null;
+    final division = await (db.select(db.divisions)..where((t) => t.id.equals(enrollment.divisionId))).getSingleOrNull();
+    if (division == null) return null;
+    final columns = SubjectColumn.of(await subjects(programId: division.programId));
+    final examRows = await _examRows(academicYearId);
+    if (columns.isEmpty || examRows.isEmpty) return null;
+    final allExams = [
+      for (final r in examRows)
+        Exam(id: r.id, academicYearId: r.academicYearId, name: r.name, displayOrder: r.displayOrder, countsInFinal: r.countsInFinal),
+    ];
+
+    // The whole class, so the rank is the same as on the result sheet.
+    // A student who has left is worked out alone (no rank).
+    var list = await roster(division.id, academicYearId);
+    final inClass = list.any((r) => r.id == studentId);
+    if (!inClass) {
+      final name = (await students.namesFor([studentId]))[studentId]?.fullName ?? '';
+      list = [(id: studentId, name: name, roll: enrollment.rollNumber, gr: null)];
+    }
+    final ids = list.map((r) => r.id).toList();
+    final rules = await this.rules();
+    final allMarks = await marks(allExams.map((e) => e.id), ids);
+    final allChoices = await choices(academicYearId, ids);
+
+    StudentResult? resultFor(List<String> examIds) {
+      final computed = ResultCalculator.compute(
+        roster: list,
+        columns: columns,
+        examIds: examIds,
+        marks: {for (final id in examIds) if (allMarks[id] != null) id: allMarks[id]!},
+        choices: allChoices,
+        rules: rules,
+      );
+      final mine = computed.where((r) => r.studentId == studentId).firstOrNull;
+      if (mine == null) return null;
+      final anyEntered = mine.columns.values.any((c) => c.obtained != null || c.grade != null);
+      if (!anyEntered) return null;
+      return inClass ? mine : mine.withRank(null);
+    }
+
+    final lines = <StudentExamResult>[];
+    for (final e in allExams) {
+      final r = resultFor([e.id]);
+      if (r != null) lines.add((exam: e, result: r));
+    }
+    final counted = allExams.where((e) => e.countsInFinal).map((e) => e.id).toList();
+    if (counted.isNotEmpty) {
+      final r = resultFor(counted);
+      if (r != null) lines.add((exam: null, result: r));
+    }
+    return (lines: lines, rules: rules);
   }
 }

@@ -19,7 +19,17 @@ final attendanceModule = ModuleDescriptor(
   subRoutes: [
     GoRoute(
       path: 'register',
-      pageBuilder: (context, state) => const NoTransitionPage(child: AttendanceRegisterScreen()),
+      pageBuilder: (context, state) {
+        final back = state.uri.queryParameters['back'];
+        return NoTransitionPage(
+          key: ValueKey('register-${state.uri.query}'),
+          child: AttendanceRegisterScreen(
+            initialDivisionId: state.uri.queryParameters['division'],
+            // Only a return to a student's profile is allowed here.
+            backTo: back != null && back.startsWith('/students/') ? back : null,
+          ),
+        );
+      },
     ),
   ],
 );

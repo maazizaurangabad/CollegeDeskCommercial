@@ -5,7 +5,9 @@ import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/data/data_providers.dart';
 import '../../students/application/students_providers.dart';
+import '../../students/domain/record_completeness.dart';
 import '../../students/domain/student_models.dart';
+import '../../students/presentation/student_profile_cards.dart';
 import 'settings_page_header.dart';
 
 /// Extra student fields and the category list for this institution.
@@ -25,6 +27,7 @@ class StudentFieldsScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final fields = ref.watch(extraFieldsProvider);
     final categories = ref.watch(studentCategoriesProvider).valueOrNull ?? StudentChoices.defaultCategories;
+    final checks = ref.watch(completenessChecksProvider).valueOrNull ?? defaultCompletenessChecks;
     void changed() => ref.read(studentsRevisionProvider.notifier).state++;
 
     return SdPage(
@@ -124,6 +127,56 @@ class StudentFieldsScreen extends ConsumerWidget {
               spacing: SdSpace.sm,
               runSpacing: SdSpace.sm,
               children: [for (final c in categories) Chip(label: Text(c))],
+            ),
+          ),
+        ),
+        const SizedBox(height: SdSpace.xl),
+        SdSection(
+          title: l10n.p360ChecksTitle,
+          trailing: SdButton(
+            label: l10n.p360ChecksReset,
+            variant: SdButtonVariant.text,
+            onPressed: () async {
+              final ok = await runWithFeedback(
+                context,
+                () => CompletenessSettings.save(ref.read(appSettingsRepositoryProvider), defaultCompletenessChecks),
+                (_) => l10n.saveFailed,
+              );
+              if (ok) changed();
+            },
+          ),
+          child: SdCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(l10n.p360ChecksHelp, style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: SdSpace.md),
+                Wrap(
+                  spacing: SdSpace.sm,
+                  runSpacing: SdSpace.sm,
+                  children: [
+                    for (final c in CompletenessCheck.values)
+                      FilterChip(
+                        label: Text(completenessCheckLabel(l10n, c)),
+                        selected: checks.contains(c),
+                        onSelected: (on) async {
+                          final next = {...checks};
+                          if (on) {
+                            next.add(c);
+                          } else {
+                            next.remove(c);
+                          }
+                          final ok = await runWithFeedback(
+                            context,
+                            () => CompletenessSettings.save(ref.read(appSettingsRepositoryProvider), next),
+                            (_) => l10n.saveFailed,
+                          );
+                          if (ok) changed();
+                        },
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),

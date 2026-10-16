@@ -1752,5 +1752,161 @@
       }
     }
   },
-  "reportAgeHint": "Age is worked out as on today's date. Ascending lists the youngest first. Students without a date of birth come last."
+  "reportAgeHint": "Age is worked out as on today's date. Ascending lists the youngest first. Students without a date of birth come last.",
+  "p360NotRecorded": "Not recorded",
+  "p360LoadFailed": "Could not load this. Please try again.",
+  "p360TabOverview": "Overview",
+  "p360TabPersonal": "Personal",
+  "p360TabAcademic": "Admission & IDs",
+  "p360TabHistory": "Class history",
+  "p360More": "More actions",
+  "p360ChooseYear": "Academic year shown",
+  "p360Call": "Call",
+  "p360WhatsApp": "WhatsApp",
+  "p360CopyDetails": "Copy details",
+  "p360ChangePhoto": "Change photo",
+  "p360PrintProfile": "Print profile",
+  "p360ChooseNumber": "Choose a number",
+  "p360CallFailed": "Could not start a call on this device.",
+  "p360WhatsAppOpened": "WhatsApp opened. The app cannot confirm delivery.",
+  "p360Copied": "Student details copied (Aadhaar is never copied)",
+  "p360PhotoSaved": "Photo changed",
+  "p360PhotoUnreadable": "This file is not a photo the app can read.",
+  "p360Name": "Name",
+  "p360AltName": "Name in other language",
+  "p360StudentCode": "Student code",
+  "p360Status": "Status",
+  "p360Admission": "Admission and class",
+  "p360AadhaarHidden": "Aadhaar stays hidden until you press Show.",
+  "p360ManageFields": "Manage fields",
+  "p360NoExtraFields": "No own fields yet. Add them in Settings > Student fields.",
+  "p360NoGuardians": "No parent or guardian recorded.",
+  "p360Contacts": "Parent contacts",
+  "p360NoContacts": "No mobile number recorded for a parent or guardian.",
+  "p360Completeness": "Record completeness",
+  "p360ChooseChecks": "Choose checks",
+  "p360PercentComplete": "{percent}% complete",
+  "@p360PercentComplete": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "p360ChecksOf": "{done} of {total} checks",
+  "@p360ChecksOf": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "p360TapToFill": "Tap to fill this in",
+  "p360MissingNote": "Tap an orange item to fill it in. This is a checklist of what is recorded, not an official verification.",
+  "p360CompleteNote": "Everything on the checklist is recorded. This is not an official verification.",
+  "p360CheckGuardianMobile": "Parent mobile",
+  "p360CheckClass": "Class this year",
+  "p360CheckMother": "Mother's name",
+  "p360CheckPhoto": "Photo",
+  "p360ChecksTitle": "Record completeness checks",
+  "p360ChecksHelp": "Choose the important items every student's record must have. Only these (and own fields marked required) count in the completeness score on the student profile.",
+  "p360ChecksReset": "Use standard checks",
+  "p360FeesTitle": "Fees · {year}",
+  "@p360FeesTitle": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "p360OpenFees": "Open Fees",
+  "p360FeesNotSet": "No fees are set for this student's class in this year.",
+  "p360PaidInFull": "Paid in full",
+  "p360PartlyPaid": "Partly paid",
+  "p360NotPaid": "Not paid",
+  "p360Overdue": "Overdue: {amount}",
+  "@p360Overdue": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "p360NextInstallment": "Next installment: {name} on {date}",
+  "@p360NextInstallment": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "p360Receipts": "Receipts",
+  "p360NoReceipts": "No receipts in this year.",
+  "p360AttendanceTitle": "Attendance · {year}",
+  "@p360AttendanceTitle": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "p360OpenAttendance": "Open register",
+  "p360AttendanceNone": "No attendance marked for this student in this year.",
+  "p360LeaveNotCounted": "Leave / not counted",
+  "p360DaysMarked": "Days marked",
+  "p360Below75": "Attendance is below 75%.",
+  "p360RecentDays": "Latest marked days",
+  "p360ResultsTitle": "Results · {year}",
+  "@p360ResultsTitle": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "p360OpenResults": "Open Results",
+  "p360ResultsNone": "No marks entered for this student in this year.",
+  "p360MarksPending": "Some marks are not entered yet",
+  "p360Rank": "Rank {rank}",
+  "@p360Rank": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "p360MakeCertificate": "Make a certificate",
+  "p360CertificatesNone": "No certificates issued yet.",
+  "p360Issued": "Issued",
+  "p360MoreCertificates": "+{count} more in the Certificates tab",
+  "@p360MoreCertificates": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "p360MessagesTitle": "Messages to parents · {year}",
+  "@p360MessagesTitle": {
+    "placeholders": {
+      "year": {
+        "type": "String"
+      }
+    }
+  },
+  "p360MessagesNone": "No messages about this student in this year.",
+  "p360OpenedInWhatsApp": "Opened in WhatsApp",
+  "p360HistoryNote": "Only classes actually saved for the student are shown.",
+  "p360NoYearTitle": "No academic year",
+  "p360NoYear": "This student has no class in any academic year yet, so there is nothing to show here.",
+  "p360PdfTitle": "Student profile",
+  "p360PdfDetail": "Detail",
+  "p360PdfValue": "Recorded",
+  "p360PdfNote": "Aadhaar is shown masked. Printed from the student's record."
 }

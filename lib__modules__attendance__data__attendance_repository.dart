@@ -421,6 +421,23 @@ class AttendanceRepository extends OrgScopedRepository {
     return _summarise(rows.map((r) => r.$2), codeMap);
   }
 
+  /// One student's attendance for a period, for the profile: the summary
+  /// (same rules as [studentSummary]) and the latest marked days, newest
+  /// first, as (date, code).
+  Future<({AttendanceSummary summary, List<(DateTime, String)> recent})> studentPeriod(
+    String studentId, {
+    required DateTime from,
+    required DateTime to,
+    int recent = 10,
+  }) async {
+    final codeMap = {for (final c in await codes()) c.code: c};
+    final rows = await _studentMarks(studentId, from, to);
+    return (
+      summary: _summarise(rows.map((r) => r.$2), codeMap),
+      recent: rows.reversed.take(recent).toList(),
+    );
+  }
+
   /// The student's most recent days counted as absent.
   Future<List<DateTime>> recentAbsences(String studentId, {int limit = 5}) async {
     final codeMap = {for (final c in await codes()) c.code: c};

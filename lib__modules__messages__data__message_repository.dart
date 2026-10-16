@@ -462,6 +462,35 @@ class MessageRepository extends OrgScopedRepository {
     return out;
   }
 
+  /// Messages about one student, newest first: one record per message the
+  /// student was part of (a sibling message counts for each child).
+  /// [from] / [to] limit by the date the message was about.
+  Future<List<MessageRecord>> historyOfStudent(String studentId, {DateTime? from, DateTime? to, int limit = 20}) async {
+    final select = db.select(db.messageLogs)
+      ..where((t) => t.organizationId.equals(orgId) & t.deletedAt.isNull() & t.studentId.equals(studentId))
+      ..orderBy([(t) => OrderingTerm.desc(t.sentAt)])
+      ..limit(limit);
+    if (from != null) select.where((t) => t.forDate.isBiggerOrEqualValue(_day(from)));
+    if (to != null) select.where((t) => t.forDate.isSmallerOrEqualValue(_day(to)));
+    final rows = await select.get();
+    return [
+      for (final r in rows)
+        MessageRecord(
+          batchId: r.batchId,
+          kind: MessageKind.byName(r.kind),
+          forDate: r.forDate,
+          sentAt: r.sentAt,
+          studentNames: [if ((r.studentName ?? '').isNotEmpty) r.studentName!],
+          classNames: [if ((r.classLabel ?? '').isNotEmpty) r.classLabel!],
+          body: r.body,
+          channel: r.channel,
+          status: r.status,
+          recipientName: r.recipientName,
+          mobile: r.mobile,
+        ),
+    ];
+  }
+
   /// How many parent messages (not summaries) were opened about [date].
   Future<int> countForDate(DateTime date) async {
     final rows = await (db.select(db.messageLogs)

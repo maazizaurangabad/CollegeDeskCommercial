@@ -114,7 +114,8 @@ class StatusPill extends StatelessWidget {
   }
 }
 
-/// Label and value on one line inside a profile section.
+/// Label and value on one line inside a profile section. An empty value
+/// shows "Not recorded".
 class InfoRow extends StatelessWidget {
   const InfoRow({super.key, required this.label, required this.value, this.trailing});
 
@@ -135,7 +136,7 @@ class InfoRow extends StatelessWidget {
           const SizedBox(width: SdSpace.md),
           Expanded(
             child: Text(
-              empty ? '—' : value!,
+              empty ? AppLocalizations.of(context).p360NotRecorded : value!,
               style: theme.textTheme.bodyMedium?.copyWith(color: empty ? SdColors.of(context).textMuted : null),
             ),
           ),
