@@ -20,6 +20,8 @@ import '../../results/data/result_repository.dart';
 import '../../results/domain/result_models.dart';
 import '../application/student_profile_providers.dart';
 import '../application/students_providers.dart';
+import '../documents/document_models.dart';
+import '../documents/document_providers.dart';
 import '../domain/record_completeness.dart';
 import '../domain/student_models.dart';
 import 'student_labels.dart';
@@ -176,13 +178,17 @@ String completenessCheckLabel(AppLocalizations l10n, CompletenessCheck c) => swi
       CompletenessCheck.pen => l10n.idPen,
       CompletenessCheck.apaar => l10n.idApaar,
       CompletenessCheck.photo => l10n.p360CheckPhoto,
+      CompletenessCheck.requiredDocuments => l10n.p360CheckDocuments,
     };
 
 class CompletenessCard extends ConsumerWidget {
-  const CompletenessCard({super.key, required this.detail, required this.yearId, this.onFix});
+  const CompletenessCard({super.key, required this.detail, required this.yearId, this.programId, this.onFix});
 
   final StudentDetail detail;
   final String? yearId;
+
+  /// The student's class (program) in the year shown, for document rules.
+  final String? programId;
 
   /// Opens the edit form; null when the user cannot edit.
   final VoidCallback? onFix;
@@ -194,7 +200,23 @@ class CompletenessCard extends ConsumerWidget {
     final sd = SdColors.of(context);
     final checks = ref.watch(completenessChecksProvider).valueOrNull ?? defaultCompletenessChecks;
     final extra = ref.watch(extraFieldsProvider).valueOrNull ?? const <ExtraFieldDefinition>[];
-    final c = RecordCompleteness.evaluate(detail, checks: checks, extraFields: extra, academicYearId: yearId);
+    int? documentsMissing;
+    if (checks.contains(CompletenessCheck.requiredDocuments)) {
+      final types = ref.watch(documentTypesProvider).valueOrNull;
+      final docs = ref.watch(studentDocumentsProvider(detail.id)).valueOrNull;
+      if (types != null && docs != null) {
+        documentsMissing = documentChecklist(types, docs, programId: programId, category: detail.draft.category)
+            .where(isMissing)
+            .length;
+      }
+    }
+    final c = RecordCompleteness.evaluate(
+      detail,
+      checks: checks,
+      extraFields: extra,
+      academicYearId: yearId,
+      documentsMissing: documentsMissing,
+    );
     final color = c.percent == 100 ? sd.present : (c.percent >= 75 ? theme.colorScheme.primary : sd.leave);
 
     return ProfileCard(

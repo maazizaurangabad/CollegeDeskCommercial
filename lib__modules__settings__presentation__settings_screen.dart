@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/app_version.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../core/database/app_database.dart';
@@ -111,10 +112,11 @@ class SettingsScreen extends ConsumerWidget {
           _Tile(
             icon: Icons.info_outline,
             title: l10n.settingsAbout,
+            subtitle: l10n.settingsVersion(appVersion),
             onTap: () => showAboutDialog(
               context: context,
               applicationName: l10n.appTitle,
-              applicationVersion: '1.0.0 (build 3b)',
+              applicationVersion: appVersion,
             ),
           ),
         ]),

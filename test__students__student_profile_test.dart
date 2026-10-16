@@ -78,6 +78,21 @@ void main() {
       expect(c.missing, isEmpty);
     });
 
+    test('"required documents received" counts only when nothing is pending', () {
+      RecordCompleteness run(int? missing) => RecordCompleteness.evaluate(
+            _detail(),
+            checks: {CompletenessCheck.requiredDocuments},
+            extraFields: const [],
+            academicYearId: 'y1',
+            documentsMissing: missing,
+          );
+      expect(run(0).percent, 100);
+      expect(run(2).missing.single.check, CompletenessCheck.requiredDocuments);
+      expect(run(null).done, 0);
+      // Not counted unless the institution switches it on.
+      expect(defaultCompletenessChecks.contains(CompletenessCheck.requiredDocuments), isFalse);
+    });
+
     test('checks the institution switches on are counted', () {
       final c = RecordCompleteness.evaluate(
         _detail(),

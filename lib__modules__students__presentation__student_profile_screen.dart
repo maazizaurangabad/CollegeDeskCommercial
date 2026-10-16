@@ -474,7 +474,12 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
         return LayoutBuilder(builder: (context, constraints) {
           final wide = constraints.maxWidth >= 760;
           final leaving = detail.status == StudentStatus.left ? _leavingCard(l10n, detail) : null;
-          final completeness = CompletenessCard(detail: detail, yearId: key?.yearId, onFix: fix);
+          final completeness = CompletenessCard(
+            detail: detail,
+            yearId: key?.yearId,
+            programId: academic.divisions.where((d) => d.id == enrollment?.divisionId).firstOrNull?.programId,
+            onFix: fix,
+          );
           final fees = modules.contains('fees') && key != null ? FeesSummaryCard(yearKey: key, yearLabel: yearLabel) : null;
           final attendance = modules.contains('attendance') && key != null
               ? AttendanceSummaryCard(yearKey: key, yearLabel: yearLabel, onOpen: openAttendance)

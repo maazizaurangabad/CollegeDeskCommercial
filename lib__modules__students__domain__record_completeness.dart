@@ -24,6 +24,9 @@ enum CompletenessCheck {
   pen,
   apaar,
   photo,
+
+  /// Every required document received (or marked "not needed").
+  requiredDocuments,
 }
 
 /// The important items that count when the institution has not chosen.
@@ -64,12 +67,14 @@ class RecordCompleteness {
 
   /// Works out the checklist. [academicYearId] is the year the profile
   /// shows (for "class this year"). Nothing here reveals a value: Aadhaar
-  /// is only checked for being recorded.
+  /// is only checked for being recorded. [documentsMissing] is how many
+  /// required documents are still pending (null while not known).
   static RecordCompleteness evaluate(
     StudentDetail detail, {
     required Set<CompletenessCheck> checks,
     required List<ExtraFieldDefinition> extraFields,
     String? academicYearId,
+    int? documentsMissing,
   }) {
     final d = detail.draft;
     bool filled(String? v) => v != null && v.trim().isNotEmpty;
@@ -93,6 +98,7 @@ class RecordCompleteness {
           CompletenessCheck.pen => filled(detail.identifier(IdentifierType.pen)),
           CompletenessCheck.apaar => filled(detail.identifier(IdentifierType.apaar)),
           CompletenessCheck.photo => filled(d.photoFileName),
+          CompletenessCheck.requiredDocuments => documentsMissing == 0,
         };
 
     return RecordCompleteness([

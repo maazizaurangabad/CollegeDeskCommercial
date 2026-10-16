@@ -71,6 +71,40 @@ class DocumentRepository extends OrgScopedRepository {
     return out;
   }
 
+  /// Each student's category (OBC, SC...), for "only reserved" document rules.
+  Future<Map<String, String?>> categoriesOf(Iterable<String> studentIds) async {
+    final ids = studentIds.toSet();
+    if (ids.isEmpty) return const {};
+    final rows =
+        await (db.select(db.students)..where((t) => t.organizationId.equals(orgId) & t.id.isIn(ids))).get();
+    return {for (final r in rows) r.id: r.category};
+  }
+
+  /// Students who have not given every required document, with the missing
+  /// ones in the institution's order. [students] are (id, programId) pairs;
+  /// a student with nothing missing is left out.
+  Future<Map<String, List<DocumentType>>> pendingFor(List<({String studentId, String? programId})> students) async {
+    if (students.isEmpty) return const {};
+    final ids = students.map((s) => s.studentId);
+    final allTypes = await types();
+    final docs = await forStudents(ids);
+    final categories = await categoriesOf(ids);
+    final out = <String, List<DocumentType>>{};
+    for (final s in students) {
+      final missing = [
+        for (final line in documentChecklist(
+          allTypes,
+          docs[s.studentId] ?? const [],
+          programId: s.programId,
+          category: categories[s.studentId],
+        ))
+          if (isMissing(line)) line.type,
+      ];
+      if (missing.isNotEmpty) out[s.studentId] = missing;
+    }
+    return out;
+  }
+
   /// Saves a document: creates it the first time, updates it after.
   /// Returns its id.
   Future<String> save(StudentDocument d) {

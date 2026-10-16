@@ -9,6 +9,7 @@ import '../../../platform/reporting/pdf_report_renderer.dart';
 import '../../attendance/application/attendance_providers.dart';
 import '../../certificates/application/certificates_providers.dart';
 import '../../students/application/students_providers.dart';
+import '../../students/documents/document_providers.dart';
 import '../../students/presentation/student_labels.dart';
 import 'report_builders.dart';
 
@@ -22,6 +23,7 @@ Future<ReportBuilders> reportBuilders(WidgetRef ref, AppLocalizations l10n) asyn
     divisionLabels: await ref.read(academicRepositoryProvider).divisionLabels(),
     certificates: ref.read(certificateRepositoryProvider),
     certificateTitle: (k) => certificateTitle(l10n, k),
+    documents: ref.read(documentRepositoryProvider),
     photoBytes: (fileName) async {
       final file = studentPhoto(ref.read(startupStateProvider).mediaDir, fileName);
       return file == null ? null : await file.readAsBytes();

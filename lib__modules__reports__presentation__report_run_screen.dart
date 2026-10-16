@@ -157,6 +157,7 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
             gender: _gender,
             fullAadhaar: fullAadhaar,
           ),
+        ReportKind.pendingDocuments => await b.pendingDocuments(programId: _programId),
         ReportKind.certificates => await b.certificateRegister(from: _from, to: _to, kind: _certKind),
         ReportKind.feeDayBook => await feeReports(ref, l10n).dayBook(from: _from, to: _to),
         ReportKind.feeHeads => await feeReports(ref, l10n).headWise(from: _from, to: _to),
@@ -258,7 +259,10 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
           value: _overdueOnly,
           onChanged: (v) => setState(() => _overdueOnly = v),
         ),
-      if (widget.kind == ReportKind.defaulters || widget.kind == ReportKind.master || widget.kind == ReportKind.feeDefaulters)
+      if (widget.kind == ReportKind.defaulters ||
+          widget.kind == ReportKind.master ||
+          widget.kind == ReportKind.pendingDocuments ||
+          widget.kind == ReportKind.feeDefaulters)
         SdSelectField<String>(
           label: l10n.fieldClass,
           value: _programId,

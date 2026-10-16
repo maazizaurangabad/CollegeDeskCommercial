@@ -88,6 +88,31 @@ void main() {
     expect((await repo.types()).single.label, 'X');
   });
 
+  test('pending documents: only students missing required ones, in the institution order', () async {
+    final db = newMemoryDatabase();
+    addTearDown(db.close);
+    final repo = DocumentRepository(db, testSession, AppSettingsRepository(db, testSession));
+    // s1 gave everything required (Aadhaar marked "not needed").
+    for (final key in ['ssc_marksheet', 'leaving_certificate', 'photos']) {
+      await repo.save(StudentDocument(studentId: 's1', typeKey: key));
+    }
+    await repo.save(const StudentDocument(studentId: 's1', typeKey: 'aadhaar_card', status: DocumentStatus.notNeeded));
+    // s2 gave only the marksheet; the TC is recorded as pending.
+    await repo.save(const StudentDocument(studentId: 's2', typeKey: 'ssc_marksheet'));
+    await repo.save(const StudentDocument(studentId: 's2', typeKey: 'leaving_certificate', status: DocumentStatus.pending));
+
+    final pending = await repo.pendingFor(const [
+      (studentId: 's1', programId: 'p1'),
+      (studentId: 's2', programId: 'p1'),
+      (studentId: 's3', programId: null),
+    ]);
+    expect(pending.containsKey('s1'), isFalse);
+    expect(pending['s2']!.map((t) => t.key), ['leaving_certificate', 'aadhaar_card', 'photos']);
+    // Nothing recorded at all; no category, so no caste certificate.
+    expect(pending['s3']!.map((t) => t.key), ['ssc_marksheet', 'leaving_certificate', 'aadhaar_card', 'photos']);
+    expect(await repo.pendingFor(const []), isEmpty);
+  });
+
   group('files', () {
     late Directory dir;
     setUp(() => dir = Directory.systemTemp.createTempSync('docs'));

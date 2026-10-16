@@ -12,6 +12,8 @@ import '../../attendance/presentation/attendance_labels.dart';
 import '../../certificates/data/certificate_repository.dart';
 import '../../certificates/domain/certificate_models.dart';
 import '../../students/data/student_repository.dart';
+import '../../students/documents/document_models.dart';
+import '../../students/documents/document_repository.dart';
 import '../../students/domain/student_models.dart';
 import '../../students/presentation/student_labels.dart';
 import '../../students/presentation/student_picker.dart';
@@ -150,7 +152,11 @@ class ReportBuilders {
     this.certificates,
     this.certificateTitle,
     this.photoBytes,
+    this.documents,
   });
+
+  /// For the pending documents report; null where documents are not used.
+  final DocumentRepository? documents;
 
   /// Reads a student's photo file (for the photo register); null when absent.
   final Future<Uint8List?> Function(String fileName)? photoBytes;
@@ -604,6 +610,96 @@ class ReportBuilders {
       countColumn: list.countAt,
       countLabels: _genderCounts,
       notes: _aadhaarNotes(fullAadhaar, layout),
+    ).withCounts();
+  }
+
+  // ---------------------------------------------------- pending documents
+
+  /// Current students (active year) who have not given every required
+  /// document, class by class in roll order. Follows each document's rules
+  /// (classes, reserved categories) and skips documents marked "not needed".
+  Future<ReportDataset> pendingDocuments({String? programId}) async {
+    var items = await students.list(academicYearId: academic.activeYear?.id, status: StudentStatus.active);
+    final programOf = {for (final d in academic.divisions) d.id: d.programId};
+    if (programId != null) items = items.where((s) => programOf[s.divisionId] == programId).toList();
+    final repo = documents;
+    final pending = repo == null
+        ? const <String, List<DocumentType>>{}
+        : await repo.pendingFor([
+            for (final s in items) (studentId: s.id, programId: programOf[s.divisionId]),
+          ]);
+    items = items.where((s) => pending.containsKey(s.id)).toList();
+    final order = {
+      for (final (i, p) in academic.programs.indexed)
+        for (final (j, d) in academic.divisionsOf(p.id).indexed) d.id: i * 100 + j,
+    };
+    final position = {for (final (i, s) in sortStudents(items, StudentSort.roll).indexed) s.id: i};
+    items.sort((a, b) {
+      final byClass = (order[a.divisionId] ?? 99999).compareTo(order[b.divisionId] ?? 99999);
+      return byClass != 0 ? byClass : position[a.id]!.compareTo(position[b.id]!);
+    });
+
+    final perType = <String, int>{};
+    final typeLabels = <String, String>{};
+    final rows = <ReportRow>[];
+    String? group;
+    var n = 0;
+    for (final s in items) {
+      final cls = _label(s.divisionId);
+      if (cls != group) {
+        group = cls;
+        rows.add(ReportRow.group(cls.isEmpty ? l10n.studentsNotPlaced : cls));
+      }
+      final missing = pending[s.id]!;
+      for (final t in missing) {
+        perType[t.key] = (perType[t.key] ?? 0) + 1;
+        typeLabels[t.key] = t.label;
+      }
+      n++;
+      rows.add(ReportRow(
+        [
+          '$n',
+          s.rollNumber?.toString() ?? '',
+          s.fullName,
+          s.grNumber ?? '',
+          s.primaryMobile ?? '',
+          missing.map((t) => t.label).join(', '),
+          '${missing.length}',
+        ],
+        textColors: const {6: _absentColor},
+      ));
+    }
+    final byType = [
+      for (final e in perType.entries) '${typeLabels[e.key]}: ${e.value}',
+    ];
+    return ReportDataset(
+      title: l10n.reportPendingDocsTitle,
+      subtitle: [
+        [
+          academic.activeYear?.label ?? '',
+          if (programId != null) academic.programs.where((p) => p.id == programId).firstOrNull?.name ?? '',
+        ].where((s) => s.isNotEmpty).join(' · '),
+      ],
+      fileName: 'pending-documents${programId == null ? '' : '-${_slug(academic.programs.where((p) => p.id == programId).firstOrNull?.name ?? '')}'}',
+      landscape: true,
+      zebra: true,
+      columns: [
+        ReportColumn(l10n.reportSr, width: 24, align: ReportAlign.center, type: ReportColumnType.number),
+        ReportColumn(l10n.reportRoll, width: 30, align: ReportAlign.center, type: ReportColumnType.number),
+        ReportColumn(l10n.fieldName, flex: 3),
+        ReportColumn(l10n.idGr, width: 56),
+        ReportColumn(l10n.fieldMobile, width: 74),
+        ReportColumn(l10n.reportPendingDocsColumn, flex: 5),
+        ReportColumn(l10n.reportPendingDocsCount, width: 44, align: ReportAlign.center, type: ReportColumnType.number),
+      ],
+      rows: rows,
+      groupLabel: l10n.fieldClass,
+      countLabels: ReportCountLabels(total: l10n.reportTotal, byValue: const {}),
+      notes: [
+        if (items.isEmpty) l10n.reportPendingDocsNone,
+        if (byType.isNotEmpty) '${l10n.reportPendingDocsByType} ${byType.join(' · ')}',
+      ],
+      signatures: [l10n.reportClassTeacher, l10n.reportPrincipal],
     ).withCounts();
   }
 

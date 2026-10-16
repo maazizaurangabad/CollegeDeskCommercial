@@ -47,6 +47,14 @@
   "settingsBackup": "Backup and restore",
   "settingsSecurity": "Security and app lock",
   "settingsAbout": "About Shiksha Desk",
+  "settingsVersion": "Version {version}",
+  "@settingsVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "appearanceSystem": "Follow device",
   "appearanceLight": "Light",
   "appearanceDark": "Dark",
@@ -1811,6 +1819,7 @@
   "p360CheckClass": "Class this year",
   "p360CheckMother": "Mother's name",
   "p360CheckPhoto": "Photo",
+  "p360CheckDocuments": "Required documents received",
   "p360ChecksTitle": "Record completeness checks",
   "p360ChecksHelp": "Choose the important items every student's record must have. Only these (and own fields marked required) count in the completeness score on the student profile.",
   "p360ChecksReset": "Use standard checks",
@@ -1931,6 +1940,12 @@
   "reportNoPhoto": "No photo",
   "reportPhotoRegisterTitle": "Student Register with Photograph",
   "reportPhotoRegisterDesc": "Sr. No., name, mother's name, date of birth and photo of each student in a class; choose more columns. PDF, Word or Excel",
+  "reportPendingDocsTitle": "Pending documents",
+  "reportPendingDocsDesc": "Students who have not given all required documents, class by class. PDF, Word or Excel",
+  "reportPendingDocsColumn": "Documents pending",
+  "reportPendingDocsCount": "No.",
+  "reportPendingDocsNone": "Every current student has given all required documents.",
+  "reportPendingDocsByType": "Pending by document:",
   "reportPhotoRegisterHint": "A4 landscape. Save as PDF, Word or Excel with the photos; Word and Excel can be edited. Students without a photo get an empty photo box.",
   "sortGender": "Gender",
   "choiceOther": "Other…",
