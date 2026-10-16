@@ -7,6 +7,7 @@ import 'package:printing/printing.dart';
 import '../../core/files/csv.dart';
 import '../../core/files/save_file.dart';
 import '../../core/files/xlsx_styled.dart';
+import 'docx_report_writer.dart';
 import 'pdf_report_renderer.dart';
 import 'report_dataset.dart';
 
@@ -45,6 +46,20 @@ abstract final class ReportOutput {
   /// buttons, sized columns, shading, real numbers and dates, print settings.
   static List<int> excelBytes(ReportDataset data, ReportLetterhead head) {
     final table = data.tableForExport();
+    // Pictures (photo register) go into their cells; the cell text under a
+    // picture ("Photo") is left out.
+    final offset = data.hasGroups ? 1 : 0;
+    final images = <int, Map<int, Uint8List>>{};
+    var index = 0;
+    for (final r in data.rows.where((r) => r.kind == ReportRowKind.data)) {
+      if (r.images.isNotEmpty) {
+        images[index] = {for (final e in r.images.entries) e.key + offset: e.value};
+        for (final c in r.images.keys) {
+          if (c + offset < table.rows[index].length) table.rows[index][c + offset] = '';
+        }
+      }
+      index++;
+    }
     return XlsxStyledWriter.write(
       sheetName: data.title,
       headingLines: [head.name, data.title, ...data.subtitle.where((s) => s.trim().isNotEmpty)],
@@ -61,8 +76,16 @@ abstract final class ReportOutput {
       notes: data.notes,
       landscape: data.landscape || table.header.length > 7,
       brandColor: head.brandColor,
+      images: images,
+      imageHeight: data.imageHeight,
     );
   }
+
+  /// An editable Word document of the report (letterhead, table, photos).
+  static Uint8List wordBytes(ReportDataset data, ReportLetterhead head) => DocxReportWriter.write(data, head);
+
+  static Future<bool> saveWord(ReportDataset data, ReportLetterhead head, {required String title}) =>
+      saveBytesWithDialog(fileName: '${data.fileName}.docx', bytes: wordBytes(data, head), title: title);
 
   static Future<bool> saveExcel(ReportDataset data, ReportLetterhead head, {required String title}) =>
       saveBytesWithDialog(fileName: '${data.fileName}.xlsx', bytes: excelBytes(data, head), title: title);

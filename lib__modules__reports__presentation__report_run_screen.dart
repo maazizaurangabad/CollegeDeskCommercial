@@ -53,14 +53,16 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
   List<ClassListColumn> _layout = const [];
   bool _fullAadhaar = false;
 
-  bool get _isNameList => widget.kind == ReportKind.classList || widget.kind == ReportKind.master;
+  bool get _isNameList =>
+      widget.kind == ReportKind.classList || widget.kind == ReportKind.master || widget.kind == ReportKind.photoRegister;
   bool get _master => widget.kind == ReportKind.master;
+  bool get _photo => widget.kind == ReportKind.photoRegister;
   String get _layoutKey => 'reports.layout.${widget.kind.name}';
 
   @override
   void initState() {
     super.initState();
-    _layout = StudentListLayout.defaults(master: _master);
+    _layout = StudentListLayout.defaults(master: _master, photo: _photo);
     if (_isNameList) _loadLayout();
   }
 
@@ -68,7 +70,7 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
   Future<void> _loadLayout() async {
     try {
       final raw = await ref.read(appSettingsRepositoryProvider).getValue(_layoutKey);
-      if (mounted) setState(() => _layout = StudentListLayout.decode(raw, master: _master));
+      if (mounted) setState(() => _layout = StudentListLayout.decode(raw, master: _master, photo: _photo));
     } catch (_) {
       // Keep the standard layout.
     }
@@ -76,7 +78,7 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
 
   void _setLayout(List<ClassListColumn> layout) {
     setState(() {
-      _layout = StudentListLayout.normalise(layout, master: _master);
+      _layout = StudentListLayout.normalise(layout, master: _master, photo: _photo);
       if (!_layout.contains(ClassListColumn.aadhaar)) _fullAadhaar = false;
     });
     ref.read(appSettingsRepositoryProvider).setValue(_layoutKey, StudentListLayout.encode(_layout)).ignore();
@@ -147,8 +149,14 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
             gender: _gender,
             fullAadhaar: fullAadhaar,
           ),
-        ReportKind.photoRegister =>
-          await b.photoRegister(_divisionId!, sort: _sort, descending: _descending, gender: _gender),
+        ReportKind.photoRegister => await b.photoRegister(
+            _divisionId!,
+            layout: _layout,
+            sort: _sort,
+            descending: _descending,
+            gender: _gender,
+            fullAadhaar: fullAadhaar,
+          ),
         ReportKind.certificates => await b.certificateRegister(from: _from, to: _to, kind: _certKind),
         ReportKind.feeDayBook => await feeReports(ref, l10n).dayBook(from: _from, to: _to),
         ReportKind.feeHeads => await feeReports(ref, l10n).headWise(from: _from, to: _to),
@@ -268,7 +276,7 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
           options: [for (final s in StudentStatus.values) (s, studentStatusLabel(l10n, s))],
           onChanged: (v) => setState(() => _status = v),
         ),
-      if (_isNameList || widget.kind == ReportKind.photoRegister) ...[
+      if (_isNameList) ...[
         Row(children: [
           Expanded(
             child: SdSelectField<StudentSort>(
@@ -312,10 +320,10 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
           const SizedBox(height: SdSpace.md),
           _ColumnChooser(
             layout: _layout,
-            available: StudentListLayout.available(master: _master),
+            available: StudentListLayout.available(master: _master, photo: _photo),
             label: (c) => _columnLabel(l10n, c),
             onChanged: _setLayout,
-            onReset: () => _setLayout(StudentListLayout.defaults(master: _master)),
+            onReset: () => _setLayout(StudentListLayout.defaults(master: _master, photo: _photo)),
           ),
           if (_layout.contains(ClassListColumn.aadhaar)) ...[
             const SizedBox(height: SdSpace.sm),
@@ -403,6 +411,16 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
                     : () => _output(() async => ReportOutput.saveExcel(data, await reportLetterhead(ref), title: l10n.exportExcel)),
               ),
               if (!data.pdfOnly)
+                SdButton(
+                  label: l10n.exportWord,
+                  icon: Icons.description_outlined,
+                  variant: SdButtonVariant.text,
+                  onPressed: _busy
+                      ? null
+                      : () => _output(() async => ReportOutput.saveWord(data, await reportLetterhead(ref), title: l10n.exportWord)),
+                ),
+              // CSV is plain text: no photos.
+              if (!data.pdfOnly && data.imageColumns.isEmpty)
               SdButton(
                 label: l10n.exportCsv,
                 variant: SdButtonVariant.text,
@@ -500,6 +518,7 @@ class _ReportRunScreenState extends ConsumerState<ReportRunScreen> {
         ClassListColumn.category => l10n.fieldCategory,
         ClassListColumn.bloodGroup => l10n.fieldBloodGroup,
         ClassListColumn.status => l10n.studentsFilterStatus,
+        ClassListColumn.photo => l10n.reportPhoto,
       };
 }
 

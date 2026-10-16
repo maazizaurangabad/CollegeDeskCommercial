@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:shiksha_desk/core/database/app_database.dart';
@@ -17,8 +18,10 @@ import 'package:shiksha_desk/platform/academic/structure_templates.dart';
 import 'package:shiksha_desk/platform/data/app_settings_repository.dart';
 import 'package:shiksha_desk/platform/demo/demo_data.dart';
 import 'package:shiksha_desk/platform/modules/module_providers.dart';
+import 'package:shiksha_desk/platform/reporting/docx_report_writer.dart';
 import 'package:shiksha_desk/platform/reporting/pdf_report_renderer.dart';
 import 'package:shiksha_desk/platform/reporting/report_dataset.dart';
+import 'package:shiksha_desk/platform/reporting/report_output.dart';
 import 'package:shiksha_desk/platform/workspace/institution_creator.dart';
 
 import '../test_support.dart';
@@ -205,7 +208,7 @@ void main() {
       expect(data(desc).map((r) => r.cells[2]), ['Riya', 'Zoya', 'Ayaan']);
     });
 
-    test('photo register: fixed columns, photos only when readable, PDF only', () async {
+    test('photo register: standard columns, photos only when readable', () async {
       final d = await reports.photoRegister(divA);
       expect(d.columns.map((c) => c.label), [
         l10n.reportSrNo,
@@ -214,7 +217,7 @@ void main() {
         l10n.fieldDateOfBirth,
         l10n.reportPhoto,
       ]);
-      expect(d.pdfOnly, isTrue);
+      expect(d.pdfOnly, isFalse); // PDF, Word and Excel
       expect(d.landscape, isTrue);
       expect(d.imageColumns, {4});
       final rows = data(d);
@@ -223,6 +226,43 @@ void main() {
       expect(rows[1].images, isEmpty); // no photo
       expect(rows[1].cells[4], l10n.reportNoPhoto);
       expect(rows[2].images, isEmpty); // damaged file: placeholder, no crash
+    });
+
+    test('photo register columns can be chosen and moved; the photo follows', () async {
+      final d = await reports.photoRegister(divA, layout: const [
+        ClassListColumn.serial,
+        ClassListColumn.photo,
+        ClassListColumn.gr,
+        ClassListColumn.name,
+      ]);
+      expect(d.columns.map((c) => c.label), [l10n.reportSrNo, l10n.reportPhoto, l10n.idGr, l10n.reportStudentName]);
+      expect(d.imageColumns, {1});
+      expect(data(d).first.images[1], isNotNull);
+      // A class list never offers the photo column.
+      expect(StudentListLayout.available(master: false), isNot(contains(ClassListColumn.photo)));
+      expect(StudentListLayout.normalise([ClassListColumn.name, ClassListColumn.photo], master: false),
+          [ClassListColumn.serial, ClassListColumn.name]);
+    });
+
+    test('Word and Excel files carry the photos', () async {
+      final d = await reports.photoRegister(divA);
+      const head = ReportLetterhead(name: 'Test College & Co');
+      final word = ZipDecoder().decodeBytes(DocxReportWriter.write(d, head));
+      final names = word.files.map((f) => f.name).toList();
+      expect(names, containsAll(['[Content_Types].xml', 'word/document.xml', 'word/_rels/document.xml.rels']));
+      expect(names.where((n) => n.startsWith('word/media/')), hasLength(1)); // only Ayaan has a usable photo
+      final document = utf8.decode(word.findFile('word/document.xml')!.content as List<int>);
+      expect(document, contains('<w:tblHeader/>'));
+      expect(document, contains('w:orient="landscape"'));
+      expect(document, contains('Mother of Ayaan'));
+      expect(document, contains('Test College &amp; Co'));
+
+      final excel = ZipDecoder().decodeBytes(ReportOutput.excelBytes(d, head));
+      final drawing = utf8.decode(excel.findFile('xl/drawings/drawing1.xml')!.content as List<int>);
+      expect('<xdr:oneCellAnchor>'.allMatches(drawing), hasLength(1));
+      expect(excel.files.where((f) => f.name.startsWith('xl/media/')), hasLength(1));
+      final sheet = utf8.decode(excel.findFile('xl/worksheets/sheet1.xml')!.content as List<int>);
+      expect(sheet, contains('<drawing r:id="rIdDrawing"/>'));
     });
 
     test('the photo register renders as a multi-page PDF with photos', () async {

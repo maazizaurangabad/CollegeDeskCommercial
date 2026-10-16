@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
+
+import 'image_size.dart';
 
 enum XlsxCellType { text, number, date }
 
@@ -30,7 +33,14 @@ abstract final class XlsxStyledWriter {
     List<String> notes = const [],
     bool landscape = false,
     int brandColor = 0xFF1D4E89,
+    Map<int, Map<int, Uint8List>> images = const {},
+    double imageHeight = 56,
   }) {
+    // images: data row index -> column -> JPEG/PNG. Each picture sits in its
+    // cell, keeps its shape, and the data rows are made tall enough.
+    final withImages = images.isNotEmpty;
+    final imageColumns = {for (final m in images.values) ...m.keys};
+    final imageBoxH = imageHeight, imageBoxW = imageHeight * 0.8;
     String esc(String s) =>
         const HtmlEscape(HtmlEscapeMode.element).convert(s).replaceAll(RegExp(r'[\x00-\x08\x0B\x0C\x0E-\x1F]'), '');
     String col(int i) {
@@ -60,6 +70,10 @@ abstract final class XlsxStyledWriter {
             .clamp(6, 45)
             .toDouble(),
     ];
+    // Wide enough for a picture (Excel widths are in characters of ~7 px).
+    for (final c in imageColumns) {
+      if (c < widths.length) widths[c] = (imageBoxW + 12) * 96 / 72 / 7 + 1;
+    }
 
     final sb = StringBuffer()
       ..write('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>')
@@ -93,7 +107,7 @@ abstract final class XlsxStyledWriter {
     for (var i = 0; i < rows.length; i++) {
       final r = firstData + i;
       final alt = i.isOdd;
-      sb.write('<row r="$r">');
+      sb.write(withImages ? '<row r="$r" ht="${imageBoxH + 8}" customHeight="1">' : '<row r="$r">');
       for (var c = 0; c < header.length; c++) {
         final v = c < rows[i].length ? rows[i][c] : '';
         final type = c < colTypes.length ? colTypes[c] : XlsxCellType.text;
@@ -122,7 +136,44 @@ abstract final class XlsxStyledWriter {
       ..write('<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>')
       ..write('<pageSetup paperSize="9" orientation="${landscape ? 'landscape' : 'portrait'}" fitToWidth="1" fitToHeight="0"/>')
       ..write('<headerFooter><oddFooter>&amp;LPage &amp;P of &amp;N&amp;R${esc(sheetName)}</oddFooter></headerFooter>')
+      ..write(withImages ? '<drawing r:id="rIdDrawing"/>' : '')
       ..write('</worksheet>');
+
+    // Pictures: one drawing with an anchor per picture.
+    const emu = 12700; // per point
+    final media = <String, Uint8List>{};
+    final drawing = StringBuffer()
+      ..write('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+          '<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" '
+          'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
+          'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">');
+    final drawingRels = StringBuffer()
+      ..write('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+          '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">');
+    for (final row in images.entries) {
+      for (final pic in row.value.entries) {
+        final kind = imageKind(pic.value);
+        if (kind == null || row.key >= rows.length || pic.key >= header.length) continue;
+        final n = media.length + 1;
+        final name = 'image$n.$kind';
+        media[name] = pic.value;
+        final fit = fitInBox(imagePixelSize(pic.value), imageBoxW, imageBoxH);
+        final cx = (fit.width * emu).round(), cy = (fit.height * emu).round();
+        final xdrRow = firstData + row.key - 1; // 0-based
+        drawing.write('<xdr:oneCellAnchor><xdr:from><xdr:col>${pic.key}</xdr:col><xdr:colOff>${6 * emu}</xdr:colOff>'
+            '<xdr:row>$xdrRow</xdr:row><xdr:rowOff>${4 * emu}</xdr:rowOff></xdr:from>'
+            '<xdr:ext cx="$cx" cy="$cy"/>'
+            '<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${n + 1}" name="Picture $n"/>'
+            '<xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>'
+            '<xdr:blipFill><a:blip r:embed="rIdImg$n"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>'
+            '<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="$cx" cy="$cy"/></a:xfrm>'
+            '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>');
+        drawingRels.write('<Relationship Id="rIdImg$n" '
+            'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/$name"/>');
+      }
+    }
+    drawing.write('</xdr:wsDr>');
+    drawingRels.write('</Relationships>');
 
     final safeName = esc((sheetName.length > 31 ? sheetName.substring(0, 31) : sheetName).replaceAll(RegExp(r"[\[\]:*?/\\']"), ' '));
     final quoted = "'${safeName.replaceAll("'", "''")}'";
@@ -163,7 +214,10 @@ abstract final class XlsxStyledWriter {
 
     final files = {
       '[Content_Types].xml':
-          '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>',
+          '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+          '${withImages ? '<Default Extension="jpeg" ContentType="image/jpeg"/><Default Extension="png" ContentType="image/png"/>'
+              '<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>' : ''}'
+          '</Types>',
       '_rels/.rels':
           '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
       'xl/workbook.xml':
@@ -177,11 +231,20 @@ abstract final class XlsxStyledWriter {
           '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
       'xl/styles.xml': styles,
       'xl/worksheets/sheet1.xml': sb.toString(),
+      if (withImages) ...{
+        'xl/worksheets/_rels/sheet1.xml.rels':
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdDrawing" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/></Relationships>',
+        'xl/drawings/drawing1.xml': drawing.toString(),
+        'xl/drawings/_rels/drawing1.xml.rels': drawingRels.toString(),
+      },
     };
     final archive = Archive();
     for (final e in files.entries) {
       final data = utf8.encode(e.value);
       archive.addFile(ArchiveFile(e.key, data.length, data));
+    }
+    for (final e in media.entries) {
+      archive.addFile(ArchiveFile('xl/media/${e.key}', e.value.length, e.value));
     }
     return ZipEncoder().encode(archive)!;
   }

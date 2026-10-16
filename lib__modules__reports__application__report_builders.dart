@@ -35,6 +35,9 @@ enum ClassListColumn {
   name,
   code,
   status,
+
+  /// Only in the Student Register with Photograph.
+  photo,
 }
 
 /// The order and choice of columns in a student list, as the user set it.
@@ -61,25 +64,38 @@ abstract final class StudentListLayout {
     ClassListColumn.status,
   ];
 
+  static const photoRegisterDefault = [
+    ClassListColumn.serial,
+    ClassListColumn.name,
+    ClassListColumn.motherName,
+    ClassListColumn.dateOfBirth,
+    ClassListColumn.photo,
+  ];
+
   /// Always shown: Sr. No. (first) and Name.
   static const fixed = {ClassListColumn.serial, ClassListColumn.name};
 
-  /// Columns offered for a report (Status only on the master list).
-  static List<ClassListColumn> available({required bool master}) => [
+  /// Columns offered for a report (Status only on the master list, Photo
+  /// only on the photo register).
+  static List<ClassListColumn> available({required bool master, bool photo = false}) => [
         for (final c in ClassListColumn.values)
-          if (master || c != ClassListColumn.status) c,
+          if (_allowed(c, master: master, photo: photo)) c,
       ];
 
-  static List<ClassListColumn> defaults({required bool master}) => master ? masterDefault : classListDefault;
+  static bool _allowed(ClassListColumn c, {required bool master, required bool photo}) =>
+      (master || c != ClassListColumn.status) && (photo || c != ClassListColumn.photo);
+
+  static List<ClassListColumn> defaults({required bool master, bool photo = false}) =>
+      photo ? photoRegisterDefault : (master ? masterDefault : classListDefault);
 
   /// A usable layout: no repeats, Sr. No. first, Name present, Status only
   /// on the master list, Aadhaar off unless chosen. Columns without Name
   /// are the old "extra columns" form: Roll, Name (and Code and Status on
   /// the master list) around the extras, in the old order.
-  static List<ClassListColumn> normalise(Iterable<ClassListColumn> columns, {required bool master}) {
+  static List<ClassListColumn> normalise(Iterable<ClassListColumn> columns, {required bool master, bool photo = false}) {
     final chosen = <ClassListColumn>[];
     for (final c in columns) {
-      if (!chosen.contains(c) && (master || c != ClassListColumn.status)) chosen.add(c);
+      if (!chosen.contains(c) && _allowed(c, master: master, photo: photo)) chosen.add(c);
     }
     if (!chosen.contains(ClassListColumn.name)) {
       const fixedOld = {
@@ -88,6 +104,7 @@ abstract final class StudentListLayout {
         ClassListColumn.name,
         ClassListColumn.code,
         ClassListColumn.status,
+        ClassListColumn.photo,
       };
       return [
         ClassListColumn.roll,
@@ -103,18 +120,18 @@ abstract final class StudentListLayout {
   }
 
   /// Saved as a JSON list of names; anything unreadable gives the default.
-  static List<ClassListColumn> decode(String? raw, {required bool master}) {
-    if (raw == null) return defaults(master: master);
+  static List<ClassListColumn> decode(String? raw, {required bool master, bool photo = false}) {
+    if (raw == null) return defaults(master: master, photo: photo);
     try {
       final names = (jsonDecode(raw) as List<dynamic>).map((e) => '$e');
       final columns = [
         for (final n in names)
           if (ClassListColumn.values.where((c) => c.name == n).firstOrNull case final c?) c,
       ];
-      if (!columns.contains(ClassListColumn.name)) return defaults(master: master);
-      return normalise(columns, master: master);
+      if (!columns.contains(ClassListColumn.name)) return defaults(master: master, photo: photo);
+      return normalise(columns, master: master, photo: photo);
     } catch (_) {
-      return defaults(master: master);
+      return defaults(master: master, photo: photo);
     }
   }
 
@@ -360,6 +377,8 @@ class ReportBuilders {
           (label: l10n.fieldBloodGroup, width: 40, flex: null, align: ReportAlign.left, type: ReportColumnType.text),
         ClassListColumn.status =>
           (label: l10n.studentsFilterStatus, width: 46, flex: null, align: ReportAlign.left, type: ReportColumnType.text),
+        ClassListColumn.photo =>
+          (label: l10n.reportPhoto, width: 66, flex: null, align: ReportAlign.center, type: ReportColumnType.text),
       };
 
   /// Column name shown in the column chooser.
@@ -382,18 +401,32 @@ class ReportBuilders {
     List<ClassListColumn> layout, {
     String Function(StudentListItem s)? groupBy,
     bool fullAadhaar = false,
+    Map<ClassListColumn, String> labels = const {},
   }) async {
     final export = await students.exportRows(items, divisionLabels);
     final needsFacts = layout.any((c) => const {
           ClassListColumn.motherName,
           ClassListColumn.fatherName,
           ClassListColumn.aadhaar,
+          ClassListColumn.photo,
         }.contains(c));
     final ids = items.map((s) => s.id);
     final facts = needsFacts ? await students.reportFacts(ids) : const <String, StudentReportFacts>{};
     final full = fullAadhaar && layout.contains(ClassListColumn.aadhaar)
         ? await students.revealAadhaarFor(ids)
         : const <String, String>{};
+    // Photos, read once; only JPEG/PNG the PDF can draw.
+    final photoAt = layout.indexOf(ClassListColumn.photo);
+    final photos = <String, Uint8List>{};
+    final loader = photoBytes;
+    if (photoAt >= 0 && loader != null) {
+      for (final s in items) {
+        final file = facts[s.id]?.photoFileName;
+        if (file == null) continue;
+        final raw = await loader(file);
+        if (raw != null && isJpegOrPng(raw)) photos[s.id] = raw;
+      }
+    }
 
     String value(ClassListColumn c, int i, int serial) {
       final s = items[i];
@@ -416,6 +449,7 @@ class ReportBuilders {
         ClassListColumn.fatherName => f?.fatherName ?? '',
         ClassListColumn.aadhaar => full[s.id] ?? f?.aadhaarMasked ?? '',
         ClassListColumn.status => studentStatusLabel(l10n, s.status),
+        ClassListColumn.photo => photos.containsKey(s.id) ? l10n.reportPhotoOnFile : l10n.reportNoPhoto,
       };
     }
 
@@ -429,11 +463,16 @@ class ReportBuilders {
           rows.add(ReportRow.group(heading));
         }
       }
-      rows.add(ReportRow([for (final c in layout) value(c, i, i + 1)]));
+      final photo = photos[items[i].id];
+      rows.add(ReportRow(
+        [for (final c in layout) value(c, i, i + 1)],
+        images: {if (photoAt >= 0 && photo != null) photoAt: photo},
+      ));
     }
     final columns = [
       for (final c in layout)
-        ReportColumn(_spec(c).label, width: _spec(c).width, flex: _spec(c).flex, align: _spec(c).align, type: _spec(c).type),
+        ReportColumn(labels[c] ?? _spec(c).label,
+            width: _spec(c).width, flex: _spec(c).flex, align: _spec(c).align, type: _spec(c).type),
     ];
     return (
       columns: columns,
@@ -570,14 +609,23 @@ class ReportBuilders {
 
   // ------------------------------------------------------- photo register
 
-  /// Student Register with Photograph: Sr. No., Student Name, Mother's
-  /// Name, Date of Birth, Photo, for one class. PDF only (A4 landscape).
+  /// Student Register with Photograph for one class. The standard columns
+  /// are Sr. No., Student Name, Mother's Name, Date of Birth, Photograph;
+  /// [layout] can add, remove and reorder them like a class list. A4
+  /// landscape; PDF, Word and Excel keep the photos.
   Future<ReportDataset> photoRegister(
     String divisionId, {
+    Iterable<ClassListColumn>? layout,
     StudentSort sort = StudentSort.roll,
     bool descending = false,
     GenderFilter gender = GenderFilter.all,
+    bool fullAadhaar = false,
   }) async {
+    final columns = StudentListLayout.normalise(
+      layout ?? StudentListLayout.photoRegisterDefault,
+      master: false,
+      photo: true,
+    );
     final items = sortStudents(
       (await students.list(academicYearId: academic.activeYear?.id, status: StudentStatus.active))
           .where((s) => s.divisionId == divisionId && matchesGender(s.gender, gender))
@@ -585,47 +633,38 @@ class ReportBuilders {
       sort,
       descending: descending,
     );
-    final export = await students.exportRows(items, divisionLabels);
-    final facts = await students.reportFacts(items.map((s) => s.id));
-    final rows = <ReportRow>[];
-    for (var i = 0; i < items.length; i++) {
-      final f = facts[items[i].id];
-      final file = f?.photoFileName;
-      final loader = photoBytes;
-      final raw = (file == null || loader == null) ? null : await loader(file);
-      final photo = (raw != null && isJpegOrPng(raw)) ? raw : null;
-      rows.add(ReportRow(
-        [
-          '${i + 1}',
-          items[i].fullName,
-          f?.motherName ?? '',
-          export[i][7],
-          photo != null ? l10n.reportPhotoOnFile : l10n.reportNoPhoto,
-        ],
-        images: {if (photo != null) 4: photo},
-      ));
-    }
+    final list = await _nameList(
+      items,
+      columns,
+      fullAadhaar: fullAadhaar,
+      labels: {
+        ClassListColumn.serial: l10n.reportSrNo,
+        ClassListColumn.name: l10n.reportStudentName,
+        ClassListColumn.photo: l10n.reportPhoto,
+      },
+    );
+    final photoAt = columns.indexOf(ClassListColumn.photo);
     return ReportDataset(
       title: l10n.reportPhotoRegisterTitle,
       subtitle: [
         '${_label(divisionId)} · ${academic.activeYear?.label ?? ''}',
         listOptionsLine(sort: sort, descending: descending, gender: gender),
       ],
-      fileName: 'photo-register-${_slug(_label(divisionId))}${gender == GenderFilter.all ? '' : '-${gender.name}'}',
+      fileName: 'photo-register-${_slug(_label(divisionId))}${gender == GenderFilter.all ? '' : '-${gender.name}'}'
+          '${fullAadhaar && columns.contains(ClassListColumn.aadhaar) ? '-confidential' : ''}',
       landscape: true,
       fontSize: 10.5,
       columns: [
-        ReportColumn(l10n.reportSrNo, width: 40, align: ReportAlign.center, type: ReportColumnType.number),
-        ReportColumn(l10n.reportStudentName, flex: 3),
-        ReportColumn(l10n.reportMotherName, flex: 2),
-        ReportColumn(l10n.fieldDateOfBirth, width: 90, align: ReportAlign.center, type: ReportColumnType.date),
-        ReportColumn(l10n.reportPhoto, width: 66, align: ReportAlign.center),
+        for (final (i, c) in list.columns.indexed)
+          // Sr. No. a little wider here.
+          i == 0 ? ReportColumn(c.label, width: 40, align: c.align, type: c.type) : c,
       ],
-      rows: rows,
-      imageColumns: const {4},
+      rows: list.rows,
+      imageColumns: {if (photoAt >= 0) photoAt},
       imageHeight: 60,
-      pdfOnly: true,
+      filterColumns: list.filters,
       countLabels: ReportCountLabels(total: l10n.reportTotal, byValue: const {}),
+      notes: _aadhaarNotes(fullAadhaar, columns),
       signatures: [l10n.reportClassTeacher, l10n.reportPrincipal],
     ).withCounts();
   }
