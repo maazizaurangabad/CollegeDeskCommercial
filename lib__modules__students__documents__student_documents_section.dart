@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -97,7 +96,7 @@ class _StudentDocumentsSectionState extends ConsumerState<StudentDocumentsSectio
               confirmLabel: l10n.docCamera,
               cancelLabel: l10n.cancel,
             );
-            if (useCamera && mounted) return _pickPages(_Source.camera);
+            if (useCamera && mounted) return await _pickPages(_Source.camera);
           }
         case _Source.camera:
           final shot = await ImagePicker().pickImage(source: ImageSource.camera, maxWidth: 2400, imageQuality: 90);
