@@ -9,6 +9,7 @@ import '../../../core/database/app_database.dart';
 import '../../../platform/data/data_providers.dart';
 import '../../../platform/modules/module_providers.dart';
 import '../../../platform/organization/organization_providers.dart';
+import '../../../platform/staff/staff_models.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -16,14 +17,18 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final can = ref.watch(permissionCheckerProvider);
+    final manage = can(Permissions.settingsManage);
 
     return SdPage(
       children: [
         Text(l10n.settingsTitle, style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: SdSpace.xl),
+        if (manage || can(Permissions.studentsImport) || can(Permissions.studentsPromote)) ...[
         SdSection(
           title: l10n.settingsInstitutionGroup,
           child: _Group(children: [
+            if (manage) ...[
             _Tile(
               icon: Icons.apartment_outlined,
               title: l10n.settingsInstitutionProfile,
@@ -61,18 +66,22 @@ class SettingsScreen extends ConsumerWidget {
                 subtitle: l10n.settingsMessagesSubtitle,
                 onTap: () => context.go('/messages/templates'),
               ),
+            ],
+            if (can(Permissions.studentsPromote))
             _Tile(
               icon: Icons.upgrade,
               title: l10n.promoTitle,
               subtitle: l10n.promoSettingsSubtitle,
               onTap: () => context.go('/students/promotion'),
             ),
+            if (can(Permissions.studentsImport))
             _Tile(
               icon: Icons.history_outlined,
               title: l10n.settingsImports,
               subtitle: l10n.settingsImportsSubtitle,
               onTap: () => context.go('/settings/imports'),
             ),
+            if (manage)
             _Tile(
               icon: Icons.delete_outline,
               title: l10n.settingsRecycleBin,
@@ -81,9 +90,31 @@ class SettingsScreen extends ConsumerWidget {
           ]),
         ),
         const SizedBox(height: SdSpace.xl),
+        ],
+        if (can(Permissions.staffManage)) ...[
+          SdSection(
+            title: l10n.staffTitle,
+            child: _Group(children: [
+              _Tile(
+                icon: Icons.badge_outlined,
+                title: l10n.staffTitle,
+                subtitle: l10n.staffSettingsSubtitle,
+                onTap: () => context.go('/settings/staff'),
+              ),
+              _Tile(
+                icon: Icons.admin_panel_settings_outlined,
+                title: l10n.staffRoles,
+                subtitle: l10n.staffRolesSubtitle,
+                onTap: () => context.go('/settings/staff/roles'),
+              ),
+            ]),
+          ),
+          const SizedBox(height: SdSpace.xl),
+        ],
         SdSection(
           title: l10n.settingsAppGroup,
           child: _Group(children: [
+            if (manage)
             _Tile(
               icon: Icons.extension_outlined,
               title: l10n.settingsModules,
@@ -97,8 +128,11 @@ class SettingsScreen extends ConsumerWidget {
               subtitle: ref.watch(startupStateProvider).encrypted ? l10n.dataEncryptionOn : l10n.dataEncryptionOff,
               onTap: () => _showDataInfo(context, ref),
             ),
-            _Tile(icon: Icons.backup_outlined, title: l10n.settingsBackup, onTap: () => context.go('/settings/backup')),
-            _Tile(icon: Icons.lock_outline, title: l10n.settingsSecurity, onTap: () => context.go('/settings/security')),
+            if (can(Permissions.backupManage))
+              _Tile(icon: Icons.backup_outlined, title: l10n.settingsBackup, onTap: () => context.go('/settings/backup')),
+            if (can(Permissions.ownerOnly))
+              _Tile(icon: Icons.lock_outline, title: l10n.settingsSecurity, onTap: () => context.go('/settings/security')),
+            if (manage)
             _Tile(
               icon: Icons.health_and_safety_outlined,
               title: l10n.settingsDataHealth,

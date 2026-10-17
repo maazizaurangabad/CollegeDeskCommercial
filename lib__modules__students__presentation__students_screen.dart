@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../platform/staff/staff_models.dart';
 import '../../../core/files/csv.dart';
 import '../../../core/files/save_file.dart';
 import '../../../core/files/xlsx_styled.dart';
@@ -175,6 +176,7 @@ class _StudentsScreenState extends ConsumerState<StudentsScreen> {
     final theme = Theme.of(context);
     final academic = ref.watch(academicControllerProvider);
     final mediaDir = ref.watch(startupStateProvider).mediaDir;
+    final can = ref.watch(permissionCheckerProvider);
     final future = _load(academic.activeYear?.id, ref.watch(studentsRevisionProvider));
     final wide = MediaQuery.sizeOf(context).width >= 900;
     final List<Division> divisionsOfProgram = _programId == null ? const [] : academic.divisionsOf(_programId!);
@@ -184,11 +186,12 @@ class _StudentsScreenState extends ConsumerState<StudentsScreen> {
         Row(
           children: [
             Expanded(child: Text(l10n.studentsTitle, style: theme.textTheme.headlineSmall)),
-            SdButton(
-              label: l10n.actionAddStudent,
-              icon: Icons.person_add_alt,
-              onPressed: () => context.go('/students/new'),
-            ),
+            if (can(Permissions.studentsEdit))
+              SdButton(
+                label: l10n.actionAddStudent,
+                icon: Icons.person_add_alt,
+                onPressed: () => context.go('/students/new'),
+              ),
             PopupMenuButton<String>(
               tooltip: l10n.studentsMore,
               onSelected: (v) {
@@ -204,9 +207,11 @@ class _StudentsScreenState extends ConsumerState<StudentsScreen> {
                 }
               },
               itemBuilder: (_) => [
-                PopupMenuItem(value: 'import', child: Text(l10n.importStudentsTitle)),
-                PopupMenuItem(value: 'photos', child: Text(l10n.importPhotosTitle)),
-                const PopupMenuDivider(),
+                if (can(Permissions.studentsImport)) ...[
+                  PopupMenuItem(value: 'import', child: Text(l10n.importStudentsTitle)),
+                  PopupMenuItem(value: 'photos', child: Text(l10n.importPhotosTitle)),
+                  const PopupMenuDivider(),
+                ],
                 PopupMenuItem(value: 'xlsx', child: Text(l10n.exportExcel)),
                 PopupMenuItem(value: 'csv', child: Text(l10n.exportCsv)),
               ],

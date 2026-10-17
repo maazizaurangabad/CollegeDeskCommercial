@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../platform/staff/staff_models.dart';
+import '../../../platform/organization/organization_providers.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
@@ -87,11 +89,12 @@ class _FeesScreenState extends ConsumerState<FeesScreen> {
       children: [
         Row(children: [
           Expanded(child: Text(l10n.navFees, style: theme.textTheme.headlineSmall)),
-          IconButton(
-            tooltip: l10n.feeSetup,
-            icon: const Icon(Icons.tune_outlined),
-            onPressed: () => context.go('/fees/setup'),
-          ),
+          if (ref.watch(permissionCheckerProvider)(Permissions.feesSetup))
+            IconButton(
+              tooltip: l10n.feeSetup,
+              icon: const Icon(Icons.tune_outlined),
+              onPressed: () => context.go('/fees/setup'),
+            ),
           const SizedBox(width: SdSpace.xs),
           SdButton(label: l10n.feeTakePayment, icon: Icons.add, onPressed: () => context.go('/fees/pay')),
         ]),

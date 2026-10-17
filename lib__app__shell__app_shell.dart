@@ -11,7 +11,9 @@ import '../../platform/organization/organization_profile.dart';
 import '../../platform/data/data_providers.dart';
 import '../../platform/organization/institution_seal.dart';
 import '../../platform/organization/organization_providers.dart';
+import '../../platform/staff/staff_models.dart';
 import '../../platform/workspace/presentation/institution_switcher.dart';
+import '../lock/lock_controller.dart';
 
 /// The frame around every screen. Phones get a bottom bar,
 /// tablets a navigation rail, desktops a full sidebar.
@@ -149,7 +151,10 @@ class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
         label: l10n.switcherTitle,
         child: InkWell(
           borderRadius: BorderRadius.circular(SdRadius.sm),
-          onTap: () => InstitutionSwitcher.show(context, ref),
+          // Opening or adding institutions is for the administrator only.
+          onTap: ref.watch(permissionCheckerProvider)(Permissions.ownerOnly)
+              ? () => InstitutionSwitcher.show(context, ref)
+              : null,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: SdSpace.sm, vertical: SdSpace.xs),
             child: Row(
@@ -184,6 +189,7 @@ class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
           icon: const Icon(Icons.search),
           onPressed: () => context.go('/search'),
         ),
+        const _UserButton(),
         const SizedBox(width: SdSpace.sm),
       ],
       bottom: isDemo
@@ -198,6 +204,55 @@ class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             )
           : null,
+    );
+  }
+}
+
+/// Who is logged in, with "Switch user" (locks the app and asks again).
+class _UserButton extends ConsumerWidget {
+  const _UserButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final user = ref.watch(currentUserProvider);
+    LockController lock;
+    try {
+      lock = ref.watch(lockControllerProvider);
+    } catch (_) {
+      return const SizedBox.shrink(); // No app lock here (tests, previews).
+    }
+    if (!lock.hasPin) return const SizedBox.shrink();
+    final name = user.isOwner ? l10n.staffAdminName : user.name;
+    return PopupMenuButton<String>(
+      tooltip: name,
+      icon: CircleAvatar(
+        radius: 15,
+        child: Text(name.isEmpty ? '?' : name.characters.first.toUpperCase(), style: const TextStyle(fontSize: 13)),
+      ),
+      onSelected: (v) {
+        if (v == 'switch') lock.lockNow();
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem<String>(
+          enabled: false,
+          child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.person_outline),
+            title: Text(name),
+            subtitle: Text(user.isOwner ? l10n.lockAdminSubtitle : l10n.staffLoggedIn),
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem<String>(
+          value: 'switch',
+          child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.switch_account_outlined),
+            title: Text(l10n.staffSwitchUser),
+          ),
+        ),
+      ],
     );
   }
 }

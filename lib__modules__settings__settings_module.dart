@@ -14,6 +14,8 @@ import 'presentation/recycle_bin_screen.dart';
 import 'presentation/security_screen.dart';
 import 'presentation/student_fields_screen.dart';
 import 'presentation/settings_screen.dart';
+import 'presentation/staff_roles_screen.dart';
+import 'presentation/staff_screen.dart';
 
 final settingsModule = ModuleDescriptor(
   id: 'settings',
@@ -52,6 +54,16 @@ final settingsModule = ModuleDescriptor(
     GoRoute(
       path: 'backup',
       pageBuilder: (context, state) => const NoTransitionPage(child: BackupScreen()),
+    ),
+    GoRoute(
+      path: 'staff',
+      pageBuilder: (context, state) => const NoTransitionPage(child: StaffScreen()),
+      routes: [
+        GoRoute(
+          path: 'roles',
+          pageBuilder: (context, state) => const NoTransitionPage(child: StaffRolesScreen()),
+        ),
+      ],
     ),
     GoRoute(
       path: 'security',

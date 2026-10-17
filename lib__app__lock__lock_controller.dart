@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/security/pin_lock_store.dart';
+import '../../platform/staff/staff_models.dart';
 
 /// Decides when the app shows the lock screen or asks for a PIN to be set.
 class LockController extends ChangeNotifier with WidgetsBindingObserver {
@@ -18,6 +19,9 @@ class LockController extends ChangeNotifier with WidgetsBindingObserver {
   bool biometricEnabled = false;
   DateTime? _backgroundSince;
 
+  /// Who unlocked the app. The administrator unless a staff member logged in.
+  final ValueNotifier<CurrentUser> user = ValueNotifier(CurrentUser.owner);
+
   Future<void> init({required bool pinRequired}) async {
     hasPin = await store.hasPin();
     timeoutMinutes = await store.timeoutMinutes();
@@ -31,6 +35,7 @@ class LockController extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    user.dispose();
     super.dispose();
   }
 
@@ -56,10 +61,18 @@ class LockController extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  void unlock() {
+  /// Unlocked with the app PIN, the recovery code or the administrator's fingerprint.
+  void unlock() => unlockAs(CurrentUser.owner);
+
+  /// Unlocked by [who] (a staff member with their own PIN, or the administrator).
+  void unlockAs(CurrentUser who) {
+    user.value = who;
     locked = false;
     notifyListeners();
   }
+
+  /// Another institution was opened: its staff are different people.
+  void resetUser() => user.value = CurrentUser.owner;
 
   void lockNow() {
     if (!hasPin) return;
@@ -68,6 +81,7 @@ class LockController extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void pinSaved() {
+    user.value = CurrentUser.owner;
     hasPin = true;
     needsSetup = false;
     locked = false;

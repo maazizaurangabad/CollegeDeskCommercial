@@ -47,6 +47,109 @@
   "settingsBackup": "Backup and restore",
   "settingsSecurity": "Security and app lock",
   "settingsAbout": "About Shiksha Desk",
+  "lockWhoIsUsing": "Who is using Shiksha Desk?",
+  "lockAdminSubtitle": "Administrator \u00b7 app PIN",
+  "lockEnterYourPin": "Enter your PIN",
+  "lockSomeoneElse": "Someone else",
+  "lockStaffForgot": "Forgot your PIN? Ask the administrator to set a new one in Settings > Staff.",
+  "lockBiometricNoUser": "The fingerprint is set for a staff member who can no longer log in. Use a PIN.",
+  "staffAdminName": "Admin",
+  "staffLoggedIn": "Logged in",
+  "staffSwitchUser": "Switch user",
+  "staffTitle": "Staff",
+  "staffSettingsSubtitle": "Logins for each staff member, with their own PIN",
+  "staffRoles": "Roles and permissions",
+  "staffRolesSubtitle": "What each role may do",
+  "staffAdd": "Add staff",
+  "staffEdit": "Edit staff member",
+  "staffIntro": "Each staff member logs in with their own PIN and can only use what their role allows. Every change records who made it.",
+  "staffEmptyTitle": "No staff yet",
+  "staffEmpty": "Until you add staff, only the administrator (app PIN) uses the app.",
+  "staffInactive": "Switched off",
+  "staffAdminNote": "The administrator (app PIN) can always do everything. Staff with a role that has \"Manage staff\" can add staff and reset PINs.",
+  "staffErrName": "Enter the staff member's name.",
+  "staffErrPin": "The PIN must be 4 to 6 digits.",
+  "staffRemoveTitle": "Remove staff member?",
+  "staffRemove": "Remove",
+  "staffName": "Name",
+  "staffRole": "Role",
+  "staffPin": "PIN (4 to 6 digits)",
+  "staffNewPin": "New PIN",
+  "staffPinHint": "They use this PIN to log in.",
+  "staffNewPinHint": "Leave empty to keep the current PIN.",
+  "staffActive": "Can log in",
+  "staffActiveHint": "Switch off when someone leaves. Their past work keeps their name.",
+  "staffRoleAdd": "Add role",
+  "staffRolesIntro": "Tick what each role may do. Changes apply the next time a staff member logs in.",
+  "staffRoleName": "Role name",
+  "staffRoleNameHint": "e.g. Librarian",
+  "staffRoleInUse": "Some staff members have this role. Give them another role first.",
+  "staffRoleDelete": "Delete role",
+  "staffRoleAdminNote": "The Admin role can always do everything.",
+  "securityBiometricUser": "Fingerprint logs in as",
+  "permGroupStudents": "Students",
+  "permGroupAttendance": "Attendance",
+  "permGroupMessages": "Messages",
+  "permGroupFees": "Fees",
+  "permGroupCertificates": "Certificates",
+  "permGroupResults": "Results",
+  "permGroupReports": "Reports",
+  "permGroupSettings": "Settings",
+  "permStudentsView": "See students",
+  "permStudentsEdit": "Add and edit students",
+  "permStudentsDelete": "Delete students",
+  "permStudentsSensitive": "See full Aadhaar",
+  "permStudentsImport": "Import from Excel",
+  "permStudentsPromote": "Year-end promotion",
+  "permAttendanceMark": "Mark attendance",
+  "permAttendancePast": "Change past days",
+  "permMessagesSend": "Send messages to parents",
+  "permFeesCollect": "Take fee payments",
+  "permFeesCancel": "Cancel receipts",
+  "permFeesSetup": "Fee setup",
+  "permCertificatesIssue": "Issue certificates",
+  "permCertificatesCancel": "Cancel certificates",
+  "permResultsMarks": "Enter marks",
+  "permResultsSetup": "Results setup",
+  "permReportsView": "See reports",
+  "permSettingsManage": "Change settings",
+  "permStaffManage": "Manage staff",
+  "permBackupManage": "Backup and restore",
+  "staffRemoveMessage": "{name} will no longer be able to log in. Their past work keeps their name.",
+  "@staffRemoveMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "staffRoleDeleteMessage": "Delete the role \"{name}\"?",
+  "@staffRoleDeleteMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "staffRolePermCount": "{count} of {total} permissions",
+  "@staffRolePermCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "staffRolePeople": "{count, plural, =0{No staff} =1{1 staff member} other{{count} staff members}}",
+  "@staffRolePeople": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "settingsVersion": "Version {version}",
   "@settingsVersion": {
     "placeholders": {

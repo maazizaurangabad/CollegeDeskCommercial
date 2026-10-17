@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../platform/staff/staff_models.dart';
 import '../../../app/startup/app_bootstrap.dart';
 import '../../../core/backup/backup_password_store.dart';
 import '../../../core/security/secret_store.dart';
@@ -21,6 +22,7 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final can = ref.watch(permissionCheckerProvider);
     final org = ref.watch(activeOrganizationProvider);
     final isDemo = ref.watch(isDemoModeProvider);
     final theme = Theme.of(context);
@@ -104,6 +106,7 @@ class DashboardScreen extends ConsumerWidget {
             spacing: SdSpace.sm,
             runSpacing: SdSpace.sm,
             children: [
+              if (can(Permissions.attendanceMark))
               SdButton(
                 label: l10n.actionMarkAttendance,
                 icon: Icons.fact_check_outlined,
@@ -115,18 +118,21 @@ class DashboardScreen extends ConsumerWidget {
                 variant: SdButtonVariant.secondary,
                 onPressed: () => context.go('/search'),
               ),
+              if (can(Permissions.studentsEdit))
               SdButton(
                 label: l10n.actionAddStudent,
                 icon: Icons.person_add_alt,
                 variant: SdButtonVariant.secondary,
                 onPressed: () => context.go('/students/new'),
               ),
+              if (can(Permissions.certificatesIssue))
               SdButton(
                 label: l10n.certIssue,
                 icon: Icons.workspace_premium_outlined,
                 variant: SdButtonVariant.secondary,
                 onPressed: () => context.go('/certificates/new'),
               ),
+              if (can(Permissions.studentsImport))
               SdButton(
                 label: l10n.actionImportExcel,
                 icon: Icons.upload_file_outlined,

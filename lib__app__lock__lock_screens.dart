@@ -3,6 +3,8 @@ import 'package:local_auth/local_auth.dart';
 
 import '../../design_system/components/components.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../../platform/staff/staff_models.dart';
+import '../../platform/staff/staff_repository.dart';
 import 'lock_controller.dart';
 
 /// Full-screen PIN entry with an on-screen number pad.
@@ -73,11 +75,16 @@ class PinPad extends StatelessWidget {
   }
 }
 
-/// Shown over the whole app while it is locked.
+/// Shown over the whole app while it is locked. With staff set up it first
+/// asks "Who is using?": the administrator (app PIN) or a staff member
+/// (their own PIN). Without staff it is just the app PIN, as before.
 class LockScreen extends StatefulWidget {
-  const LockScreen({super.key, required this.controller});
+  const LockScreen({super.key, required this.controller, this.staff});
 
   final LockController controller;
+
+  /// Staff of the open institution; null shows the app PIN only.
+  final StaffRepository? staff;
 
   @override
   State<LockScreen> createState() => _LockScreenState();
@@ -88,14 +95,28 @@ class _LockScreenState extends State<LockScreen> {
   String? _error;
   bool _checking = false;
   bool _biometricAvailable = false;
-  int _length = 6;
+  int _adminLength = 6;
+
+  /// Staff who can log in; empty means only the administrator.
+  List<StaffLogin> _staff = const [];
+  bool _staffLoaded = false;
+
+  /// Who is entering a PIN: null = not chosen yet, '' = administrator.
+  String? _who;
+
+  // Wrong staff PINs: after a few, wait before trying again.
+  int _staffFailures = 0;
+  DateTime? _staffBlockedUntil;
+  static const _staffFreeAttempts = 5;
+  static const _staffWait = Duration(seconds: 30);
 
   @override
   void initState() {
     super.initState();
     widget.controller.store.pinLength().then((n) {
-      if (mounted) setState(() => _length = n);
+      if (mounted) setState(() => _adminLength = n);
     });
+    _loadStaff();
     if (widget.controller.biometricEnabled) {
       LocalAuthentication().isDeviceSupported().then((ok) {
         if (!mounted) return;
@@ -105,11 +126,43 @@ class _LockScreenState extends State<LockScreen> {
     }
   }
 
+  Future<void> _loadStaff() async {
+    var list = const <StaffLogin>[];
+    try {
+      list = await widget.staff?.logins() ?? const [];
+    } catch (_) {
+      // Staff could not be read: the app PIN still works.
+    }
+    if (!mounted) return;
+    setState(() {
+      _staff = list;
+      _staffLoaded = true;
+      if (list.isEmpty) _who = '';
+    });
+  }
+
+  int get _length {
+    final who = _who;
+    if (who == null || who.isEmpty) return _adminLength;
+    return _staff.where((s) => s.id == who).firstOrNull?.pinLength ?? 4;
+  }
+
   Future<void> _biometric() async {
     final l10n = AppLocalizations.of(context);
     try {
       final ok = await LocalAuthentication().authenticate(localizedReason: l10n.lockBiometricReason);
-      if (ok) widget.controller.unlock();
+      if (!ok) return;
+      final id = await widget.controller.store.biometricUserId();
+      if (id == null) {
+        widget.controller.unlock();
+        return;
+      }
+      final user = await widget.staff?.accessFor(id);
+      if (user != null) {
+        widget.controller.unlockAs(user);
+      } else if (mounted) {
+        setState(() => _error = l10n.lockBiometricNoUser);
+      }
     } catch (_) {
       // Cancelled or not available: the PIN still works.
     }
@@ -121,67 +174,193 @@ class _LockScreenState extends State<LockScreen> {
       _error = null;
     });
     if (value.length < _length || _checking) return;
+    final l10n = AppLocalizations.of(context);
+    final who = _who ?? '';
+    if (who.isNotEmpty) {
+      final until = _staffBlockedUntil;
+      if (until != null && until.isAfter(DateTime.now())) {
+        setState(() {
+          _pin = '';
+          _error = l10n.lockBlocked(until.difference(DateTime.now()).inSeconds + 1);
+        });
+        return;
+      }
+    }
     setState(() => _checking = true);
-    final ok = await widget.controller.store.verifyPin(value);
-    if (!mounted) return;
-    if (ok) {
-      widget.controller.unlock();
+    if (who.isEmpty) {
+      final ok = await widget.controller.store.verifyPin(value);
+      if (!mounted) return;
+      if (ok) {
+        widget.controller.unlock();
+        return;
+      }
+      final blocked = await widget.controller.store.blockedUntil();
+      if (!mounted) return;
+      setState(() {
+        _checking = false;
+        _pin = '';
+        _error = blocked == null ? l10n.lockWrongPin : l10n.lockBlocked(blocked.difference(DateTime.now()).inSeconds + 1);
+      });
       return;
     }
-    final l10n = AppLocalizations.of(context);
-    final blocked = await widget.controller.store.blockedUntil();
+    CurrentUser? user;
+    try {
+      final repo = widget.staff;
+      if (repo != null && await repo.verifyPin(who, value)) user = await repo.accessFor(who);
+    } catch (_) {
+      user = null;
+    }
     if (!mounted) return;
+    if (user != null) {
+      _staffFailures = 0;
+      widget.controller.unlockAs(user);
+      return;
+    }
+    _staffFailures++;
+    if (_staffFailures >= _staffFreeAttempts) {
+      _staffFailures = 0;
+      _staffBlockedUntil = DateTime.now().add(_staffWait);
+    }
     setState(() {
       _checking = false;
       _pin = '';
-      _error = blocked == null
-          ? l10n.lockWrongPin
-          : l10n.lockBlocked(blocked.difference(DateTime.now()).inSeconds + 1);
+      _error = l10n.lockWrongPin;
     });
   }
+
+  void _choose(String? who) => setState(() {
+        _who = who;
+        _pin = '';
+        _error = null;
+      });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final fingerprint = _biometricAvailable
+        ? IconButton(
+            tooltip: l10n.lockUseBiometric,
+            icon: const Icon(Icons.fingerprint, size: 32),
+            onPressed: _biometric,
+          )
+        : null;
+
+    Widget body;
+    if (!_staffLoaded) {
+      body = const Padding(padding: EdgeInsets.all(SdSpace.xl), child: CircularProgressIndicator());
+    } else if (_who == null) {
+      body = _WhoIsUsing(
+        staff: _staff,
+        error: _error,
+        onChoose: _choose,
+        fingerprint: fingerprint,
+      );
+    } else {
+      final staffName = _staff.where((s) => s.id == _who).firstOrNull?.name;
+      body = Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.lock_outline, size: 40, color: theme.colorScheme.primary),
+          const SizedBox(height: SdSpace.md),
+          Text(
+            _staff.isEmpty ? l10n.lockTitle : (staffName ?? l10n.staffAdminName),
+            style: theme.textTheme.titleLarge,
+          ),
+          if (_staff.isNotEmpty) Text(l10n.lockEnterYourPin, style: theme.textTheme.bodySmall),
+          const SizedBox(height: SdSpace.sm),
+          SizedBox(
+            height: 20,
+            child: Text(_error ?? '', style: theme.textTheme.bodySmall?.copyWith(color: SdColors.of(context).absent)),
+          ),
+          const SizedBox(height: SdSpace.lg),
+          PinPad(
+            value: _pin,
+            maxLength: _length,
+            onChanged: _changed,
+            extra: (_who ?? '').isEmpty ? fingerprint : null,
+          ),
+          const SizedBox(height: SdSpace.lg),
+          if (_staff.isNotEmpty)
+            TextButton.icon(
+              onPressed: () => _choose(null),
+              icon: const Icon(Icons.people_outline),
+              label: Text(l10n.lockSomeoneElse),
+            ),
+          if ((_who ?? '').isEmpty)
+            TextButton(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                builder: (_) => RecoveryScreen(controller: widget.controller),
+              )),
+              child: Text(l10n.lockForgot),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: SdSpace.xl),
+              child: Text(l10n.lockStaffForgot, textAlign: TextAlign.center, style: theme.textTheme.bodySmall),
+            ),
+        ],
+      );
+    }
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.lock_outline, size: 40, color: theme.colorScheme.primary),
-                const SizedBox(height: SdSpace.md),
-                Text(l10n.lockTitle, style: theme.textTheme.titleLarge),
-                const SizedBox(height: SdSpace.sm),
-                SizedBox(
-                  height: 20,
-                  child: Text(_error ?? '', style: theme.textTheme.bodySmall?.copyWith(color: SdColors.of(context).absent)),
-                ),
-                const SizedBox(height: SdSpace.lg),
-                PinPad(
-                  value: _pin,
-                  maxLength: _length,
-                  onChanged: _changed,
-                  extra: _biometricAvailable
-                      ? IconButton(
-                          tooltip: l10n.lockUseBiometric,
-                          icon: const Icon(Icons.fingerprint, size: 32),
-                          onPressed: _biometric,
-                        )
-                      : null,
-                ),
-                const SizedBox(height: SdSpace.lg),
-                TextButton(
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
-                    builder: (_) => RecoveryScreen(controller: widget.controller),
-                  )),
-                  child: Text(l10n.lockForgot),
-                ),
-              ],
+        child: Center(child: SingleChildScrollView(child: body)),
+      ),
+    );
+  }
+}
+
+/// "Who is using?": the administrator first, then each staff member.
+class _WhoIsUsing extends StatelessWidget {
+  const _WhoIsUsing({required this.staff, required this.onChoose, this.error, this.fingerprint});
+
+  final List<StaffLogin> staff;
+  final ValueChanged<String> onChoose;
+  final String? error;
+  final Widget? fingerprint;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    Widget person(String id, String name, String subtitle, IconData icon) => ListTile(
+          leading: CircleAvatar(child: Icon(icon)),
+          title: Text(name),
+          subtitle: Text(subtitle),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => onChoose(id),
+        );
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 420),
+      child: Padding(
+        padding: const EdgeInsets.all(SdSpace.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Icon(Icons.lock_outline, size: 40, color: theme.colorScheme.primary),
+            const SizedBox(height: SdSpace.md),
+            Text(l10n.lockWhoIsUsing, textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
+            if ((error ?? '').isNotEmpty) ...[
+              const SizedBox(height: SdSpace.sm),
+              Text(error!, textAlign: TextAlign.center, style: theme.textTheme.bodySmall?.copyWith(color: SdColors.of(context).absent)),
+            ],
+            const SizedBox(height: SdSpace.lg),
+            SdCard(
+              padding: EdgeInsets.zero,
+              child: Column(children: [
+                person('', l10n.staffAdminName, l10n.lockAdminSubtitle, Icons.admin_panel_settings_outlined),
+                for (final s in staff) ...[
+                  const Divider(indent: SdSpace.lg),
+                  person(s.id, s.name, s.roleLabel, Icons.person_outline),
+                ],
+              ]),
             ),
-          ),
+            if (fingerprint != null) ...[
+              const SizedBox(height: SdSpace.lg),
+              Center(child: fingerprint!),
+            ],
+          ],
         ),
       ),
     );

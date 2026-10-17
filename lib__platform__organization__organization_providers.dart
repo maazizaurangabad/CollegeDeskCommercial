@@ -39,6 +39,6 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   }
 }
 
-/// Permission check used by every service and screen.
-/// Single administrator until Phase 3; roles plug in here without changing callers.
-final permissionCheckerProvider = Provider<bool Function(String permission)>((ref) => (_) => true);
+/// Permission check used by every service and screen: what the person
+/// logged in may do (the administrator may do everything).
+final permissionCheckerProvider = Provider<bool Function(String permission)>((ref) => ref.watch(currentUserProvider).can);

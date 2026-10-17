@@ -20,6 +20,7 @@ class PinLockStore {
   static const _failuresKey = 'sd.lock.failures';
   static const _blockedUntilKey = 'sd.lock.blocked_until';
   static const _lengthKey = 'sd.lock.pin_length';
+  static const _biometricUserKey = 'sd.lock.biometric_user';
 
   static const freeAttempts = 5;
   static const defaultTimeoutMinutes = 5;
@@ -100,6 +101,14 @@ class PinLockStore {
   Future<bool> biometricEnabled() async => (await _store.read(_biometricKey)) == 'true';
 
   Future<void> setBiometricEnabled(bool enabled) => _store.write(_biometricKey, '$enabled');
+
+  /// The staff member the fingerprint logs in; null means the administrator.
+  Future<String?> biometricUserId() async {
+    final v = await _store.read(_biometricUserKey);
+    return (v == null || v.isEmpty) ? null : v;
+  }
+
+  Future<void> setBiometricUserId(String? id) => _store.write(_biometricUserKey, id ?? '');
 
   Future<void> _resetFailures() async {
     await _store.delete(_failuresKey);

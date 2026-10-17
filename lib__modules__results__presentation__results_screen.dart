@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../platform/staff/staff_models.dart';
+import '../../../platform/organization/organization_providers.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
@@ -143,7 +145,8 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
 
     final header = Row(children: [
       Expanded(child: Text(l10n.navResults, style: theme.textTheme.headlineSmall)),
-      IconButton(tooltip: l10n.resSetup, icon: const Icon(Icons.tune_outlined), onPressed: () => context.go('/results/setup')),
+      if (ref.watch(permissionCheckerProvider)(Permissions.resultsSetup))
+        IconButton(tooltip: l10n.resSetup, icon: const Icon(Icons.tune_outlined), onPressed: () => context.go('/results/setup')),
     ]);
     if (year == null) {
       return SdPage(children: [header, SdEmptyState(icon: Icons.event_busy, title: l10n.feeErrNoYear, message: '')]);

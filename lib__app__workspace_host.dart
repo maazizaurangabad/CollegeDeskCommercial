@@ -9,6 +9,7 @@ import '../l10n/gen/app_localizations.dart';
 import '../platform/data/data_providers.dart';
 import '../platform/modules/module_providers.dart';
 import '../platform/modules/module_registry.dart';
+import '../platform/staff/staff_repository.dart';
 import '../platform/workspace/institution_draft.dart';
 import '../platform/workspace/workspace_actions.dart';
 import '../platform/workspace/workspace_registry.dart';
@@ -74,6 +75,8 @@ class _WorkspaceHostState extends State<WorkspaceHost> implements WorkspaceActio
         _busy = false;
       });
       if (!identical(previous.database, next.database)) await previous.database.close().catchError((Object _) {});
+      // Staff belong to one institution: the next one starts with its administrator.
+      if (previous.session.organizationId != next.session.organizationId) _lock.resetUser();
       if (!next.isDemo) _lock.requirePin();
       _dailyBackup();
     } catch (_) {
@@ -154,6 +157,7 @@ class _WorkspaceHostState extends State<WorkspaceHost> implements WorkspaceActio
               moduleRegistryProvider.overrideWithValue(widget.registry),
               workspaceActionsProvider.overrideWithValue(this),
               lockControllerProvider.overrideWithValue(_lock),
+              currentUserNotifierProvider.overrideWithValue(_lock.user),
             ],
             child: const ShikshaDeskApp(),
           ),
@@ -165,7 +169,14 @@ class _WorkspaceHostState extends State<WorkspaceHost> implements WorkspaceActio
               ),
             ),
           if (showSetup) Positioned.fill(child: _overlay(PinSetupScreen(controller: _lock))),
-          if (showLock && _lockReady) Positioned.fill(child: _overlay(LockScreen(controller: _lock))),
+          if (showLock && _lockReady)
+            Positioned.fill(
+              child: _overlay(LockScreen(
+                key: ValueKey('lock-${_current.session.organizationId}'),
+                controller: _lock,
+                staff: StaffRepository(_current.database, _current.session),
+              )),
+            ),
           if (!_lockReady) const Positioned.fill(child: ColoredBox(color: Color(0xFFF6F7F9))),
         ],
       ),

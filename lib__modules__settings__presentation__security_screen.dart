@@ -6,6 +6,7 @@ import '../../../app/lock/lock_controller.dart';
 import '../../../app/lock/lock_screens.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../../platform/staff/staff_providers.dart';
 import '../../../platform/workspace/workspace_actions.dart';
 import '../../../platform/workspace/workspace_registry.dart';
 import 'settings_page_header.dart';
@@ -55,6 +56,7 @@ class SecurityScreen extends ConsumerWidget {
                     );
                   },
                 ),
+                if (lock.biometricEnabled && lock.hasPin) _BiometricUser(lock: lock),
                 const Divider(indent: SdSpace.lg),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(SdSpace.lg, SdSpace.lg, SdSpace.lg, 0),
@@ -97,6 +99,60 @@ class SecurityScreen extends ConsumerWidget {
               ],
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Whose fingerprint opens the app on this device: the administrator or
+/// one staff member.
+class _BiometricUser extends ConsumerStatefulWidget {
+  const _BiometricUser({required this.lock});
+
+  final LockController lock;
+
+  @override
+  ConsumerState<_BiometricUser> createState() => _BiometricUserState();
+}
+
+class _BiometricUserState extends ConsumerState<_BiometricUser> {
+  String _who = '';
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.lock.store.biometricUserId().then((id) {
+      if (mounted) {
+        setState(() {
+          _who = id ?? '';
+          _loaded = true;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final staff = ref.watch(staffListProvider).valueOrNull ?? const [];
+    final people = [
+      ('', l10n.staffAdminName),
+      for (final m in staff)
+        if (m.active && m.id != null) (m.id!, m.name),
+    ];
+    if (!_loaded) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(SdSpace.lg, 0, SdSpace.lg, SdSpace.md),
+      child: SdSelectField<String>(
+        label: l10n.securityBiometricUser,
+        value: people.any((p) => p.$1 == _who) ? _who : '',
+        options: people,
+        onChanged: (v) async {
+          final id = v ?? '';
+          setState(() => _who = id);
+          await widget.lock.store.setBiometricUserId(id.isEmpty ? null : id);
+        },
       ),
     );
   }
