@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../platform/modules/module_providers.dart';
 import '../platform/organization/organization_providers.dart';
 import '../platform/staff/route_permissions.dart';
+import '../platform/staff/staff_providers.dart';
 import 'shell/app_shell.dart';
 
 /// Routes come from the module registry: each installed module brings
@@ -20,6 +21,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Pages that need more than seeing the section (Staff, Backup, Fee setup...).
       final needed = permissionForPath(state.uri.path);
       if (needed != null && !ref.read(permissionCheckerProvider)(needed)) return '/';
+      // A teacher opening another class's attendance or marks from a link.
+      final division = state.uri.queryParameters['division'];
+      final allowed = ref.read(allowedDivisionsProvider);
+      if (division != null && allowed != null && !allowed.contains(division)) return '/';
       return null;
     },
     routes: [

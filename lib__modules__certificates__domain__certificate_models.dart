@@ -101,7 +101,11 @@ class CertificateRecord {
     required this.printCount,
     this.cancelReason,
     this.lastPrintedAt,
+    this.createdBy,
   });
+
+  /// User id of whoever issued the certificate (for "Issued by").
+  final String? createdBy;
 
   final String id;
   final CertificateKind kind;

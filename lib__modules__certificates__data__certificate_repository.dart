@@ -285,5 +285,6 @@ class CertificateRepository extends OrgScopedRepository {
         printCount: r.printCount,
         cancelReason: r.cancelReason,
         lastPrintedAt: r.lastPrintedAt,
+        createdBy: r.createdBy,
       );
 }

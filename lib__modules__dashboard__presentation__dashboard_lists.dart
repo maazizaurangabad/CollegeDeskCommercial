@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../platform/organization/organization_providers.dart';
+import '../../../platform/staff/staff_models.dart';
+import '../../../platform/staff/staff_providers.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
@@ -31,6 +34,10 @@ class DashboardTodayLists extends ConsumerWidget {
     final mediaDir = ref.watch(startupStateProvider).mediaDir;
     final attendanceOn = ref.watch(enabledModulesProvider).contains('attendance');
     String place(String divisionId) => placementName(academic, divisionId) ?? '';
+    // A teacher sees only their own classes; sections follow the role.
+    final mine = ref.watch(allowedDivisionsProvider);
+    bool ours(String? divisionId) => mine == null || mine.contains(divisionId);
+    final can = ref.watch(permissionCheckerProvider);
 
     final sections = <Widget>[];
 
@@ -47,8 +54,8 @@ class DashboardTodayLists extends ConsumerWidget {
           )
         : const SizedBox.shrink();
 
-    if (attendanceOn) {
-      final unmarked = ref.watch(unmarkedTodayProvider).valueOrNull ?? const <String>[];
+    if (attendanceOn && can(Permissions.attendanceMark)) {
+      final unmarked = (ref.watch(unmarkedTodayProvider).valueOrNull ?? const <String>[]).where(ours).toList();
       if (unmarked.isNotEmpty) {
         add(
           l10n.dashboardUnmarked(unmarked.length),
@@ -67,7 +74,8 @@ class DashboardTodayLists extends ConsumerWidget {
         );
       }
 
-      final absent = ref.watch(absentTodayProvider).valueOrNull ?? const <AbsentToday>[];
+      final absent =
+          (ref.watch(absentTodayProvider).valueOrNull ?? const <AbsentToday>[]).where((a) => ours(a.divisionId)).toList();
       if (absent.isNotEmpty) {
         add(
           l10n.dashboardAbsentToday(absent.length),
@@ -97,7 +105,9 @@ class DashboardTodayLists extends ConsumerWidget {
         );
       }
 
-      final low = ref.watch(lowAttendanceProvider).valueOrNull ?? const <LowAttendance>[];
+      final low = (ref.watch(lowAttendanceProvider).valueOrNull ?? const <LowAttendance>[])
+          .where((l) => ours(l.student.divisionId))
+          .toList();
       if (low.isNotEmpty) {
         add(
           l10n.dashboardLowAttendance(low.length),
@@ -128,7 +138,7 @@ class DashboardTodayLists extends ConsumerWidget {
       }
     }
 
-    if (ref.watch(enabledModulesProvider).contains('certificates')) {
+    if (ref.watch(enabledModulesProvider).contains('certificates') && can(Permissions.certificatesIssue)) {
       final certs = ref.watch(certificatesThisMonthProvider).valueOrNull ?? const {};
       if (certs.isNotEmpty) {
         add(
@@ -149,7 +159,7 @@ class DashboardTodayLists extends ConsumerWidget {
       }
     }
 
-    if (ref.watch(enabledModulesProvider).contains('fees')) {
+    if (ref.watch(enabledModulesProvider).contains('fees') && can(Permissions.feesCollect)) {
       final fees = ref.watch(feesTodayProvider).valueOrNull;
       add(
         l10n.feeDashboardTitle,
@@ -176,7 +186,7 @@ class DashboardTodayLists extends ConsumerWidget {
       );
     }
 
-    final birthdays = ref.watch(birthdaysTodayProvider).valueOrNull ?? const [];
+    final birthdays = (ref.watch(birthdaysTodayProvider).valueOrNull ?? const []).where((b) => ours(b.divisionId)).toList();
     if (birthdays.isNotEmpty) {
       add(
         l10n.dashboardBirthdays(birthdays.length),

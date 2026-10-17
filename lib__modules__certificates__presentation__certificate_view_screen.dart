@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
 
+import '../../../platform/organization/organization_providers.dart';
+import '../../../platform/staff/staff_models.dart';
+import '../../../platform/staff/staff_providers.dart';
 import '../../../core/files/save_file.dart';
 
 import '../../../design_system/components/components.dart';
@@ -53,16 +56,21 @@ class _CertificateViewScreenState extends ConsumerState<CertificateViewScreen> {
     setState(() => _record = ref.read(certificateRepositoryProvider).get(widget.id));
   }
 
-  Future<Uint8List> _pdf(CertificateRecord r) => certificatePdf(
-        ref,
-        kind: r.kind,
-        fields: r.fields,
-        serialLabel: r.serialLabel,
-        issuedOn: r.issuedOn,
-        duplicate: r.isDuplicate,
-        officeCopy: r.fields['office_copy'] != 'false',
-        cancelled: r.status == CertificateStatus.cancelled,
-      );
+  Future<Uint8List> _pdf(CertificateRecord r) async {
+    final admin = AppLocalizations.of(context).staffAdminName;
+    final names = await ref.read(staffNamesProvider.future);
+    return certificatePdf(
+      ref,
+      kind: r.kind,
+      fields: r.fields,
+      serialLabel: r.serialLabel,
+      issuedOn: r.issuedOn,
+      duplicate: r.isDuplicate,
+      officeCopy: r.fields['office_copy'] != 'false',
+      cancelled: r.status == CertificateStatus.cancelled,
+      issuedBy: userDisplayName(names, r.createdBy, adminName: admin),
+    );
+  }
 
   Future<void> _print(CertificateRecord r) async {
     final bytes = await _pdf(r);
@@ -114,6 +122,7 @@ class _CertificateViewScreenState extends ConsumerState<CertificateViewScreen> {
               : const Center(child: CircularProgressIndicator());
         }
         final cancelled = r.status == CertificateStatus.cancelled;
+        final names = ref.watch(staffNamesProvider).valueOrNull ?? const <String, String>{};
         return Column(children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(SdSpace.lg, SdSpace.lg, SdSpace.lg, SdSpace.sm),
@@ -128,6 +137,8 @@ class _CertificateViewScreenState extends ConsumerState<CertificateViewScreen> {
                       r.studentName,
                       r.serialLabel,
                       if (r.printCount > 0) l10n.certPrintCount(r.printCount),
+                      if (userDisplayName(names, r.createdBy, adminName: l10n.staffAdminName) case final by?)
+                        l10n.staffIssuedBy(by),
                       if (cancelled) '${l10n.certCancelled}: ${r.cancelReason ?? ''}',
                     ].join(' · '),
                     style: theme.textTheme.bodySmall,
@@ -136,7 +147,7 @@ class _CertificateViewScreenState extends ConsumerState<CertificateViewScreen> {
               ),
               IconButton(tooltip: l10n.resPrint, icon: const Icon(Icons.print_outlined), onPressed: () => _print(r)),
               IconButton(tooltip: l10n.reportSavePdf, icon: const Icon(Icons.download_outlined), onPressed: () => _save(r)),
-              if (!cancelled)
+              if (!cancelled && ref.watch(permissionCheckerProvider)(Permissions.certificatesCancel))
                 SdButton(label: l10n.certCancel, variant: SdButtonVariant.text, onPressed: () => _cancel(r)),
             ]),
           ),

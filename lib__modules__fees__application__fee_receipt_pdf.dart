@@ -16,6 +16,7 @@ abstract final class FeeReceiptPdf {
     required ReportFonts fonts,
     required String modeLabel,
     bool officeCopy = true,
+    String? issuedBy,
   }) async {
     final regular = pw.Font.ttf(fonts.regular);
     final bold = pw.Font.ttf(fonts.bold);
@@ -108,7 +109,12 @@ abstract final class FeeReceiptPdf {
           pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
             pw.Text('Computer generated receipt', style: st(size: 7, color: PdfColors.grey600)),
             pw.Column(children: [
-              pw.SizedBox(height: 18),
+              if ((issuedBy ?? '').isEmpty)
+                pw.SizedBox(height: 18)
+              else ...[
+                pw.SizedBox(height: 6),
+                pw.Text(issuedBy!, style: st(size: 9, b: true)),
+              ],
               pw.Text('Received by (Cashier / Clerk)', style: st(size: 9)),
             ]),
           ]),

@@ -182,7 +182,11 @@ class FeeReceiptRecord {
     this.reference,
     this.note,
     this.cancelReason,
+    this.createdBy,
   });
+
+  /// User id of whoever issued the receipt (for "Issued by").
+  final String? createdBy;
 
   final String id;
   final String serialLabel;

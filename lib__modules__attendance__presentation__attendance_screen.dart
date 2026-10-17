@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../platform/organization/organization_providers.dart';
+import '../../../platform/staff/staff_models.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/data/data_providers.dart';
@@ -94,9 +96,13 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     });
   }
 
+  /// A past day whose attendance this person's role may not change.
+  bool get _pastLocked =>
+      !DateUtils.isSameDay(_date, DateTime.now()) && !ref.read(permissionCheckerProvider)(Permissions.attendancePast);
+
   bool get _editable {
     final s = _sheet;
-    if (s == null) return false;
+    if (s == null || _pastLocked) return false;
     return !s.day.isFuture && !s.day.isLocked && (s.day.isMarkable || _overrideHoliday);
   }
 
@@ -228,6 +234,10 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       if (sheet != null) ...[
         const SizedBox(height: SdSpace.sm),
         _banner(l10n, sheet, sd),
+      ],
+      if (sheet != null && _pastLocked) ...[
+        const SizedBox(height: SdSpace.sm),
+        Text(l10n.staffPastDayLocked, textAlign: TextAlign.center, style: theme.textTheme.bodySmall?.copyWith(color: sd.leave)),
       ],
       const SizedBox(height: SdSpace.md),
     ];

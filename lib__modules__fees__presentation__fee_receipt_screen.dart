@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
 
+import '../../../platform/organization/organization_providers.dart';
+import '../../../platform/staff/staff_models.dart';
+import '../../../platform/staff/staff_providers.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/fees_providers.dart';
@@ -58,6 +61,7 @@ class _FeeReceiptScreenState extends ConsumerState<FeeReceiptScreen> {
               ? SdEmptyState(icon: Icons.search_off, title: l10n.issueNotFound, message: '')
               : const Center(child: CircularProgressIndicator());
         }
+        final names = ref.watch(staffNamesProvider).valueOrNull ?? const <String, String>{};
         return Column(children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(SdSpace.lg, SdSpace.lg, SdSpace.lg, SdSpace.sm),
@@ -75,13 +79,15 @@ class _FeeReceiptScreenState extends ConsumerState<FeeReceiptScreen> {
                     [
                       r.studentName,
                       paymentModeLabel(l10n, r.mode),
+                      if (userDisplayName(names, r.createdBy, adminName: l10n.staffAdminName) case final by?)
+                        l10n.staffIssuedBy(by),
                       if (r.isCancelled) '${l10n.certCancelled}: ${r.cancelReason ?? ''}',
                     ].join(' · '),
                     style: theme.textTheme.bodySmall,
                   ),
                 ]),
               ),
-              if (!r.isCancelled)
+              if (!r.isCancelled && ref.watch(permissionCheckerProvider)(Permissions.feesCancel))
                 SdButton(label: l10n.feeCancelReceipt, variant: SdButtonVariant.text, onPressed: () => _cancel(r)),
             ]),
           ),

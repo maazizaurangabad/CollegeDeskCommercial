@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../platform/modules/module_descriptor.dart';
 import 'presentation/academic_years_screen.dart';
+import 'presentation/activity_log_screen.dart';
 import 'presentation/attendance_settings_screen.dart';
 import 'presentation/backup_screen.dart';
 import 'presentation/classes_divisions_screen.dart';
@@ -64,6 +65,10 @@ final settingsModule = ModuleDescriptor(
           pageBuilder: (context, state) => const NoTransitionPage(child: StaffRolesScreen()),
         ),
       ],
+    ),
+    GoRoute(
+      path: 'activity',
+      pageBuilder: (context, state) => const NoTransitionPage(child: ActivityLogScreen()),
     ),
     GoRoute(
       path: 'security',

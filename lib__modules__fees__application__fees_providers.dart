@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/data/data_providers.dart';
+import '../../../platform/staff/staff_providers.dart';
 import '../../../platform/reporting/report_output.dart';
 import '../../reports/application/reports_providers.dart';
 import '../../students/application/students_providers.dart';
@@ -61,12 +62,14 @@ String feeErrorMessage(AppLocalizations l10n, Object error) {
 }
 
 Future<Uint8List> feeReceiptPdf(WidgetRef ref, AppLocalizations l10n, FeeReceiptRecord r, {bool officeCopy = true}) async {
+  final names = await ref.read(staffNamesProvider.future);
   return FeeReceiptPdf.build(
     r: r,
     head: await reportLetterhead(ref),
     fonts: await ReportOutput.fonts(),
     modeLabel: paymentModeLabel(l10n, r.mode),
     officeCopy: officeCopy,
+    issuedBy: userDisplayName(names, r.createdBy, adminName: l10n.staffAdminName),
   );
 }
 

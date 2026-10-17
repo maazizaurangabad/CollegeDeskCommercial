@@ -107,6 +107,12 @@ class SettingsScreen extends ConsumerWidget {
                 subtitle: l10n.staffRolesSubtitle,
                 onTap: () => context.go('/settings/staff/roles'),
               ),
+              _Tile(
+                icon: Icons.history,
+                title: l10n.logTitle,
+                subtitle: l10n.logSettingsSubtitle,
+                onTap: () => context.go('/settings/activity'),
+              ),
             ]),
           ),
           const SizedBox(height: SdSpace.xl),

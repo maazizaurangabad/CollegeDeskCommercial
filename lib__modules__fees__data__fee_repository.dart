@@ -777,6 +777,7 @@ class FeeRepository extends OrgScopedRepository {
           cancelReason: r.cancelReason,
           printCount: r.printCount,
           createdAt: r.createdAt,
+          createdBy: r.createdBy,
           lines: [
             for (final l in lines.where((l) => l.receiptId == r.id))
               FeeReceiptLine(headId: l.headId, headName: l.headName, amount: l.amount),

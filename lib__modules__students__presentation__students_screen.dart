@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../platform/staff/staff_providers.dart';
 import '../../../platform/staff/staff_models.dart';
 import '../../../core/files/csv.dart';
 import '../../../core/files/save_file.dart';
@@ -278,6 +279,8 @@ class _StudentsScreenState extends ConsumerState<StudentsScreen> {
               ]);
             }
             var items = snapshot.data!;
+            final mine = ref.watch(allowedDivisionsProvider);
+            if (mine != null) items = items.where((s) => mine.contains(s.divisionId)).toList();
             if (_programId != null) {
               final allowed = _divisionId != null ? {_divisionId} : divisionsOfProgram.map((d) => d.id).toSet();
               items = items.where((s) => allowed.contains(s.divisionId)).toList();

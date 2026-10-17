@@ -47,6 +47,58 @@
   "settingsBackup": "Backup and restore",
   "settingsSecurity": "Security and app lock",
   "settingsAbout": "About Shiksha Desk",
+  "logTitle": "Activity log",
+  "logSettingsSubtitle": "Who changed what, and when",
+  "logIntro": "Every change made in the app, newest first. Choose a person and dates to narrow it down.",
+  "logPerson": "Person",
+  "logEveryone": "Everyone",
+  "logEmpty": "No changes in these days.",
+  "logUnknownPerson": "Unknown",
+  "logAdded": "Added",
+  "logChanged": "Changed",
+  "logRemoved": "Removed",
+  "logRestored": "Restored",
+  "logStudents": "Student",
+  "logDocuments": "Documents",
+  "logAttendance": "Attendance",
+  "logCertificates": "Certificate",
+  "logReceipts": "Fee receipt",
+  "logFeeSetup": "Fee setup",
+  "logResults": "Results",
+  "logMessages": "Message",
+  "logImports": "Import",
+  "logStaff": "Staff",
+  "logClasses": "Classes and years",
+  "logSettings": "Settings",
+  "staffNotYourClass": "Not in your classes",
+  "staffNotYourClassHint": "You can open students of the classes given to you in Settings > Staff.",
+  "staffPastDayLocked": "Your role cannot change attendance of past days.",
+  "staffClasses": "Classes",
+  "staffClassesHint": "The teacher sees only these classes' students, attendance and marks.",
+  "staffIssuedBy": "Issued by {name}",
+  "@staffIssuedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "logCount": "{count, plural, =1{1 change} other{{count} changes}}",
+  "@logCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "staffClassCount": "{count, plural, =0{No classes} =1{1 class} other{{count} classes}}",
+  "@staffClassCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "lockWhoIsUsing": "Who is using Shiksha Desk?",
   "lockAdminSubtitle": "Administrator \u00b7 app PIN",
   "lockEnterYourPin": "Enter your PIN",

@@ -1,8 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiksha_desk/core/security/pin_hasher.dart';
 import 'package:shiksha_desk/core/session/app_session.dart';
+import 'package:shiksha_desk/modules/students/documents/document_models.dart';
+import 'package:shiksha_desk/modules/students/documents/document_repository.dart';
+import 'package:shiksha_desk/platform/data/activity_repository.dart';
+import 'package:shiksha_desk/platform/data/app_settings_repository.dart';
 import 'package:shiksha_desk/platform/staff/route_permissions.dart';
 import 'package:shiksha_desk/platform/staff/staff_models.dart';
+import 'package:shiksha_desk/platform/staff/staff_providers.dart';
 import 'package:shiksha_desk/platform/staff/staff_repository.dart';
 
 import '../test_support.dart';
@@ -37,6 +42,7 @@ void main() {
       expect(permissionForPath('/settings/backup'), Permissions.backupManage);
       expect(permissionForPath('/settings/security'), Permissions.ownerOnly);
       expect(permissionForPath('/settings/classes'), Permissions.settingsManage);
+      expect(permissionForPath('/settings/activity'), Permissions.staffManage);
     });
 
     test('changes are recorded under whoever is logged in at that moment', () {
@@ -91,5 +97,34 @@ void main() {
     final back = await repo.roles();
     expect(back.map((r) => r.key), containsAll(['admin', 'principal', 'clerk', 'accountant', 'teacher', 'librarian']));
     expect(back.last.permissions, {Permissions.studentsView});
+  });
+
+  test('activity log: who did what, by person and day', () async {
+    final db = newMemoryDatabase();
+    addTearDown(db.close);
+    String? who;
+    final session = AppSession(
+      organizationId: testSession.organizationId,
+      deviceId: 'd',
+      userId: localAdminUserId,
+      activeUserId: () => who,
+    );
+    final docs = DocumentRepository(db, session, AppSettingsRepository(db, session));
+    await docs.save(const StudentDocument(studentId: 's1', typeKey: 'photos'));
+    who = 'staff-1';
+    await docs.save(const StudentDocument(studentId: 's2', typeKey: 'photos'));
+
+    final log = ActivityRepository(db, session);
+    final today = DateTime.now();
+    final all = await log.log(from: today, to: today);
+    expect(all, hasLength(2));
+    expect(all.map((e) => e.userId).toSet(), {'staff-1', localAdminUserId});
+    expect((await log.log(userId: 'staff-1', from: today, to: today)).single.entity, 'student_documents');
+    final yesterday = today.subtract(const Duration(days: 1));
+    expect(await log.log(from: yesterday, to: yesterday), isEmpty);
+
+    expect(userDisplayName({'staff-1': 'Asma'}, 'staff-1'), 'Asma');
+    expect(userDisplayName(const {}, localAdminUserId), 'Admin');
+    expect(userDisplayName(const {}, null), isNull);
   });
 }

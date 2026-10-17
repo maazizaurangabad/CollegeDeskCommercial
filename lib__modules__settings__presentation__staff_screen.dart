@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/security/pin_hasher.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../../../platform/academic/academic_controller.dart';
 import '../../../platform/staff/staff_models.dart';
 import '../../../platform/staff/staff_providers.dart';
 import '../../../platform/staff/staff_repository.dart';
@@ -62,6 +63,7 @@ class StaffScreen extends ConsumerWidget {
                         subtitle: Text([
                           roleLabel[list[i].roleKey] ?? list[i].roleKey,
                           if ((list[i].mobile ?? '').isNotEmpty) list[i].mobile!,
+                          if (list[i].roleKey == StaffRoles.teacherKey) l10n.staffClassCount(list[i].divisionIds.length),
                           if (!list[i].active) l10n.staffInactive,
                         ].join(' · ')),
                         trailing: const Icon(Icons.edit_outlined),
@@ -108,6 +110,7 @@ class _StaffEditDialogState extends ConsumerState<StaffEditDialog> {
   final _pin2 = TextEditingController();
   late String _role = widget.member?.roleKey ?? 'clerk';
   late bool _active = widget.member?.active ?? true;
+  late final Set<String> _classes = {...?widget.member?.divisionIds};
   String? _nameError;
   String? _pinError;
   bool _saving = false;
@@ -142,7 +145,13 @@ class _StaffEditDialogState extends ConsumerState<StaffEditDialog> {
     try {
       final base = widget.member ?? StaffMember(name: '', roleKey: _role);
       await ref.read(staffRepositoryProvider).save(
-            base.copyWith(name: _name.text.trim(), mobile: _mobile.text.trim(), roleKey: _role, active: _active),
+            base.copyWith(
+              name: _name.text.trim(),
+              mobile: _mobile.text.trim(),
+              roleKey: _role,
+              active: _active,
+              divisionIds: _role == StaffRoles.teacherKey ? _classes.toList() : const [],
+            ),
             pin: pin.isEmpty ? null : pin,
           );
       ref.read(staffRevisionProvider.notifier).state++;
@@ -185,6 +194,7 @@ class _StaffEditDialogState extends ConsumerState<StaffEditDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final roles = ref.watch(staffRolesProvider).valueOrNull ?? StaffRoles.defaults;
+    final academic = ref.watch(academicControllerProvider);
     final digits = [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)];
     return AlertDialog(
       title: Text(_isNew ? l10n.staffAdd : l10n.staffEdit),
@@ -213,6 +223,25 @@ class _StaffEditDialogState extends ConsumerState<StaffEditDialog> {
                 options: [for (final r in roles) (r.key, r.label)],
                 onChanged: (v) => setState(() => _role = v ?? _role),
               ),
+              if (_role == StaffRoles.teacherKey) ...[
+                const SizedBox(height: SdSpace.md),
+                Text(l10n.staffClasses, style: Theme.of(context).textTheme.titleSmall),
+                Text(l10n.staffClassesHint, style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: SdSpace.sm),
+                Wrap(
+                  spacing: SdSpace.sm,
+                  runSpacing: SdSpace.sm,
+                  children: [
+                    for (final p in academic.programs)
+                      for (final d in academic.divisionsOf(p.id))
+                        FilterChip(
+                          label: Text('${p.name} ${d.name}'),
+                          selected: _classes.contains(d.id),
+                          onSelected: (on) => setState(() => on ? _classes.add(d.id) : _classes.remove(d.id)),
+                        ),
+                  ],
+                ),
+              ],
               const SizedBox(height: SdSpace.md),
               TextField(
                 controller: _pin,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../platform/staff/staff_providers.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
@@ -24,6 +25,9 @@ class _DivisionPickerState extends ConsumerState<DivisionPicker> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final academic = ref.watch(academicControllerProvider);
+    // A teacher sees only their own classes.
+    final allowed = ref.watch(allowedDivisionsProvider);
+    bool mine(String divisionId) => allowed == null || allowed.contains(divisionId);
     final programId = academic.divisions.where((d) => d.id == widget.divisionId).firstOrNull?.programId ?? _programId;
     final wide = MediaQuery.sizeOf(context).width >= 600;
     final classField = SdSelectField<String>(
@@ -31,19 +35,24 @@ class _DivisionPickerState extends ConsumerState<DivisionPicker> {
       value: programId,
       options: [
         for (final p in academic.programs)
-          if (academic.divisionsOf(p.id).isNotEmpty) (p.id, p.name),
+          if (academic.divisionsOf(p.id).any((d) => mine(d.id))) (p.id, p.name),
       ],
       onChanged: (v) {
         if (v == null) return;
         setState(() => _programId = v);
-        final divisions = academic.divisionsOf(v);
+        final divisions = academic.divisionsOf(v).where((d) => mine(d.id)).toList();
         widget.onChanged(divisions.length == 1 ? divisions.single.id : null);
       },
     );
     final divisionField = SdSelectField<String>(
       label: l10n.fieldDivision,
       value: widget.divisionId,
-      options: programId == null ? const [] : [for (final d in academic.divisionsOf(programId)) (d.id, d.name)],
+      options: programId == null
+          ? const []
+          : [
+              for (final d in academic.divisionsOf(programId))
+                if (mine(d.id)) (d.id, d.name),
+            ],
       onChanged: widget.onChanged,
     );
     if (!wide) return Column(children: [classField, divisionField]);

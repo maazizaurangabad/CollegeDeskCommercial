@@ -6,11 +6,22 @@ import '../../core/database/org_scoped_repository.dart';
 
 /// One line of "recent activity", read from the audit log.
 class ActivityItem {
-  const ActivityItem({required this.entity, required this.action, required this.at, required this.details});
+  const ActivityItem({
+    required this.entity,
+    required this.action,
+    required this.at,
+    required this.details,
+    this.userId,
+    this.entityId = '',
+  });
 
   final String entity;
   final String action;
   final DateTime at;
+
+  /// Who made the change (staff id, or the administrator's id).
+  final String? userId;
+  final String entityId;
 
   /// The audit entry's changes: field -> {old, new}.
   final Map<String, dynamic> details;
@@ -50,5 +61,38 @@ class ActivityRepository extends OrgScopedRepository {
       if (out.length >= limit) break;
     }
     return out;
+  }
+
+  /// The full history for Settings > Activity log: newest first, by one
+  /// person (or everyone) between two days (inclusive, local time).
+  Future<List<ActivityItem>> log({String? userId, required DateTime from, required DateTime to, int limit = 500}) async {
+    final start = DateTime(from.year, from.month, from.day).toUtc();
+    final end = DateTime(to.year, to.month, to.day).add(const Duration(days: 1)).toUtc();
+    final rows = await (db.select(db.auditEntries)
+          ..where((t) {
+            var w = t.organizationId.equals(orgId) & t.at.isBiggerOrEqualValue(start) & t.at.isSmallerThanValue(end);
+            if (userId != null) w = w & t.userId.equals(userId);
+            return w;
+          })
+          ..orderBy([(t) => OrderingTerm.desc(t.at)])
+          ..limit(limit))
+        .get();
+    return [
+      for (final r in rows)
+        ActivityItem(
+          entity: r.entity,
+          action: r.action,
+          at: r.at,
+          userId: r.userId,
+          entityId: r.entityId,
+          details: (() {
+            try {
+              return jsonDecode(r.changes) as Map<String, dynamic>;
+            } catch (_) {
+              return <String, dynamic>{};
+            }
+          })(),
+        ),
+    ];
   }
 }

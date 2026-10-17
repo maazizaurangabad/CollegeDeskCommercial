@@ -22,6 +22,7 @@ abstract final class CertificatePdf {
     bool duplicate = false,
     bool officeCopy = true,
     bool cancelled = false,
+    String? issuedBy,
   }) async {
     final regular = pw.Font.ttf(fonts.regular);
     final bold = pw.Font.ttf(fonts.bold);
@@ -81,13 +82,23 @@ abstract final class CertificatePdf {
           pageTheme: pw.PageTheme(
             pageFormat: pageFormat,
             margin: margin,
-            buildForeground: cancelled
-                ? (context) => pw.Center(
-                      child: pw.Transform.rotateBox(
-                        angle: 0.5,
-                        child: pw.Text('CANCELLED', style: st(size: 72, b: true, color: PdfColor.fromInt(0x55C62828))),
-                      ),
-                    )
+            buildForeground: (cancelled || (issuedBy ?? '').isNotEmpty)
+                ? (context) => pw.Stack(fit: pw.StackFit.expand, children: [
+                      if (cancelled)
+                        pw.Center(
+                          child: pw.Transform.rotateBox(
+                            angle: 0.5,
+                            child: pw.Text('CANCELLED', style: st(size: 72, b: true, color: PdfColor.fromInt(0x55C62828))),
+                          ),
+                        ),
+                      // Small office note at the very bottom: who issued it.
+                      if ((issuedBy ?? '').isNotEmpty)
+                        pw.Positioned(
+                          left: 0,
+                          bottom: -14,
+                          child: pw.Text('Issued by: $issuedBy', style: st(size: 7, color: PdfColors.grey600)),
+                        ),
+                    ])
                 : null,
           ),
           build: build,

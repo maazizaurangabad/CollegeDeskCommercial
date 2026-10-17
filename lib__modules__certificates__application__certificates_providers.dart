@@ -48,6 +48,7 @@ Future<Uint8List> certificatePdf(
   bool duplicate = false,
   bool officeCopy = true,
   bool cancelled = false,
+  String? issuedBy,
 }) async {
   return CertificatePdf.build(
     kind: kind,
@@ -60,5 +61,6 @@ Future<Uint8List> certificatePdf(
     duplicate: duplicate,
     officeCopy: officeCopy,
     cancelled: cancelled,
+    issuedBy: issuedBy,
   );
 }

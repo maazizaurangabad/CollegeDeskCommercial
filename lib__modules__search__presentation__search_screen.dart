@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../platform/staff/staff_providers.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../../platform/academic/academic_controller.dart';
@@ -89,7 +90,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   void _run() {
     final q = _query;
-    final classes = _divisionIds();
+    var classes = _divisionIds();
+    // A teacher finds only students of their own classes.
+    final mine = ref.read(allowedDivisionsProvider);
+    if (mine != null) classes = classes == null ? mine : classes.intersection(mine);
     final searchable = q.length >= 2 || rollQuery(q) != null || (q.isEmpty && classes != null);
     setState(() {
       _shown = _page;

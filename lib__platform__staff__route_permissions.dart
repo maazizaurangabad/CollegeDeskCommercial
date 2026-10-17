@@ -15,7 +15,7 @@ String? permissionForPath(String path) {
   if (under('/fees/setup') || under('/fees/structure')) return Permissions.feesSetup;
   if (under('/certificates/new')) return Permissions.certificatesIssue;
   if (under('/results/setup')) return Permissions.resultsSetup;
-  if (under('/settings/staff')) return Permissions.staffManage;
+  if (under('/settings/staff') || under('/settings/activity')) return Permissions.staffManage;
   if (under('/settings/backup')) return Permissions.backupManage;
   if (under('/settings/security')) return Permissions.ownerOnly;
   if (under('/settings/imports')) return Permissions.studentsImport;

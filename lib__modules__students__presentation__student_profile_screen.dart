@@ -9,6 +9,8 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../platform/staff/staff_models.dart';
+import '../../../platform/staff/staff_providers.dart';
 import '../../../core/ids/uuid7.dart';
 import '../../../design_system/components/components.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -276,6 +278,18 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
             ),
           ]);
         }
+        // A teacher may open only students of their own classes.
+        final mine = ref.watch(allowedDivisionsProvider);
+        if (mine != null && !detail.enrollments.any((e) => mine.contains(e.divisionId))) {
+          return SdPage(children: [
+            SdEmptyState(
+              icon: Icons.lock_outline,
+              title: l10n.staffNotYourClass,
+              message: l10n.staffNotYourClassHint,
+              action: SdButton(label: l10n.back, onPressed: () => context.go('/students')),
+            ),
+          ]);
+        }
         return _profile(context, l10n, detail);
       },
     );
@@ -346,7 +360,7 @@ class _StudentProfileScreenState extends ConsumerState<StudentProfileScreen> {
                 PopupMenuItem(value: 'certificate', child: Text(l10n.p360MakeCertificate)),
               if (detail.status == StudentStatus.active && _can('students.edit'))
                 PopupMenuItem(value: 'left', child: Text(l10n.studentMarkLeft)),
-              if (_can('students.edit')) PopupMenuItem(value: 'delete', child: Text(l10n.studentDelete)),
+              if (_can(Permissions.studentsDelete)) PopupMenuItem(value: 'delete', child: Text(l10n.studentDelete)),
             ],
           ),
         ),
