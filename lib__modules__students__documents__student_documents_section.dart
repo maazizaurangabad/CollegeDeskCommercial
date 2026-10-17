@@ -62,37 +62,46 @@ class _StudentDocumentsSectionState extends ConsumerState<StudentDocumentsSectio
     try {
       switch (source) {
         case _Source.scan:
-          final scanner = DocumentScanner(
-            // Pages come back as JPEG pictures (the scanner's standard).
-            options: DocumentScannerOptions(
-              mode: ScannerMode.full,
-              pageLimit: 20,
-              isGalleryImport: true,
-            ),
-          );
-          Object? failure;
-          try {
-            final result = await scanner.scanDocument();
-            final List<String>? pages = result.images;
-            for (final path in pages ?? const <String>[]) {
+          // First the full scanner (auto edge detection, filters, many pages).
+          // If the phone refuses it, try once more with the simplest scanner
+          // before giving up, then offer the camera.
+          final attempts = [
+            DocumentScannerOptions(mode: ScannerMode.full, pageLimit: 20, isGalleryImport: true),
+            DocumentScannerOptions(mode: ScannerMode.base, pageLimit: 1),
+          ];
+          final failures = <Object>[];
+          List<String>? pages;
+          var cancelled = false;
+          for (final options in attempts) {
+            final scanner = DocumentScanner(options: options);
+            try {
+              pages = (await scanner.scanDocument()).images ?? const <String>[];
+              break;
+            } catch (e) {
+              // Closing the scanner without scanning is not an error.
+              if (_isScanCancel(e)) {
+                cancelled = true;
+                break;
+              }
+              failures.add(e);
+            } finally {
+              try {
+                await scanner.close();
+              } catch (_) {
+                // Nothing to release.
+              }
+            }
+          }
+          if (pages != null) {
+            for (final path in pages) {
               saved.add(await files.addImage(studentId, await File(path).readAsBytes()));
             }
             if (saved.isEmpty && mounted) SdToast.show(context, l10n.docScanNoPages);
-          } on DocumentTooLarge {
-            rethrow;
-          } on DocumentUnreadable {
-            rethrow;
-          } catch (e) {
-            // Closing the scanner without scanning is not an error.
-            if (!_isScanCancel(e)) failure = e;
-          } finally {
-            await scanner.close();
-          }
-          if (failure != null && mounted) {
+          } else if (!cancelled && failures.isNotEmpty && mounted) {
             final useCamera = await SdDialog.confirm(
               context,
               title: l10n.docScanFailedTitle,
-              message: l10n.docScanFailedMessage(_scanReason(failure)),
+              message: l10n.docScanFailedMessage(failures.map(_scanReason).toSet().join('\n')),
               confirmLabel: l10n.docCamera,
               cancelLabel: l10n.cancel,
             );
@@ -132,9 +141,17 @@ class _StudentDocumentsSectionState extends ConsumerState<StudentDocumentsSectio
   /// A short, readable reason from the scanner's error (for screenshots).
   String _scanReason(Object e) {
     var text = e.toString();
-    if (e is PlatformException) text = e.message ?? e.code;
-    text = text.replaceAll(RegExp(r'^[\w.]*Exception:\s*'), '').trim();
-    if (text.length > 160) text = '${text.substring(0, 160)}…';
+    if (e is PlatformException) {
+      // The phone's own error and where it happened, so a screenshot shows the cause.
+      final where = (e.stacktrace ?? '')
+          .split('\n')
+          .map((l) => l.trim())
+          .where((l) => l.isNotEmpty)
+          .take(3)
+          .join(' | ');
+      text = [e.code, e.message ?? '', where].where((t) => t.isNotEmpty).join(' — ');
+    }
+    if (text.length > 400) text = '${text.substring(0, 400)}…';
     return text.isEmpty ? '-' : text;
   }
 
