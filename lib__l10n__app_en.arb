@@ -47,6 +47,26 @@
   "settingsBackup": "Backup and restore",
   "settingsSecurity": "Security and app lock",
   "settingsAbout": "About Shiksha Desk",
+  "scanRetake": "Retake",
+  "scanRotate": "Rotate",
+  "scanNext": "Crop and clean",
+  "scanAdjust": "Adjust corners",
+  "scanSave": "Save",
+  "scanSaveAndNext": "Save + next page",
+  "scanAdjustHint": "Drag the 4 white circles onto the corners of the page.",
+  "scanCheckHint": "Check the page. Pinch to zoom. Choose Clean, Grey or Colour.",
+  "scanFilterClean": "Clean",
+  "scanFilterGrey": "Grey",
+  "scanFilterColour": "Colour",
+  "scanFailed": "Could not prepare this page. Adjust the corners or retake the photo.",
+  "scanPageTitle": "Scan page {number}",
+  "@scanPageTitle": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
   "logTitle": "Activity log",
   "logSettingsSubtitle": "Who changed what, and when",
   "logIntro": "Every change made in the app, newest first. Choose a person and dates to narrow it down.",

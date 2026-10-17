@@ -2,9 +2,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
@@ -21,6 +19,7 @@ import 'document_files.dart';
 import 'document_models.dart';
 import 'document_providers.dart';
 import 'documents_pdf.dart';
+import 'scan_editor.dart';
 
 enum _Source { scan, camera, upload }
 
@@ -62,50 +61,10 @@ class _StudentDocumentsSectionState extends ConsumerState<StudentDocumentsSectio
     try {
       switch (source) {
         case _Source.scan:
-          // First the full scanner (auto edge detection, filters, many pages).
-          // If the phone refuses it, try once more with the simplest scanner
-          // before giving up, then offer the camera.
-          final attempts = [
-            DocumentScannerOptions(mode: ScannerMode.full, pageLimit: 20, isGalleryImport: true),
-            DocumentScannerOptions(mode: ScannerMode.base, pageLimit: 1),
-          ];
-          final failures = <Object>[];
-          List<String>? pages;
-          var cancelled = false;
-          for (final options in attempts) {
-            final scanner = DocumentScanner(options: options);
-            try {
-              pages = (await scanner.scanDocument()).images ?? const <String>[];
-              break;
-            } catch (e) {
-              // Closing the scanner without scanning is not an error.
-              if (_isScanCancel(e)) {
-                cancelled = true;
-                break;
-              }
-              failures.add(e);
-            } finally {
-              try {
-                await scanner.close();
-              } catch (_) {
-                // Nothing to release.
-              }
-            }
-          }
-          if (pages != null) {
-            for (final path in pages) {
-              saved.add(await files.addImage(studentId, await File(path).readAsBytes()));
-            }
-            if (saved.isEmpty && mounted) SdToast.show(context, l10n.docScanNoPages);
-          } else if (!cancelled && failures.isNotEmpty && mounted) {
-            final useCamera = await SdDialog.confirm(
-              context,
-              title: l10n.docScanFailedTitle,
-              message: l10n.docScanFailedMessage(failures.map(_scanReason).toSet().join('\n')),
-              confirmLabel: l10n.docCamera,
-              cancelLabel: l10n.cancel,
-            );
-            if (useCamera && mounted) return await _pickPages(_Source.camera);
+          // Our own scanner: photo, drag the corners, straighten and clean up.
+          final pages = await runDocumentScan(context);
+          for (final page in pages) {
+            saved.add(await files.addImage(studentId, page));
           }
         case _Source.camera:
           final shot = await ImagePicker().pickImage(source: ImageSource.camera, maxWidth: 2400, imageQuality: 90);
@@ -133,26 +92,6 @@ class _StudentDocumentsSectionState extends ConsumerState<StudentDocumentsSectio
       // Camera or file picker closed without choosing anything.
     }
     return saved;
-  }
-
-  /// The scanner reports "Operation cancelled" when the user closes it.
-  bool _isScanCancel(Object e) => e.toString().toLowerCase().contains('cancel');
-
-  /// A short, readable reason from the scanner's error (for screenshots).
-  String _scanReason(Object e) {
-    var text = e.toString();
-    if (e is PlatformException) {
-      // The phone's own error and where it happened, so a screenshot shows the cause.
-      final where = (e.stacktrace ?? '')
-          .split('\n')
-          .map((l) => l.trim())
-          .where((l) => l.isNotEmpty)
-          .take(3)
-          .join(' | ');
-      text = [e.code, e.message ?? '', where].where((t) => t.isNotEmpty).join(' — ');
-    }
-    if (text.length > 400) text = '${text.substring(0, 400)}…';
-    return text.isEmpty ? '-' : text;
   }
 
   Future<void> _addPages(DocumentLine line, _Source source) async {
@@ -313,7 +252,7 @@ class _StudentDocumentsSectionState extends ConsumerState<StudentDocumentsSectio
 }
 
 /// Which ways of adding pages this device has.
-List<_Source> get _sources => [if (Platform.isAndroid) ...[_Source.scan, _Source.camera], _Source.upload];
+List<_Source> get _sources => [_Source.scan, if (Platform.isAndroid || Platform.isIOS) _Source.camera, _Source.upload];
 
 String _sourceLabel(AppLocalizations l10n, _Source s) => switch (s) {
       _Source.scan => l10n.docScan,
