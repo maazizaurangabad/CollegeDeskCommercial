@@ -591,6 +591,28 @@ class StudentDocuments extends Table with StandardColumns {
   Set<Column> get primaryKey => {id};
 }
 
+/// A staff member who can log in on this device with their own PIN.
+/// The administrator (the app PIN) is not stored here.
+@DataClassName('StaffMemberRow')
+class StaffMembers extends Table with StandardColumns {
+  TextColumn get name => text()();
+  TextColumn get mobile => text().nullable()();
+
+  /// Key of the role (Settings > Staff > Roles).
+  TextColumn get roleKey => text()();
+
+  /// Salted, slow hash of the PIN; never the PIN itself.
+  TextColumn get pinHash => text().nullable()();
+  IntColumn get pinLength => integer().withDefault(const Constant(4))();
+  BoolColumn get active => boolean().withDefault(const Constant(true))();
+
+  /// JSON list of division ids a teacher works with.
+  TextColumn get divisionsJson => text().withDefault(const Constant('[]'))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 /// Append-only history of changes: who, what, when, old and new values.
 @DataClassName('AuditEntryRow')
 @TableIndex(name: 'audit_by_entity', columns: {#entity, #entityId})

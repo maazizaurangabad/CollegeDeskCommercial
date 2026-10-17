@@ -75,6 +75,9 @@ Future<void> applyMigrationStep(AppDatabase db, Migrator m, int fromVersion) asy
       // v10 -> v11: documents students submit, with scanned pages.
       await m.createTable(db.studentDocuments);
       await _createIndexes(m, _v11Indexes);
+    case 11:
+      // v11 -> v12: staff members with their own PIN and role.
+      await m.createTable(db.staffMembers);
     default:
       throw StateError('No migration step from schema version $fromVersion');
   }

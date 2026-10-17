@@ -64,7 +64,7 @@ void main() {
     expect(modules.single.enabled, isFalse);
 
     final history = await (db.select(db.migrationHistory)..orderBy([(t) => OrderingTerm.asc(t.fromVersion)])).get();
-    expect(history.map((h) => '${h.fromVersion}->${h.toVersion}'), ['1->2', '2->3', '3->4', '4->5', '5->6', '6->7', '7->8', '8->9', '9->10', '10->11']);
+    expect(history.map((h) => '${h.fromVersion}->${h.toVersion}'), ['1->2', '2->3', '3->4', '4->5', '5->6', '6->7', '7->8', '8->9', '9->10', '10->11', '11->12']);
     expect(history.last.toVersion, AppDatabase.currentSchemaVersion);
 
     // Tables added in version 3 exist and are empty.
@@ -86,6 +86,7 @@ void main() {
     expect(await db.select(db.feeReceipts).get(), isEmpty);
     expect(await db.select(db.marks).get(), isEmpty);
     expect(await db.select(db.studentDocuments).get(), isEmpty);
+    expect(await db.select(db.staffMembers).get(), isEmpty);
 
     await (db.update(db.organizations)..where((t) => t.id.equals('org-1')))
         .write(const OrganizationsCompanion(udiseCode: Value('27191234567')));
